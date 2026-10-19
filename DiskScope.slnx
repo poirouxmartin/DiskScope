@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DiskScope.Core/DiskScope.Core.csproj" />
+    <Project Path="src/DiskScope.Scanner/DiskScope.Scanner.csproj" />
+    <Project Path="src/DiskScope.Scanner.Standard/DiskScope.Scanner.Standard.csproj" />
+    <Project Path="src/DiskScope.Scanner.Ntfs/DiskScope.Scanner.Ntfs.csproj" />
+    <Project Path="src/DiskScope.App/DiskScope.App.csproj" />
+    <Project Path="src/DiskScope.Benchmarks/DiskScope.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DiskScope.Tests/DiskScope.Tests.csproj" />
+  </Folder>
+</Solution>

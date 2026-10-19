@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>DiskScope.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiskScope.Core\DiskScope.Core.csproj" />
+    <ProjectReference Include="..\DiskScope.Scanner\DiskScope.Scanner.csproj" />
+    <ProjectReference Include="..\DiskScope.Scanner.Standard\DiskScope.Scanner.Standard.csproj" />
+    <ProjectReference Include="..\DiskScope.Scanner.Ntfs\DiskScope.Scanner.Ntfs.csproj" />
+  </ItemGroup>
+
+</Project>
