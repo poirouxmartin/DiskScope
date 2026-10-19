@@ -1,6 +1,9 @@
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
 using DiskScope.App.Formatting;
+using DiskScope.App.Services;
 using DiskScope.Core;
 using DiskScope.Scanner;
 using DiskScope.Scanner.Standard;
@@ -10,15 +13,25 @@ namespace DiskScope.App.ViewModels;
 public sealed class MainViewModel : ObservableObject
 {
     private const int MaxErrorsInSummary = 20;
+    private const int MaxLargestFiles = 1000;
 
+    private readonly IShellActions _shell;
     private string _rootPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     private bool _isScanning;
     private string _statusText = "Ready";
     private string _summary = string.Empty;
     private CancellationTokenSource? _cts;
+    private NodeIndex? _index;
+    private SizeKind _sizeKind = SizeKind.Logical;
+    private bool _isLogical = true;
+    private bool _isAllocated;
+    private ObservableCollection<NodeViewModel> _rootNodes = new();
+    private ObservableCollection<FileRowViewModel> _largestFiles = new();
 
-    public MainViewModel()
+    public MainViewModel(IShellActions? shell = null)
     {
+        _shell = shell ?? new ShellActions();
+
         ScanCommand = new RelayCommand(
             async () =>
             {
@@ -34,6 +47,9 @@ public sealed class MainViewModel : ObservableObject
             () => !IsScanning);
 
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsScanning);
+
+        CopyPathCommand = new ParameterCommand(CopyPath);
+        OpenInExplorerCommand = new ParameterCommand(OpenInExplorer);
     }
 
     public string RootPath
@@ -67,9 +83,130 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _summary, value);
     }
 
+    public SizeKind SizeKind
+    {
+        get => _sizeKind;
+        set
+        {
+            if (!SetProperty(ref _sizeKind, value))
+            {
+                return;
+            }
+
+            SetProperty(ref _isLogical, value == SizeKind.Logical);
+            SetProperty(ref _isAllocated, value == SizeKind.Allocated);
+            Rebuild();
+        }
+    }
+
+    public bool IsLogical
+    {
+        get => _isLogical;
+        set
+        {
+            if (value)
+            {
+                SizeKind = SizeKind.Logical;
+            }
+        }
+    }
+
+    public bool IsAllocated
+    {
+        get => _isAllocated;
+        set
+        {
+            if (value)
+            {
+                SizeKind = SizeKind.Allocated;
+            }
+        }
+    }
+
+    public ObservableCollection<NodeViewModel> RootNodes
+    {
+        get => _rootNodes;
+        private set => SetProperty(ref _rootNodes, value);
+    }
+
+    public ObservableCollection<FileRowViewModel> LargestFiles
+    {
+        get => _largestFiles;
+        private set => SetProperty(ref _largestFiles, value);
+    }
+
     public RelayCommand ScanCommand { get; }
 
     public RelayCommand CancelCommand { get; }
+
+    public ICommand CopyPathCommand { get; }
+
+    public ICommand OpenInExplorerCommand { get; }
+
+    public void LoadIndex(NodeIndex index)
+    {
+        _index = index;
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        NodeIndex? index = _index;
+        if (index is null)
+        {
+            return;
+        }
+
+        var root = new NodeViewModel(index, NodeIndex.RootId, _sizeKind, parentTotal: 0);
+        root.IsExpanded = true;
+        RootNodes = new ObservableCollection<NodeViewModel> { root };
+
+        SizeKind kind = _sizeKind;
+        LargestFiles = new ObservableCollection<FileRowViewModel>(
+            index.GetLargestFiles(MaxLargestFiles, kind).Select(id => ToFileRow(index, id, kind)));
+    }
+
+    private static FileRowViewModel ToFileRow(NodeIndex index, int id, SizeKind kind)
+    {
+        long size = index.GetTotalSize(id, kind);
+        return new FileRowViewModel(id, index.GetFullPath(id), size, ByteFormatter.Format(size));
+    }
+
+    private void CopyPath(object? parameter)
+    {
+        if (TryGetFullPath(parameter, out string path))
+        {
+            _shell.CopyText(path);
+        }
+    }
+
+    private void OpenInExplorer(object? parameter)
+    {
+        if (TryGetFullPath(parameter, out string path))
+        {
+            _shell.ShowInExplorer(path);
+        }
+    }
+
+    private bool TryGetFullPath(object? parameter, out string path)
+    {
+        path = string.Empty;
+        NodeIndex? index = _index;
+        int? id = parameter switch
+        {
+            FileRowViewModel row => row.Id,
+            NodeViewModel { IsPlaceholder: false } node => node.Id,
+            _ => null,
+        };
+
+        if (index is null || id is null)
+        {
+            return false;
+        }
+
+        path = index.GetFullPath(id.Value);
+        return true;
+    }
 
     private async Task ScanAsync()
     {
@@ -95,6 +232,7 @@ public sealed class MainViewModel : ObservableObject
             StatusText = "Scanning...";
             ScanResult result = await engine.ScanAsync(request, new ProgressObserver(this), cts.Token);
             Summary = BuildSummary(result);
+            LoadIndex(result.Index);
             StatusText = $"Scan finished: {result.Outcome}";
         }
         finally

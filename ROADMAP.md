@@ -17,10 +17,14 @@ Initial spec: prompt of 2026-10-19.
 - Benchmark protocol.
 - 29 tests.
 
+Then: size queries (children by size, bounded-heap largest files); virtualized lazy tree sorted by size,
+logical/allocated switch without rescan, largest-files list (top 1000), context menu (copy path,
+open in Explorer). Checked in the running app through UI Automation on `.nuget\packages`. 45 tests.
+Known limit: tree number columns shift by one indent per depth level (fixed-width name column).
+
 ### Remaining, in order
 
-1. Virtualized tree sorted by size, largest-files list, context menu (copy path, open in Explorer). (in progress)
-2. Search and filters (extension, size, date, type); extension statistics.
+1. Search and filters (extension, size, date, type); extension statistics.
 3. Treemap (custom rendering, squarified layout) synchronized with tree selection.
 4. CSV export.
 5. Partial-tree publication during scan (reader-safe snapshot of the builder).
