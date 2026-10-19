@@ -46,7 +46,7 @@
 
         <TextBlock Grid.Row="2" Text="{Binding StatusText}" Margin="6,2" />
 
-        <!-- Main: tree on the left, largest files on the right -->
+        <!-- Main: tree on the left, file lists (largest files, search, extensions) on the right -->
         <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" />
@@ -105,25 +105,145 @@
 
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
 
-            <ListView Grid.Column="2"
-                      ItemsSource="{Binding LargestFiles}"
-                      VirtualizingPanel.IsVirtualizing="True"
-                      VirtualizingPanel.VirtualizationMode="Recycling">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListView}}" />
-                        <Setter Property="ContextMenu" Value="{StaticResource FileRowMenu}" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Size" Width="90"
-                                        DisplayMemberBinding="{Binding SizeText}" />
-                        <GridViewColumn Header="Path" Width="500"
-                                        DisplayMemberBinding="{Binding Path=Path}" />
-                    </GridView>
-                </ListView.View>
-            </ListView>
+            <TabControl Grid.Column="2">
+                <TabItem Header="Largest files">
+                    <ListView ItemsSource="{Binding LargestFiles}"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}" />
+                                <Setter Property="ContextMenu" Value="{StaticResource FileRowMenu}" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Size" Width="90"
+                                                DisplayMemberBinding="{Binding SizeText}" />
+                                <GridViewColumn Header="Path" Width="500"
+                                                DisplayMemberBinding="{Binding Path=Path}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+
+                <TabItem Header="Search" DataContext="{Binding Search}">
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name contains"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Extensions"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding ExtensionsText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="jpg, png; empty = any"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Min size (MB)"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="2" Grid.Column="1"
+                                     Text="{Binding MinSizeMbText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Max size (MB)"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="3" Grid.Column="1"
+                                     Text="{Binding MaxSizeMbText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Modified from"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <DatePicker Grid.Row="4" Grid.Column="1"
+                                        SelectedDate="{Binding ModifiedFrom}"
+                                        Margin="4,2" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified to"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <DatePicker Grid.Row="5" Grid.Column="1"
+                                        SelectedDate="{Binding ModifiedTo}"
+                                        Margin="4,2" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Type"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <ComboBox Grid.Row="6" Grid.Column="1"
+                                      ItemsSource="{Binding KindOptions}"
+                                      SelectedItem="{Binding Kind}"
+                                      Margin="4,2" />
+                        </Grid>
+
+                        <TextBlock DockPanel.Dock="Top" Text="{Binding InputError}"
+                                   Foreground="Firebrick" Margin="4,2">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding InputError}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock DockPanel.Dock="Top" Text="{Binding ResultText}" Margin="4" />
+
+                        <ListView ItemsSource="{Binding Results}"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource FileRowMenu}" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Size" Width="90"
+                                                    DisplayMemberBinding="{Binding SizeText}" />
+                                    <GridViewColumn Header="Path" Width="500"
+                                                    DisplayMemberBinding="{Binding Path}" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem Header="Extensions">
+                    <ListView ItemsSource="{Binding Extensions}"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Extension" Width="120"
+                                                DisplayMemberBinding="{Binding DisplayName}" />
+                                <GridViewColumn Header="Files" Width="80"
+                                                DisplayMemberBinding="{Binding FileCount, StringFormat=N0}" />
+                                <GridViewColumn Header="Size" Width="90"
+                                                DisplayMemberBinding="{Binding SizeText}" />
+                                <GridViewColumn Header="Share" Width="70"
+                                                DisplayMemberBinding="{Binding PercentText}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+            </TabControl>
         </Grid>
 
         <!-- Summary and errors -->

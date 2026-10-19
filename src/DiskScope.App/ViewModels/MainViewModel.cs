@@ -27,6 +27,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isAllocated;
     private ObservableCollection<NodeViewModel> _rootNodes = new();
     private ObservableCollection<FileRowViewModel> _largestFiles = new();
+    private ObservableCollection<ExtensionRowViewModel> _extensions = new();
 
     public MainViewModel(IShellActions? shell = null)
     {
@@ -50,6 +51,7 @@ public sealed class MainViewModel : ObservableObject
 
         CopyPathCommand = new ParameterCommand(CopyPath);
         OpenInExplorerCommand = new ParameterCommand(OpenInExplorer);
+        Search = new SearchViewModel(() => _index, () => SizeKind);
     }
 
     public string RootPath
@@ -135,6 +137,12 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _largestFiles, value);
     }
 
+    public ObservableCollection<ExtensionRowViewModel> Extensions
+    {
+        get => _extensions;
+        private set => SetProperty(ref _extensions, value);
+    }
+
     public RelayCommand ScanCommand { get; }
 
     public RelayCommand CancelCommand { get; }
@@ -142,6 +150,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand CopyPathCommand { get; }
 
     public ICommand OpenInExplorerCommand { get; }
+
+    public SearchViewModel Search { get; }
 
     public void LoadIndex(NodeIndex index)
     {
@@ -164,12 +174,29 @@ public sealed class MainViewModel : ObservableObject
         SizeKind kind = _sizeKind;
         LargestFiles = new ObservableCollection<FileRowViewModel>(
             index.GetLargestFiles(MaxLargestFiles, kind).Select(id => ToFileRow(index, id, kind)));
+
+        long rootTotal = index.GetTotalSize(NodeIndex.RootId, kind);
+        Extensions = new ObservableCollection<ExtensionRowViewModel>(
+            ExtensionStats.Compute(index, kind).Select(stat => ToExtensionRow(stat, rootTotal)));
+
+        _ = Search.RefreshAsync();
     }
 
-    private static FileRowViewModel ToFileRow(NodeIndex index, int id, SizeKind kind)
+    internal static FileRowViewModel ToFileRow(NodeIndex index, int id, SizeKind kind)
     {
         long size = index.GetTotalSize(id, kind);
         return new FileRowViewModel(id, index.GetFullPath(id), size, ByteFormatter.Format(size));
+    }
+
+    private static ExtensionRowViewModel ToExtensionRow(ExtensionStat stat, long rootTotal)
+    {
+        double percent = rootTotal > 0 ? stat.TotalSize * 100.0 / rootTotal : 0;
+        return new ExtensionRowViewModel(
+            stat.Extension,
+            stat.FileCount,
+            stat.TotalSize,
+            ByteFormatter.Format(stat.TotalSize),
+            FormattableString.Invariant($"{percent:F1} %"));
     }
 
     private void CopyPath(object? parameter)

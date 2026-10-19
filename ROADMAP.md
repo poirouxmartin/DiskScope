@@ -22,9 +22,10 @@ logical/allocated switch without rescan, largest-files list (top 1000), context 
 open in Explorer). Checked in the running app through UI Automation on `.nuget\packages`. 45 tests.
 Known limit: tree number columns shift by one indent per depth level (fixed-width name column).
 
+Then: search and filters (name, extensions, size range, modification date range, type) as a linear scan with a bounded top-1000 result, debounced and cancelled per keystroke; files with an unknown date are excluded from date filters and counted, never matched; extension statistics tab. Checked in the running app (`dll` on `.nuget\packages`: 3,541 matches). 70 tests.
+
 ### Remaining, in order
 
-1. Search and filters (extension, size, date, type); extension statistics.
 3. Treemap (custom rendering, squarified layout) synchronized with tree selection.
 4. CSV export.
 5. Partial-tree publication during scan (reader-safe snapshot of the builder).

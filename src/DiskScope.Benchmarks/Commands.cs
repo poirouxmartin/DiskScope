@@ -221,7 +221,27 @@ internal static class Commands
         Console.WriteLine($"Build:            {Stats.Fixed(buildClock.Elapsed.TotalMilliseconds, "F1")} ms (aggregation + CSR)");
         Console.WriteLine($"Managed alloc:    {Stats.Mb(allocated8)} MB, {Stats.Fixed((double)allocated8 / index.Count, "F1")} bytes/node");
         Console.WriteLine($"Peak working set: {Stats.Mb(process.PeakWorkingSet64)} MB");
+
+        // Search and extension stats are linear scans: measured here, best of 3, instead of assumed instant.
+        SearchResult search = NodeSearch.Find(index, new NodeFilter { NameContains = "n9" }, 1000);
+        double searchMs = BestOf3(() => NodeSearch.Find(index, new NodeFilter { NameContains = "n9" }, 1000));
+        double statsMs = BestOf3(() => ExtensionStats.Compute(index, SizeKind.Logical));
+        Console.WriteLine($"Search (name):    {Stats.Fixed(searchMs, "F1")} ms, {search.TotalMatches} matches");
+        Console.WriteLine($"Extension stats:  {Stats.Fixed(statsMs, "F1")} ms (synthetic names have no extension: 1 bucket)");
         return index.Count == nodeCount ? 0 : 1;
+    }
+
+    private static double BestOf3(Action action)
+    {
+        double best = double.MaxValue;
+        for (int i = 0; i < 3; i++)
+        {
+            var clock = Stopwatch.StartNew();
+            action();
+            best = Math.Min(best, clock.Elapsed.TotalMilliseconds);
+        }
+
+        return best;
     }
 
     private static int WriteName(Span<char> buffer, int ordinal)
