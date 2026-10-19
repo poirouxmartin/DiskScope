@@ -24,14 +24,15 @@ Known limit: tree number columns shift by one indent per depth level (fixed-widt
 
 Then: search and filters (name, extensions, size range, modification date range, type) as a linear scan with a bounded top-1000 result, debounced and cancelled per keystroke; files with an unknown date are excluded from date filters and counted, never matched; extension statistics tab. Checked in the running app (`dll` on `.nuget\packages`: 3,541 matches). 70 tests.
 
+Then: squarified treemap (Core layout, pure and tested; one WPF element drawing in OnRender, capped at 100 000 rectangles, areas under 9 px² dropped; click selects, double-click zooms into a directory, right-click zooms out) synchronized with the tree (tree selection to treemap, treemap selection reveals and selects the node in the tree); CSV export (RFC 4180, depth-first, no path string per file, unknown dates left empty). Rendering checked in the running app. NOT verified in the running app: mouse click selection in the treemap (posted clicks do not reach WPF and real clicks were refused while the session was locked); the view-model side is covered by tests. 96 tests.
+
 ### Remaining, in order
 
-3. Treemap (custom rendering, squarified layout) synchronized with tree selection.
-4. CSV export.
-5. Partial-tree publication during scan (reader-safe snapshot of the builder).
-6. Vanished-during-scan test via an injection point in the engine.
-7. NTFS engine prototype (needs an elevated session, see docs/NTFS-RISKS.md).
-8. Reference benchmarks on a quiet machine (docs/BENCHMARK-PROTOCOL.md).
+1. Manual check of treemap mouse interaction (click select, double-click zoom, right-click zoom out) on an unlocked session.
+2. Partial-tree publication during scan (reader-safe snapshot of the builder).
+3. Vanished-during-scan test via an injection point in the engine.
+4. NTFS engine prototype (needs an elevated session, see docs/NTFS-RISKS.md).
+5. Reference benchmarks on a quiet machine (docs/BENCHMARK-PROTOCOL.md).
 
 Open decision: hard links counted once per path (current behavior) or once per file reference.
 

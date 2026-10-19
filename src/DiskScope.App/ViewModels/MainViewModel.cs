@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -28,6 +29,9 @@ public sealed class MainViewModel : ObservableObject
     private ObservableCollection<NodeViewModel> _rootNodes = new();
     private ObservableCollection<FileRowViewModel> _largestFiles = new();
     private ObservableCollection<ExtensionRowViewModel> _extensions = new();
+    private int _treemapRootId;
+    private int _selectedNodeId = -1;
+    private NodeViewModel? _revealedNode;
 
     public MainViewModel(IShellActions? shell = null)
     {
@@ -49,6 +53,22 @@ public sealed class MainViewModel : ObservableObject
 
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsScanning);
 
+        ExportCsvCommand = new RelayCommand(
+            async () =>
+            {
+                try
+                {
+                    Task export = ExportCsvAsync();
+                    PendingExport = export;
+                    await export;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    StatusText = $"Export failed: {ex.Message}";
+                }
+            },
+            () => _index is not null && !IsScanning);
+
         CopyPathCommand = new ParameterCommand(CopyPath);
         OpenInExplorerCommand = new ParameterCommand(OpenInExplorer);
         Search = new SearchViewModel(() => _index, () => SizeKind);
@@ -69,6 +89,7 @@ public sealed class MainViewModel : ObservableObject
             {
                 ScanCommand.RaiseCanExecuteChanged();
                 CancelCommand.RaiseCanExecuteChanged();
+                ExportCsvCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -147,16 +168,81 @@ public sealed class MainViewModel : ObservableObject
 
     public RelayCommand CancelCommand { get; }
 
+    public RelayCommand ExportCsvCommand { get; }
+
+    /// <summary>Set by <see cref="ExportCsvCommand"/> so tests can await the export.</summary>
+    public Task? PendingExport { get; private set; }
+
     public ICommand CopyPathCommand { get; }
 
     public ICommand OpenInExplorerCommand { get; }
 
     public SearchViewModel Search { get; }
 
+    public NodeIndex? Index => _index;
+
+    public int TreemapRootId
+    {
+        get => _treemapRootId;
+        set => SetProperty(ref _treemapRootId, value);
+    }
+
+    public int SelectedNodeId
+    {
+        get => _selectedNodeId;
+        set
+        {
+            if (SetProperty(ref _selectedNodeId, value) && value >= 0)
+            {
+                RevealNode(value);
+            }
+        }
+    }
+
     public void LoadIndex(NodeIndex index)
     {
-        _index = index;
+        SetProperty(ref _index, index, nameof(Index));
+        TreemapRootId = 0;
         Rebuild();
+        ExportCsvCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>Expands the ancestors of <paramref name="id"/> in the tree and selects its node. No-op if not found.</summary>
+    public void RevealNode(int id)
+    {
+        NodeIndex? index = _index;
+        if (index is null || id < 0 || id >= index.Count)
+        {
+            return;
+        }
+
+        // Target first, then ancestors up to (excluding) the root; walked root-first below.
+        var chain = new List<int>();
+        for (int current = id; current != NodeIndex.RootId; current = index.GetParent(current))
+        {
+            chain.Add(current);
+        }
+
+        NodeViewModel node = RootNodes[0];
+        for (int i = chain.Count - 1; i >= 0; i--)
+        {
+            node.IsExpanded = true;
+            NodeViewModel? child = node.Children.FirstOrDefault(c => c.Id == chain[i]);
+            if (child is null)
+            {
+                return;
+            }
+
+            node = child;
+        }
+
+        if (_revealedNode is not null)
+        {
+            _revealedNode.IsSelected = false;
+        }
+
+        node.IsSelected = true;
+        _revealedNode = node;
     }
 
     private void Rebuild()
@@ -268,6 +354,26 @@ public sealed class MainViewModel : ObservableObject
             cts.Dispose();
             IsScanning = false;
         }
+    }
+
+    private async Task ExportCsvAsync()
+    {
+        if (_index is not { } index)
+        {
+            return;
+        }
+
+        if (_shell.AskSaveCsvPath("DiskScope-export.csv") is not { } path)
+        {
+            return;
+        }
+
+        long rows = await Task.Run(() =>
+        {
+            using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
+            return CsvExporter.Write(index, writer);
+        });
+        StatusText = $"Exported {rows:N0} rows to {path}";
     }
 
     private static string BuildSummary(ScanResult result)

@@ -125,5 +125,9 @@ public sealed class MainViewModelTests
         public void CopyText(string text) => Copied.Add(text);
 
         public void ShowInExplorer(string path) => Shown.Add(path);
+
+        public string? SavePath { get; set; }
+
+        public string? AskSaveCsvPath(string suggestedFileName) => SavePath;
     }
 }

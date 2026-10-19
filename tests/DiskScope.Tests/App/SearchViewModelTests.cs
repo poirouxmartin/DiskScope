@@ -128,5 +128,7 @@ public sealed class SearchViewModelTests
         public void ShowInExplorer(string path)
         {
         }
+
+        public string? AskSaveCsvPath(string suggestedFileName) => null;
     }
 }

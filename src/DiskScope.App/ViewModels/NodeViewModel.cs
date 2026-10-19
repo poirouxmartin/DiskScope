@@ -13,6 +13,7 @@ public sealed class NodeViewModel : ObservableObject
     private readonly NodeIndex? _index;
     private readonly SizeKind _sizeKind;
     private bool _isExpanded;
+    private bool _isSelected;
     private ObservableCollection<NodeViewModel> _children = new();
 
     public NodeViewModel(NodeIndex index, int id, SizeKind sizeKind, long parentTotal)
@@ -90,6 +91,12 @@ public sealed class NodeViewModel : ObservableObject
                 LoadChildren(_index);
             }
         }
+    }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => SetProperty(ref _isSelected, value);
     }
 
     /// <summary>UI Automation names tree items from ToString; keep it readable for screen readers and UI tests.</summary>
