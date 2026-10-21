@@ -75,6 +75,20 @@ Standard engine: count once per path (current rule in `docs/ARCHITECTURE.md`).
 
 Each step adds a row to `docs/benchmarks/RESULTS.md`, produced by `docs/BENCHMARK-PROTOCOL.md`.
 
+### Status (2026-10-21)
+
+Done and tested without elevation (`DiskScope.Scanner.Ntfs`):
+
+- `UsnRecordParser`: V2 and V3 layouts checked against the Microsoft Learn pages of USN_RECORD_V2, USN_RECORD_V3 and MFT_ENUM_DATA_V1. The name is read through FileNameOffset. A bad RecordLength (zero, under 8, unaligned, past the buffer) stops the parse; a name outside its record is counted malformed; other major versions are skipped and counted.
+- `UsnRecordStore`: struct-of-arrays staging with one char pool, 128-bit references.
+- `UsnTreeBuilder`: breadth-first rebuild, `<orphans>` node for missing, file, self or cyclic parents and duplicate references, with an Unexpected error so the root reads SubtreeIncomplete.
+- `UsnVolumeEnumerator.GetRootReference`: reads the root FRN via FileIdInfo, checked on C: (record 5).
+- `UsnVolumeEnumerator.Enumerate`: refuses with ERROR_ACCESS_DENIED when not elevated (tested).
+
+Not verified: the enumeration loop on a real volume (end-of-data code ERROR_HANDLE_EOF is an assumption, not stated on the FSCTL page), record counts against the standard engine, timings. To run, in an elevated console: `dotnet run -c Release --project src/DiskScope.Benchmarks -- usn-probe C`.
+
+There is still no NTFS scan engine: USN records carry no sizes, so options (a) or (c) of section 4 must be measured before an engine can produce a sized tree.
+
 ## 9. Fallback guarantee
 
 Any NTFS engine error gives `Outcome = Failed` with a message. The UI offers a standard scan. Partial NTFS data is never mixed with standard data in the same index.

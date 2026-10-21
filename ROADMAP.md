@@ -28,12 +28,14 @@ Then: squarified treemap (Core layout, pure and tested; one WPF element drawing 
 
 Then (2026-10-21): treemap mouse interaction checked in the running app with real clicks on `C:\Program Files\dotnet` (click selects and reveals the node in the tree, double-click zooms into the directory, right-click zooms out). Partial results during the scan: `NodeIndexBuilder.Snapshot` copies the builder on the scan thread and flags pending directories NotScanned, so the root reads SubtreeIncomplete; `ScanOptions.PartialResultInterval` (app: 2 s, doubling after each snapshot, capped at 30 s, never shorter than 10x the last snapshot cost); `IScanObserver.OnPartialResult`. Checked in the running app on `C:\Windows` (summary shows PARTIAL RESULT during the scan). Known limit: each partial refresh rebuilds the tree, so expansion state is lost. Changes during the scan: a test seam in the standard engine deletes or renames a directory between listing and enumeration (Vanished, NotFound error, siblings still counted). 107 tests.
 
-### Remaining, in order
+Then: NTFS prototype, parts that do not need elevation (USN record parser, tree rebuild with orphans, root reference, `usn-probe` benchmark command). Status and what is not verified: docs/NTFS-RISKS.md section 8. 123 tests.
 
-1. NTFS engine prototype (needs an elevated session, see docs/NTFS-RISKS.md).
+### Remaining (blocked by the environment)
+
+1. NTFS probe on a real volume, then the sizes decision (docs/NTFS-RISKS.md section 4): needs an elevated console.
 2. Reference benchmarks on a quiet machine (docs/BENCHMARK-PROTOCOL.md).
 
-Open decision: hard links counted once per path (current behavior) or once per file reference.
+Hard links: decided by default to keep "once per path" in the standard engine (it cannot see link counts without one handle per file). To revisit with the NTFS engine, which sees the file reference.
 
 ## Part 2: Monitoring, diagnostic and maintenance modules
 

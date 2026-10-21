@@ -24,6 +24,9 @@ internal static class Program
                 "compare" => RunCompare(args),
                 "synthetic" => RunSynthetic(args),
                 "generate" => RunGenerate(args),
+                "usn-probe" => args.Length == 2 && args[1].Length >= 1 && char.IsAsciiLetter(args[1][0])
+                    ? UsnProbe.Run(char.ToUpperInvariant(args[1][0]))
+                    : Usage("usn-probe takes exactly one drive letter."),
                 _ => Usage($"Unknown command '{args[0]}'."),
             };
         }
@@ -180,6 +183,8 @@ internal static class Program
         Console.Error.WriteLine("      NodeIndexBuilder Add, Build and allocation cost on a synthetic tree.");
         Console.Error.WriteLine("  generate <dir> [--files N=200000] [--seed S=1]");
         Console.Error.WriteLine("      Deterministic test tree (1110 directories, 8 GiB logical cap). Refuses a non-empty <dir>.");
+        Console.Error.WriteLine("  usn-probe <drive letter>");
+        Console.Error.WriteLine("      FSCTL_ENUM_USN_DATA enumeration and tree rebuild on a whole NTFS volume. Needs an elevated console.");
         Console.Error.WriteLine();
         Console.Error.WriteLine("Exit codes: 0 ok; 1 scan not completed, compare mismatch, or I/O failure;");
         Console.Error.WriteLine("            2 usage or invalid argument; 3 refused by precondition (non-empty target, low free space).");
