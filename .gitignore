@@ -1,6 +1,20 @@
+# Build output
 bin/
 obj/
+artifacts/
+publish/
+
+# IDE and user state
 .vs/
+.vscode/
+.idea/
 *.user
+*.suo
+*.DotSettings.user
+
+# Test and benchmark output
 TestResults/
 BenchmarkResults/
+coverage*/
+*.coverage
+*.log

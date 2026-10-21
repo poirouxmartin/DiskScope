@@ -10,4 +10,10 @@ Each row is one measured scan series produced by the procedure in `docs/BENCHMAR
 | 2026-10-19 | initial | `.vscode` (7 461 nodes) | Standard | warm | 112-243 ms | 107 ms | 31k-67k | - | - | .NET baseline 235-3 382 ms in the same session. |
 | 2026-10-19 | initial | user profile (~2M nodes, partial) | Standard | cold | stopped at 905 s | - | ~2 200 | - | - | Not completed. Cold-cache dominated (warmup on `.nuget` cold: 7.8 s vs 0.26 s warm). |
 
+## Monitoring cost (`monitor --seconds 60`, Release, no UI)
+
+| Date | Dataset | Collector mean / max (ms) | Process refresh median / max (ms) | Self CPU (% machine) | Peak WS (MB) | Alloc (MB/s) | Notes |
+|------|---------|---------------------------|-----------------------------------|----------------------|--------------|--------------|-------|
+| 2026-10-21 | dev laptop, ~545 processes, 1 iGPU | CPU 1.22 / 14.3, Memory 0.65 / 16.3, Volumes 0.49 / 2.9, GPU 3.25 / 28.4, Self 0.07 / 2.9 | 72.0 / 145.7 (29 runs, every 2 s) | 0.25 | 80 | 1.09 | Single 61 s run. 0 failures, 0 missed ticks. Not measured yet: the WPF app itself (its working set went from about 210 to 290 MB in the first minutes of an interactive session; to be measured over 10 min before drawing a conclusion). |
+
 Environment caveat for all rows above: dev laptop (Samsung PM9A1 NVMe, 20 logical CPUs), Defender in EDR block mode with MsSense running, other Claude sessions active. Run-to-run variance exceeded the A/B differences measured; FileIdBothDirectoryInfo vs FileFullDirectoryInfo could not be ranked. A quiet machine is required before any comparative claim.

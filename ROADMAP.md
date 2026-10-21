@@ -1,8 +1,10 @@
 # DiskScope roadmap
 
-Status as of 2026-10-19. Part 1 is in progress. Part 2 starts only after Part 1 is complete.
+Status as of 2026-10-21. Part 1 is complete except the items blocked by the environment (elevation, quiet machine). Part 2 is in progress: steps A to E done, F to H below.
 
-## Part 1: Storage module (in progress)
+Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit are in place; nothing is pushed and no GitHub repository exists yet (needs the owner's go).
+
+## Part 1: Storage module (done, except blocked items)
 
 Initial spec: prompt of 2026-10-19.
 
@@ -74,3 +76,20 @@ Other rules kept from the spec:
 
 - Collectors never touch WPF; they return batches and the scheduler publishes them.
 - The App shell gains navigation between modules (Dashboard, Storage, CPU & memory, Processes, GPU).
+
+### Done (2026-10-21)
+
+- B. `DiskScope.Core`: `IMetricCollector`, `MetricDescriptor` (unit, source, definition), `MetricValue` (null when unavailable, NaN refused), `MetricBatch`, `CollectorAvailability`, `CollectorError`, `IMetricStore`, `IAlertEngine`, `ThresholdRule`, `FindingLevel`. `DiskScope.Monitoring`: scheduler (one loop per collector, failure isolation, cost and missed-tick counters, survives a failing store), monotonic clock.
+- C. CPU (GetSystemTimes, per-processor NtQuerySystemInformation resolved at run time), memory (GlobalMemoryStatusEx, GetPerformanceInfo), process explorer (Toolhelp32 + PROCESS_QUERY_LIMITED_INFORMATION, PID + creation time identity, tree with PID-reuse check, CPU deltas, in-place UI update), self-cost collector.
+- D. Dashboard (cards open their module), in-memory tiered history with gaps, alert engine (episodes, recovery, cooldown, evidence, editable thresholds, acknowledgement), memory growth suspicion per process.
+- E. GPU via PDH English counters + DXGI by LUID, engines by type, dedicated vs shared memory, per-process attribution; compatibility matrix in `docs/GPU-COMPATIBILITY.md` (one machine so far).
+- Checked in the running app (screenshots in `docs/images`): every tab renders live values; a DataGrid star column collapsed in the processes tab and was fixed. Monitoring cost measured (`docs/benchmarks/RESULTS.md`). 177 tests.
+
+### Remaining, in order
+
+1. F. Startup and services inventory, read-only, with export (Run/RunOnce keys, startup folders, scheduled tasks, services: start type, state, account, dependencies). Hardware sensors: study `D3DKMTQueryAdapterInfo` (GPU temperature) and WMI thermal zones; LibreHardwareMonitor only after a license (MPL 2.0) and maintenance check, as the spec asks. Sensors need a decision before any dependency is added.
+2. G. Correlation engine (hypotheses such as "slowdown coincides with high disk activity", never stated as a cause), then one bounded ETW scenario.
+3. H. Exports (CSV of metrics and processes, JSON diagnostics, local HTML report with sources and unavailable metrics, no command lines by default), documentation, regression tests.
+4. History persistence (SQLite would be the first external dependency: needs a decision).
+5. Process details on demand: command line, user, signature; exited processes in history.
+6. Side-by-side comparison with Task Manager; 10-minute measurement of the WPF app's own memory.
