@@ -5,6 +5,7 @@
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
     <RootNamespace>DiskScope.App</RootNamespace>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

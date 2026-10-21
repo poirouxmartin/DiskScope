@@ -15,13 +15,21 @@ public sealed class ShellActions : IShellActions
         Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = false });
     }
 
-    public string? AskSaveCsvPath(string suggestedFileName)
+    public string? AskSaveCsvPath(string suggestedFileName) => AskSavePath(suggestedFileName);
+
+    public string? AskSavePath(string suggestedFileName)
     {
+        string ext = System.IO.Path.GetExtension(suggestedFileName).ToLowerInvariant();
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
             FileName = suggestedFileName,
-            Filter = "CSV files (*.csv)|*.csv",
-            DefaultExt = ".csv",
+            Filter = ext switch
+            {
+                ".json" => "JSON files (*.json)|*.json",
+                ".html" => "HTML files (*.html)|*.html",
+                _ => "CSV files (*.csv)|*.csv",
+            },
+            DefaultExt = ext.Length > 0 ? ext : ".csv",
             OverwritePrompt = true,
         };
         return dlg.ShowDialog() == true ? dlg.FileName : null;

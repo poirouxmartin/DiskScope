@@ -2,7 +2,13 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using static System.FormattableString;
 using System.Windows.Threading;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using DiskScope.App.Services;
 using DiskScope.Core;
+using DiskScope.Reports;
 using DiskScope.Diagnostics;
 using DiskScope.History;
 using DiskScope.Monitoring;
@@ -32,6 +38,8 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private readonly GpuCollector? _gpu;
     private readonly IReadOnlyList<IMetricCollector> _collectors;
     private readonly DiagnosticEngine _diagnostics;
+    private readonly IShellActions _shell;
+    private string _exportStatus = string.Empty;
     private DateTime _lastDiagnostics;
     private string _findingSignature = string.Empty;
     private DispatcherTimer? _timer;
@@ -44,8 +52,12 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private string _historySummary = string.Empty;
     private DateTime _now;
 
-    public MonitoringViewModel(IReadOnlyList<IMetricCollector> collectors, IMetricStore store, IAlertEngine alerts, MonitoringClock clock, DiagnosticEngine? diagnostics = null)
+    public MonitoringViewModel(IReadOnlyList<IMetricCollector> collectors, IMetricStore store, IAlertEngine alerts, MonitoringClock clock, DiagnosticEngine? diagnostics = null, IShellActions? shell = null)
     {
+        _shell = shell ?? new ShellActions();
+        ExportHistoryCsvCommand = new RelayCommand(() => Export("DiskScope-history.csv", w => MetricHistoryCsv.Write(w, BuildReport(_historyRange, allMetrics: true).Series)));
+        ExportJsonCommand = new RelayCommand(() => Export("DiskScope-report.json", w => JsonReportWriter.Write(w, BuildReport(_historyRange))));
+        ExportHtmlCommand = new RelayCommand(() => Export("DiskScope-report.html", w => HtmlReportWriter.Write(w, BuildReport(_historyRange))));
         _collectors = collectors;
         _diagnostics = diagnostics ?? new DiagnosticEngine([]);
         _store = store;
@@ -353,6 +365,74 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     }
 
     public int FindingCount => Findings.Count;
+
+    public RelayCommand ExportHistoryCsvCommand { get; }
+
+    public RelayCommand ExportJsonCommand { get; }
+
+    public RelayCommand ExportHtmlCommand { get; }
+
+    public string ExportStatus { get => _exportStatus; private set => SetProperty(ref _exportStatus, value); }
+
+    /// <summary>
+    /// Snapshot of the session for the report writers, over the last <paramref name="range"/>. Key metrics only unless
+    /// <paramref name="allMetrics"/>. No machine name, user name or command line is included.
+    /// </summary>
+    public DiagnosticReport BuildReport(TimeSpan range, bool allMetrics = false)
+    {
+        DateTime now = _clock.UtcNow;
+        DateTime from = now - range;
+        string[] key = [CpuCollector.Total, MemoryCollector.PhysicalUsed, MemoryCollector.CommitPercent, DiskActivityCollector.Active, DiskActivityCollector.Latency];
+        IEnumerable<MetricDescriptor> metrics = allMetrics
+            ? _scheduler.Metrics
+            : _scheduler.Metrics.Where(m => key.Contains(m.Id) || (m.Id.StartsWith("gpu.", StringComparison.Ordinal) && m.Id.EndsWith(".util", StringComparison.Ordinal)) || VolumeTiles.Any(v => v.Id == m.Id));
+        var series = metrics.Select(m => new ReportSeries(m, _store.Query(m.Id, from, now))).ToArray();
+        var collectors = _scheduler.GetStats().Select(s => new ReportCollector(
+            s.Collector, s.Availability.IsAvailable, s.Availability.Reason, s.Collections, s.Failures, s.SkippedTicks,
+            s.Collections > 0 ? s.TotalDuration.TotalMilliseconds / s.Collections : double.NaN, s.MaxDuration.TotalMilliseconds)).ToArray();
+        var unavailable = _scheduler.Metrics.Where(m => _scheduler.GetLatest(m.Id) is not { IsAvailable: true }).ToArray();
+        string version = typeof(MonitoringViewModel).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
+        (IReadOnlyList<Finding> findings, _) = _diagnostics.Evaluate(new DiagnosticContext(_alerts.Events, _store, now));
+        return new DiagnosticReport(
+            version,
+            now,
+            from,
+            now,
+            RuntimeInformation.OSDescription,
+            Environment.ProcessorCount,
+            collectors,
+            unavailable,
+            series,
+            _alerts.Events.Where(a => (a.EndedUtc ?? now) >= from).ToArray(),
+            findings.Where(x => x.ToUtc >= from).ToArray(),
+            _alerts.Rules,
+            [
+                "History is kept in memory since DiskScope started; older periods are not covered.",
+                "Values that could not be read are absent (gaps), never zero; first samples of rate metrics are always unavailable.",
+                "Without administrator rights some processes cannot be opened; their details are unavailable.",
+                "Hypotheses are correlations in time, not proven causes.",
+                "GPU temperature, clocks, power and fans, CPU frequency and hardware sensors are not collected.",
+            ]);
+    }
+
+    private void Export(string suggestedName, Action<TextWriter> write)
+    {
+        if (_shell.AskSavePath(suggestedName) is not { } path)
+        {
+            return;
+        }
+
+        try
+        {
+            using var writer = new StreamWriter(path, false, new UTF8Encoding(path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)));
+            write(writer);
+            ExportStatus = "Exported to " + path;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ExportStatus = "Export failed: " + ex.Message;
+        }
+    }
 
     private void RefreshHistory()
     {

@@ -57,6 +57,10 @@ The two sources fail independently: one failing call only makes its own metrics 
 
 See `docs/GPU-COMPATIBILITY.md`.
 
+## Disk activity
+
+`disk.active` (100 - % Idle Time), `disk.read`, `disk.write` (bytes/s), `disk.latency` (Avg. Disk sec/Transfer, in ms), `disk.queue` (instantaneous), all physical disks together, from the PhysicalDisk(_Total) counters with English names. The first collection has no rate data. Latency is `n/a` when no transfer happened in the interval (the counter then reads 0, which would mean "instant").
+
 ## Volumes
 
 `disk.X.free`, `disk.X.total`, `disk.X.used` for the fixed volumes present at start-up (DriveInfo / GetDiskFreeSpaceEx). "Free" is the space available to the current user.
@@ -76,12 +80,32 @@ See `docs/GPU-COMPATIBILITY.md`.
 | Sustained high CPU | `cpu.total` > 90 % | 30 s | 10 s | 1 min |
 | Very low available memory | `mem.physical.available` < 512 MB | 10 s | 10 s | 1 min |
 | Commit charge near its limit | `mem.commit.percent` > 90 % | 10 s | 10 s | 1 min |
+| High disk latency | `disk.latency` > 50 ms | 30 s | 10 s | 1 min |
 
 - One episode raises one event. It ends when the condition has been false for the recovery time. If the condition returns within the cooldown, the same event is reopened: a flapping metric gives one episode, not a stream of alerts.
 - Unavailable values neither start nor end an episode.
 - Each event keeps its evidence (first value over the duration, worst value) and an explanation that says it is a measured fact, not a diagnosis.
 - Thresholds and enabling are editable in the History & alerts tab; byte thresholds are edited in MB.
 - Low memory uses an absolute amount, not a percentage of RAM: a high "in use" percentage is normal with a large cache.
+
+## Hypotheses (`IDiagnosticRule`, `CoincidenceRule`)
+
+Level `Hypothesis`, with a stated confidence, the observed data, the checks to run and the limits. Re-evaluated every 5 s.
+
+| Rule | Formula | Confidence |
+|------|---------|------------|
+| High CPU coincided with heavy disk activity | during a "Sustained high CPU" episode, average `disk.active` >= 60 % | Low (coincidence only) |
+| Low memory coincided with heavy disk activity: paging is likely | during a "Very low available memory" episode, average `disk.active` >= 50 % | Medium (known paging mechanism) |
+
+Nothing is concluded when the history covers less than half of the episode. Every finding says that a coincidence in time is not proof of causality.
+
+## Start-up and services (`DiskScope.Maintenance`)
+
+Read-only. Run and RunOnce keys (current user, machine, 32-bit view), user and common Startup folders, scheduled tasks with a logon or boot trigger (Task Scheduler COM, late bound), and Win32 services (SCM opened with SC_MANAGER_ENUMERATE_SERVICE only; configuration from the registry). Publisher is the version-resource CompanyName, not a verified signature. "Enabled" comes from the undocumented StartupApproved values (bit 0 of the first byte set = disabled, bytes 4-11 = FILETIME of the disabling; checked on the dev machine). No impact score: start-up impact has not been measured. Sources that cannot be read are listed, and the status says the inventory is partial.
+
+## Reports (`DiskScope.Reports`)
+
+From the History & alerts tab, over the selected range: history CSV (every metric, one row per stored point), JSON report and self-contained HTML report (summary, inline SVG charts with gaps, alerts, hypotheses, rules, collectors, unavailable metrics, limits). From the Processes tab: CSV of the visible rows. Reports never include the machine name, user names or command lines.
 
 ## Comparison with Windows tools
 

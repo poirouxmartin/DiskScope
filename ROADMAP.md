@@ -1,6 +1,6 @@
 # DiskScope roadmap
 
-Status as of 2026-10-21. Part 1 is complete except the items blocked by the environment (elevation, quiet machine). Part 2 is in progress: steps A to E done, F to H below.
+Status as of 2026-10-21. Part 1 is complete except the items blocked by the environment (elevation, quiet machine). Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
 
 Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit are in place; nothing is pushed and no GitHub repository exists yet (needs the owner's go).
 
@@ -85,11 +85,15 @@ Other rules kept from the spec:
 - E. GPU via PDH English counters + DXGI by LUID, engines by type, dedicated vs shared memory, per-process attribution; compatibility matrix in `docs/GPU-COMPATIBILITY.md` (one machine so far).
 - Checked in the running app (screenshots in `docs/images`): every tab renders live values; a DataGrid star column collapsed in the processes tab and was fixed. Monitoring cost measured (`docs/benchmarks/RESULTS.md`). 177 tests.
 
+- F (partial). Read-only start-up and services inventory with CSV export (`DiskScope.Maintenance`); checked in the app on the dev machine (68 entries, 345 services, every source read). Hardware sensors: not started (see below).
+- G (partial). Disk activity collector; `Finding`, `Confidence`, `IDiagnosticRule` in Core; two coincidence hypotheses (CPU or low memory with heavy disk activity) and a disk latency alert. ETW: not started (see below).
+- H. History CSV, process CSV, JSON and HTML reports (`DiskScope.Reports`); HTML export checked end to end from the running app (real data, no user or machine name in the file). Docs updated. 209 tests.
+
 ### Remaining, in order
 
-1. F. Startup and services inventory, read-only, with export (Run/RunOnce keys, startup folders, scheduled tasks, services: start type, state, account, dependencies). Hardware sensors: study `D3DKMTQueryAdapterInfo` (GPU temperature) and WMI thermal zones; LibreHardwareMonitor only after a license (MPL 2.0) and maintenance check, as the spec asks. Sensors need a decision before any dependency is added.
-2. G. Correlation engine (hypotheses such as "slowdown coincides with high disk activity", never stated as a cause), then one bounded ETW scenario.
-3. H. Exports (CSV of metrics and processes, JSON diagnostics, local HTML report with sources and unavailable metrics, no command lines by default), documentation, regression tests.
-4. History persistence (SQLite would be the first external dependency: needs a decision).
-5. Process details on demand: command line, user, signature; exited processes in history.
-6. Side-by-side comparison with Task Manager; 10-minute measurement of the WPF app's own memory.
+1. Hardware sensors (F): study `D3DKMTQueryAdapterInfo` with `KMTQAITYPE_ADAPTERPERFDATA` (GPU temperature, documented in the WDK) and WMI thermal zones (often absent or wrong on laptops). LibreHardwareMonitor only after a license (MPL 2.0), maintenance and driver check, as the spec asks; it loads a kernel driver for most sensors, which conflicts with the "no kernel driver" rule of Part 1: needs the owner's decision.
+2. First ETW scenario (G): kernel providers need administrator rights (or the Performance Log Users group), so it cannot be exercised on the dev machine as is; the usual consumer library (Microsoft.Diagnostics.Tracing.TraceEvent, MIT) would be an external dependency: needs a decision. Candidate scenario: a bounded 30 s trace of disk I/O per process during a "High disk latency" alert.
+3. History persistence (SQLite would be the first external dependency: needs a decision).
+4. Process details on demand: command line, user, signature; exited processes in history.
+5. Side-by-side comparison with Task Manager; 10-minute measurement of the WPF app's own memory.
+6. Startup changes (disable/enable) only if requested, with confirmation, dependencies shown and a way back (spec section 10).

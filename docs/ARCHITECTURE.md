@@ -5,19 +5,21 @@
 ```
 DiskScope.App                  WPF shell, MVVM view models, views (no collector code)
 DiskScope.Core                 shared contracts: metrics, quality, availability, alerts. No dependency.
-DiskScope.Monitoring           scheduler, monotonic clock, volume space collector      -> Core
+DiskScope.Monitoring           scheduler, monotonic clock, PDH wrapper, volume and disk collectors -> Core
 DiskScope.Monitoring.CpuRam    CPU and memory collectors (Win32)                       -> Core
 DiskScope.Monitoring.Gpu       GPU collector (PDH + DXGI)                              -> Core
 DiskScope.Processes            process enumeration, tree, CPU deltas, self collector  -> Core
 DiskScope.History              in-memory tiered history (IMetricStore)                 -> Core
-DiskScope.Diagnostics          alert engine, default rules, memory growth detector     -> Core
+DiskScope.Diagnostics          alert engine, default rules, coincidence hypotheses, memory growth detector -> Core
+DiskScope.Maintenance          read-only start-up and services inventory               -> Core
+DiskScope.Reports              CSV, JSON and HTML report writers                       -> Core
 DiskScope.Storage              storage index (Part 1). No dependency.
 DiskScope.Scanner[.Standard|.Ntfs]  scan engines                                       -> Storage
 DiskScope.Benchmarks           reproducible measurements (scan, synthetic, monitor, usn-probe)
 DiskScope.Tests                unit and integration tests
 ```
 
-Monitoring modules depend on Core only, never on each other or on Storage; the App wires them together. Metric details and limits: `docs/MONITORING.md`. GPU: `docs/GPU-COMPATIBILITY.md`.
+Modules depend on Core only (the GPU collector also uses the PDH wrapper in Monitoring), never on Storage; the App wires them together. Metric details and limits: `docs/MONITORING.md`. GPU: `docs/GPU-COMPATIBILITY.md`.
 
 ## Storage project graph
 

@@ -24,7 +24,11 @@ DiskScope measures; it does not "optimize" behind your back. It never deletes, m
 - **CPU & memory**: global and per-logical-processor usage, user/kernel split, physical memory, commit charge and limit, cache, kernel pools, process/thread/handle counts. Every counter lists its definition and Windows source.
 - **Processes**: parent/child tree (PID reuse detected with creation times), CPU % of the machine, private bytes, working set, private working set, threads, handles, I/O, start time, path. Sustained private memory growth is flagged as a suspicion to verify, not as a leak.
 - **GPU**: per adapter, usage per engine type (3D, copy, video decode/encode/processing, compute), dedicated and shared memory, processes using the GPU. Engines are not added together; shared memory is not presented as VRAM.
-- **History & alerts**: in-memory history (1 s for 10 min, 5 s for 1 h, 1 min for 24 h), explainable alerts with evidence, editable thresholds, acknowledgement.
+- **Disk activity**: active time, read/write throughput, latency and queue for all physical disks.
+- **History & alerts**: in-memory history (1 s for 10 min, 5 s for 1 h, 1 min for 24 h), explainable alerts with evidence (CPU, available memory, commit charge, disk latency), editable thresholds, acknowledgement.
+- **Hypotheses**: correlations such as "low memory coincided with heavy disk activity: paging is likely", each with its confidence, data, checks to run and limits. Never presented as a proven cause.
+- **Startup & services**: read-only inventory of Run keys, startup folders, logon/boot scheduled tasks and services, with CSV export. No invented "impact score".
+- **Reports**: history CSV, process CSV, JSON and self-contained HTML reports. No machine name, user name or command line in them.
 - The cost of monitoring is itself measured and displayed (collection time per collector, DiskScope CPU and memory).
 
 | CPU & memory | GPU |
@@ -73,6 +77,7 @@ Work in progress. Known gaps:
 
 - NTFS fast engine: the USN record parser and tree rebuild are written and tested, but enumeration of a real volume needs an elevated console and has not been run yet; sizes still come from the standard engine (`docs/NTFS-RISKS.md`).
 - History is kept in memory only and lost on exit.
+- No ETW tracing yet, and nothing can be changed from the startup and services view (read-only by design for now).
 - No CPU frequency, no GPU temperature, clocks, power or fans, no hardware sensors, no network monitoring yet: no reliable vendor-neutral source has been validated.
 - Not compared side by side with Task Manager yet; expected differences are documented in `docs/MONITORING.md`.
 

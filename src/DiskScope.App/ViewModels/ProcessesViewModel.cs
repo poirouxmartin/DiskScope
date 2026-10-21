@@ -3,7 +3,11 @@ using System.Diagnostics;
 using System.Globalization;
 using static System.FormattableString;
 using System.Windows;
+using System.IO;
+using System.Text;
+using DiskScope.App.Services;
 using DiskScope.Core;
+using DiskScope.Reports;
 using DiskScope.Diagnostics;
 using DiskScope.Processes;
 
@@ -24,6 +28,10 @@ public sealed class ProcessRowViewModel : ObservableObject
     public string Name => _snapshot.Name;
 
     public int Pid => _snapshot.ProcessId;
+
+    public int ParentPid => _snapshot.ParentProcessId;
+
+    internal ProcessSnapshot Snapshot => _snapshot;
 
     public int Depth { get => _depth; private set { if (SetProperty(ref _depth, value)) { RaisePropertyChanged(nameof(Indent)); } } }
 
@@ -106,6 +114,15 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     private ProcessRowViewModel? _selected;
     private Snapshot? _last;
     private Dictionary<int, string> _names = new();
+    private readonly IShellActions _shell;
+
+    public ProcessesViewModel(IShellActions? shell = null)
+    {
+        _shell = shell ?? new ShellActions();
+        ExportCommand = new RelayCommand(Export, () => Rows.Count > 0);
+    }
+
+    public RelayCommand ExportCommand { get; }
 
     public ObservableCollection<ProcessRowViewModel> Rows { get; } = new();
 
@@ -174,6 +191,44 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         }
 
         _cts.Dispose();
+    }
+
+    /// <summary>
+    /// CSV of the rows currently shown (filter applied). No command line or user: the spec keeps potentially sensitive
+    /// data out of exports by default. Unknown values are empty cells.
+    /// </summary>
+    internal static int WriteCsv(TextWriter w, IEnumerable<ProcessRowViewModel> rows)
+    {
+        static string? N(long? v) => v?.ToString(CultureInfo.InvariantCulture);
+        return CsvTable.Write(
+            w,
+            ["name", "pid", "parent_pid", "started_utc", "cpu_percent_machine", "private_bytes", "working_set", "private_working_set", "threads", "handles", "io_read_bytes", "io_write_bytes", "image_path", "memory_growth"],
+            rows.Select(r => (IReadOnlyList<string?>)
+            [
+                r.Name, r.Pid.ToString(CultureInfo.InvariantCulture), r.ParentPid.ToString(CultureInfo.InvariantCulture),
+                r.Snapshot.StartTimeUtc?.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture),
+                r.Cpu?.ToString("F2", CultureInfo.InvariantCulture), N(r.PrivateBytes), N(r.WorkingSet), N(r.PrivateWorkingSet),
+                r.Threads.ToString(CultureInfo.InvariantCulture), N(r.Handles), N(r.IoRead), N(r.IoWrite), r.Snapshot.ImagePath, r.Growth.Length > 0 ? r.Growth : null,
+            ]));
+    }
+
+    private void Export()
+    {
+        if (_shell.AskSavePath("DiskScope-processes.csv") is not { } path)
+        {
+            return;
+        }
+
+        try
+        {
+            using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
+            int n = WriteCsv(writer, Rows);
+            Summary = Invariant($"Exported {n} processes to ") + path;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Summary = "Export failed: " + ex.Message;
+        }
     }
 
     /// <summary>Enumeration and every computation that does not need the UI thread.</summary>
