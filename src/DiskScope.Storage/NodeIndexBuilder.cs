@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Single-writer, append-only builder for <see cref="NodeIndex"/>.

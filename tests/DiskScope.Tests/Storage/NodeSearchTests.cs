@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Threading;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Tests;
 

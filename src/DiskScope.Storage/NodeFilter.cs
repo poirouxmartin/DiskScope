@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>Which node kinds a <see cref="NodeFilter"/> accepts. Links never match, whatever the value.</summary>
 public enum KindFilter { Any, Files, Directories }

@@ -1,6 +1,6 @@
 using System;
 
-namespace DiskScope.Core.Treemap;
+namespace DiskScope.Storage.Treemap;
 
 /// <summary>
 /// Squarified treemap layout (Bruls, Huizing, van Wijk 2000). Rows are filled along the shorter side

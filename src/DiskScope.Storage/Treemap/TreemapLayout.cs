@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DiskScope.Core.Treemap;
+namespace DiskScope.Storage.Treemap;
 
 /// <summary>
 /// One laid-out node. Output order: a parent always precedes its descendants.

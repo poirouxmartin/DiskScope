@@ -3,7 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Streams a <see cref="NodeIndex"/> as RFC 4180 CSV, one row per node, depth-first.

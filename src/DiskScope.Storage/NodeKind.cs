@@ -1,4 +1,4 @@
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Kind of a node in the index.

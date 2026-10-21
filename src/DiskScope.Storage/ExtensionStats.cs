@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>File count and total size for one extension.</summary>
 /// <param name="Extension">Lowercase, without the dot. Empty for files without extension.</param>

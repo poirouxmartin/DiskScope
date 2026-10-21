@@ -59,11 +59,18 @@ Spec roadmap steps (spec section 15):
 - G. Correlation engine, then a first ETW scenario.
 - H. Exports, documentation and regression tests.
 
-### Integration notes (decide at step A)
+### Step A decision (2026-10-21): DiskScope.Core holds the shared contracts
 
-- DiskScope.Core currently holds the storage index.
-- The spec's Core holds shared contracts: IMetricCollector, IMetricStore, IAlertEngine, IDiagnosticRule, IHardwareTelemetryProvider.
-- Option 1: move the storage types to DiskScope.Storage and keep Core for shared contracts.
-- Option 2: add DiskScope.Monitoring.Abstractions for the contracts and leave Core as is.
-- Decide before step B, since step B creates the contracts.
-- The App shell must gain navigation between modules.
+The storage index moved from `DiskScope.Core` to a new `DiskScope.Storage` project (namespace `DiskScope.Storage`); `DiskScope.Core` now holds only the contracts shared by every module (metrics, quality, availability, collector errors).
+
+Why this option rather than a separate `DiskScope.Monitoring.Abstractions` next to an unchanged Core:
+
+- The spec (section 1) asks that new modules integrate "without coupling them strongly to the core". With the index in Core, every monitoring module would reference storage types it never uses, or Core would end up meaning two things.
+- Storage becomes one module among others, which is what it is. Its types do not leak into CPU, GPU or process code.
+- The cost was one mechanical rename (45 files, namespaces only, no behavior change, 123 tests green before and after). The repository has no external consumers yet, so nothing else breaks. A later rename, once the repo is public, would cost more.
+- No real trade-off was left, so the choice was made without asking.
+
+Other rules kept from the spec:
+
+- Collectors never touch WPF; they return batches and the scheduler publishes them.
+- The App shell gains navigation between modules (Dashboard, Storage, CPU & memory, Processes, GPU).

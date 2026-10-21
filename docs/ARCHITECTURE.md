@@ -3,12 +3,12 @@
 ## Project graph
 
 ```
-Core <- Scanner <- Scanner.Standard <- App, Benchmarks
-                 <- Scanner.Ntfs     <- App
-Tests references every project except App.
+Storage <- Scanner <- Scanner.Standard <- App, Benchmarks
+                    <- Scanner.Ntfs     <- App, Benchmarks
+Tests references every project.
 ```
 
-Core has no dependencies. Scanner holds the engine contract and the orchestrator. The two engines
+Storage has no dependencies. Scanner holds the engine contract and the orchestrator. The two engines
 are separate assemblies so the NTFS-specific code (volume handles, file reference numbers) stays
 out of the standard path.
 
@@ -62,4 +62,6 @@ positions in this index, file references are file system identities.
 `CheckAvailability` is true. The NTFS engine is preferred when available; the standard engine is
 the fallback. If none is available, the orchestrator throws with every engine's reason.
 
-Partial-tree publication during scan (batches readable by the UI) is deferred: it needs a reader-safe snapshot of the builder; v1 publishes progress counters only.
+## Partial results
+
+`NodeIndexBuilder.Snapshot` copies the builder on the scan thread (single writer, no lock) into an immutable `NodeIndex`. Directories still on the work stack are flagged `NotScanned` in the copy, so the root reads `SubtreeIncomplete` and a snapshot can never pass for a final result. The copy is O(nodes), so `PartialResultSchedule` doubles the delay after each snapshot (capped) and never waits less than 10x the last snapshot cost.

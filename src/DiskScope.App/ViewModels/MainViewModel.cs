@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using DiskScope.App.Formatting;
 using DiskScope.App.Services;
-using DiskScope.Core;
+using DiskScope.Storage;
 using DiskScope.Scanner;
 using DiskScope.Scanner.Standard;
 

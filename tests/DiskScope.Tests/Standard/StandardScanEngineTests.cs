@@ -1,6 +1,6 @@
 using System.Security.AccessControl;
 using System.Security.Principal;
-using DiskScope.Core;
+using DiskScope.Storage;
 using DiskScope.Scanner;
 using DiskScope.Scanner.Standard;
 

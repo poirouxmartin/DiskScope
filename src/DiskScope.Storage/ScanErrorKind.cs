@@ -1,4 +1,4 @@
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 public enum ScanErrorKind : byte
 {

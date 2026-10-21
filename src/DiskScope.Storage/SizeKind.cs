@@ -1,4 +1,4 @@
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Which size column a query reads: logical (bytes in the file) or allocated (bytes on disk).

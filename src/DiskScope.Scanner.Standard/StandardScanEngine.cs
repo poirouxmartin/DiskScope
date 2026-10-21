@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Scanner.Standard;
 

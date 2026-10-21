@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using DiskScope.Core;
+using DiskScope.Storage;
 using DiskScope.Scanner.Ntfs;
 
 namespace DiskScope.Tests.Ntfs;

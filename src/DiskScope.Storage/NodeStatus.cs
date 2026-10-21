@@ -1,4 +1,4 @@
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Status flags of a node.

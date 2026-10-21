@@ -4,8 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using DiskScope.App.Formatting;
-using DiskScope.Core;
-using DiskScope.Core.Treemap;
+using DiskScope.Storage;
+using DiskScope.Storage.Treemap;
 
 namespace DiskScope.App.Controls;
 
@@ -61,7 +61,7 @@ public sealed class TreemapControl : FrameworkElement
 
     public static readonly DependencyProperty SizeKindProperty =
         DependencyProperty.Register(nameof(SizeKind), typeof(SizeKind), typeof(TreemapControl),
-            new PropertyMetadata(DiskScope.Core.SizeKind.Logical, OnLayoutInputChanged));
+            new PropertyMetadata(DiskScope.Storage.SizeKind.Logical, OnLayoutInputChanged));
 
     public static readonly DependencyProperty SelectedIdProperty =
         DependencyProperty.Register(nameof(SelectedId), typeof(int), typeof(TreemapControl),

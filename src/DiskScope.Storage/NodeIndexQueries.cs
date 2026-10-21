@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Read-only queries over a <see cref="NodeIndex"/> that need sorting or ranking.

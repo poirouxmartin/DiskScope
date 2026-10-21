@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using DiskScope.Core;
-using DiskScope.Core.Treemap;
+using DiskScope.Storage;
+using DiskScope.Storage.Treemap;
 
 namespace DiskScope.Tests;
 

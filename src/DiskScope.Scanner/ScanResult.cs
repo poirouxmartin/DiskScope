@@ -1,4 +1,4 @@
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Scanner;
 

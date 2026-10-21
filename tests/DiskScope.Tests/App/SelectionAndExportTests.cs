@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DiskScope.App.Services;
 using DiskScope.App.ViewModels;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Tests.App;
 

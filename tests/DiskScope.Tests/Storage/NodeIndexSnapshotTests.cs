@@ -1,5 +1,5 @@
 using System.IO;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Tests;
 

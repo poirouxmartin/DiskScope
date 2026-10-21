@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using DiskScope.App.Formatting;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.App.ViewModels;
 

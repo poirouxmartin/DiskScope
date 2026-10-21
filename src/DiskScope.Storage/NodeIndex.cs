@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>
 /// Immutable, struct-of-arrays index of a scanned tree. Created by <see cref="NodeIndexBuilder.Build"/>.

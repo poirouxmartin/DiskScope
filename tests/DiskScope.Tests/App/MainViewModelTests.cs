@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using DiskScope.App.Services;
 using DiskScope.App.ViewModels;
-using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.Tests.App;
 

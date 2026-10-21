@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using DiskScope.Core;
+using DiskScope.Storage;
 using DiskScope.Scanner.Ntfs;
 
 namespace DiskScope.Benchmarks;

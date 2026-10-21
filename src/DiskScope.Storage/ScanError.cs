@@ -1,3 +1,3 @@
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 public readonly record struct ScanError(int NodeId, ScanErrorKind Kind, int Win32Error, string Message);

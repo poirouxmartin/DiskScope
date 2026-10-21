@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/DiskScope.Core/DiskScope.Core.csproj" />
+    <Project Path="src/DiskScope.Storage/DiskScope.Storage.csproj" />
     <Project Path="src/DiskScope.Scanner/DiskScope.Scanner.csproj" />
     <Project Path="src/DiskScope.Scanner.Standard/DiskScope.Scanner.Standard.csproj" />
     <Project Path="src/DiskScope.Scanner.Ntfs/DiskScope.Scanner.Ntfs.csproj" />

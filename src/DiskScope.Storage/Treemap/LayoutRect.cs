@@ -1,6 +1,6 @@
 using System;
 
-namespace DiskScope.Core.Treemap;
+namespace DiskScope.Storage.Treemap;
 
 /// <summary>
 /// Axis-aligned rectangle in layout units. Width and Height are never negative when produced by this code.

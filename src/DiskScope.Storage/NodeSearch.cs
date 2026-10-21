@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DiskScope.Core;
+namespace DiskScope.Storage;
 
 /// <summary>Result of <see cref="NodeSearch.Find"/>.</summary>
 /// <param name="Ids">Top matches, size descending, ties by ascending id. Empty when maxResults is 0.</param>
