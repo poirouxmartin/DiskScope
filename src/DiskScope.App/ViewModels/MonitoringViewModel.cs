@@ -30,6 +30,10 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private readonly MonitoringClock _clock;
     private readonly Dictionary<string, MetricDescriptor> _descriptors;
     private readonly GpuCollector? _gpu;
+    private readonly IReadOnlyList<IMetricCollector> _collectors;
+    private readonly DiagnosticEngine _diagnostics;
+    private DateTime _lastDiagnostics;
+    private string _findingSignature = string.Empty;
     private DispatcherTimer? _timer;
     private string _alertSignature = string.Empty;
     private string _statusText = "Starting";
@@ -40,8 +44,10 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private string _historySummary = string.Empty;
     private DateTime _now;
 
-    public MonitoringViewModel(IReadOnlyList<IMetricCollector> collectors, IMetricStore store, IAlertEngine alerts, MonitoringClock clock)
+    public MonitoringViewModel(IReadOnlyList<IMetricCollector> collectors, IMetricStore store, IAlertEngine alerts, MonitoringClock clock, DiagnosticEngine? diagnostics = null)
     {
+        _collectors = collectors;
+        _diagnostics = diagnostics ?? new DiagnosticEngine([]);
         _store = store;
         _alerts = alerts;
         _clock = clock;
@@ -56,6 +62,8 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         CpuDetailTile = Tile(CpuCollector.Total, DetailWindow, null);
         MemoryDetailTile = Tile(MemoryCollector.PhysicalUsed, DetailWindow, null);
         CommitDetailTile = Tile(MemoryCollector.CommitUsed, DetailWindow, null);
+        DiskTile = Tile(DiskActivityCollector.Active, TrendWindow, ShellViewModel.CpuMemoryTab);
+        DiskDetailTile = Tile(DiskActivityCollector.Active, DetailWindow, null);
 
         VolumeTiles = new ObservableCollection<MetricTileViewModel>(
             _scheduler.Metrics.Where(m => m.Id.StartsWith("disk.", StringComparison.Ordinal) && m.Id.EndsWith(".used", StringComparison.Ordinal))
@@ -67,7 +75,9 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
                 : []);
 
         MemoryRows = new ObservableCollection<MetricRowViewModel>(
-            _scheduler.Metrics.Where(m => m.Id.StartsWith("mem.", StringComparison.Ordinal) || m.Id.StartsWith("sys.", StringComparison.Ordinal) || m.Id.StartsWith("cpu.", StringComparison.Ordinal) && !m.Id.StartsWith("cpu.core.", StringComparison.Ordinal))
+            _scheduler.Metrics.Where(m => m.Id.StartsWith("mem.", StringComparison.Ordinal) || m.Id.StartsWith("sys.", StringComparison.Ordinal)
+                || (m.Id.StartsWith("cpu.", StringComparison.Ordinal) && !m.Id.StartsWith("cpu.core.", StringComparison.Ordinal))
+                || (m.Id.StartsWith("disk.", StringComparison.Ordinal) && m.Id.Count(c => c == '.') == 1))
                 .Select(m => new MetricRowViewModel(m)));
 
         _gpu = collectors.OfType<GpuCollector>().FirstOrDefault();
@@ -92,10 +102,11 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
             new CpuCollector(),
             new MemoryCollector(),
             new VolumeSpaceCollector(),
+            new DiskActivityCollector(),
             new GpuCollector(),
             new SelfCollector(),
         ];
-        return new MonitoringViewModel(collectors, new InMemoryMetricStore(), new AlertEngine(DefaultRules.Create()), clock);
+        return new MonitoringViewModel(collectors, new InMemoryMetricStore(), new AlertEngine(DefaultRules.Create()), clock, DiagnosticEngine.CreateDefault());
     }
 
     public MonitoringScheduler Scheduler => _scheduler;
@@ -107,6 +118,13 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     public MetricTileViewModel? CommitTile { get; }
 
     public MetricTileViewModel? SelfCpuTile { get; }
+
+    public MetricTileViewModel? DiskTile { get; }
+
+    public MetricTileViewModel? DiskDetailTile { get; }
+
+    /// <summary>Hypotheses from the diagnostic rules, newest first; re-evaluated every 5 s.</summary>
+    public ObservableCollection<FindingRowViewModel> Findings { get; } = new();
 
     public MetricTileViewModel? CpuDetailTile { get; }
 
@@ -190,7 +208,10 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     {
         _timer?.Stop();
         await _scheduler.StopAsync().ConfigureAwait(true);
-        _gpu?.Dispose();
+        foreach (IDisposable d in _collectors.OfType<IDisposable>())
+        {
+            d.Dispose();
+        }
     }
 
     /// <summary>Pulls the latest values and the recent history into the bound properties. UI thread.</summary>
@@ -227,8 +248,15 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
             row.Update(_scheduler.GetLatest(row.Descriptor.Id));
         }
 
+        UpdateTile(DiskTile, now, 100);
+        UpdateTile(DiskDetailTile, now, 100);
         RefreshStats();
         RefreshAlerts();
+        if (now - _lastDiagnostics >= TimeSpan.FromSeconds(5))
+        {
+            _lastDiagnostics = now;
+            RefreshFindings(now);
+        }
         RefreshHistory();
     }
 
@@ -299,6 +327,32 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
 
         OnPropertyChanged(nameof(ActiveAlertCount));
     }
+
+    internal void RefreshFindings(DateTime now)
+    {
+        (IReadOnlyList<Finding> findings, IReadOnlyList<string> errors) = _diagnostics.Evaluate(new DiagnosticContext(_alerts.Events, _store, now));
+        string signature = string.Join('|', findings.Select(f => f.RuleId + f.FromUtc.Ticks + f.Explanation)) + string.Join('|', errors);
+        if (signature == _findingSignature)
+        {
+            return;
+        }
+
+        _findingSignature = signature;
+        Findings.Clear();
+        foreach (Finding f in findings.OrderByDescending(f => f.FromUtc))
+        {
+            Findings.Add(new FindingRowViewModel(f));
+        }
+
+        foreach (string e in errors)
+        {
+            Findings.Add(FindingRowViewModel.ForError(e, now));
+        }
+
+        RaisePropertyChanged(nameof(FindingCount));
+    }
+
+    public int FindingCount => Findings.Count;
 
     private void RefreshHistory()
     {

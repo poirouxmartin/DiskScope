@@ -39,6 +39,18 @@
                 </DataGrid.Columns>
             </DataGrid>
 
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Hypotheses (correlations in time, not causes)" />
+            <DataGrid ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="130" />
+                    <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="170" />
+                    <DataGridTextColumn Header="Hypothesis" Binding="{Binding Title}" Width="240" />
+                    <DataGridTextColumn Header="Observed" Binding="{Binding Explanation}" Width="300" />
+                    <DataGridTextColumn Header="To check" Binding="{Binding Checks}" Width="300" />
+                    <DataGridTextColumn Header="Limits" Binding="{Binding Limits}" Width="300" />
+                </DataGrid.Columns>
+            </DataGrid>
+
             <TextBlock Style="{StaticResource SectionTitle}" Text="Rules" />
             <ItemsControl ItemsSource="{Binding Rules}">
                 <ItemsControl.ItemTemplate>

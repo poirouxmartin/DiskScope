@@ -11,6 +11,7 @@ public static class DefaultRules
     public const string HighCpu = "cpu.high";
     public const string LowAvailableMemory = "mem.available.low";
     public const string CommitNearLimit = "mem.commit.high";
+    public const string HighDiskLatency = "disk.latency.high";
 
     public static IReadOnlyList<ThresholdRule> Create() =>
     [
@@ -30,5 +31,10 @@ public static class DefaultRules
             FindingLevel.Alert,
             "Committed memory above 90 % of the commit limit: allocations can fail once the limit is reached.",
             "With a growable page file the limit is soft and Windows may extend it."),
+        new(HighDiskLatency, "High disk latency", "disk.latency", ThresholdComparison.Above, 50, MetricUnit.Milliseconds,
+            MinDuration: TimeSpan.FromSeconds(30), Recovery: TimeSpan.FromSeconds(10), Cooldown: TimeSpan.FromMinutes(1),
+            FindingLevel.Alert,
+            "Average time per disk transfer above 50 ms for 30 s: programs waiting on the disk feel slow. Measured over all physical disks.",
+            "Hard disks and USB drives under sequential load commonly exceed 50 ms; the threshold suits SSDs."),
     ];
 }

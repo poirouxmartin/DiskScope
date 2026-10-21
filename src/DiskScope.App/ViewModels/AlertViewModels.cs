@@ -26,6 +26,29 @@ public sealed class AlertRowViewModel(AlertEvent alert, Action<Guid> acknowledge
     public RelayCommand AcknowledgeCommand { get; } = new(() => acknowledge(alert.Id), () => !alert.Acknowledged);
 }
 
+/// <summary>One diagnostic hypothesis, with its confidence, evidence, limits and the checks to run.</summary>
+public sealed class FindingRowViewModel(Finding finding)
+{
+    public Finding Finding { get; } = finding;
+
+    public string Period => $"{Finding.FromUtc.ToLocalTime():HH:mm:ss} - {Finding.ToUtc.ToLocalTime():HH:mm:ss}";
+
+    public string Level => $"{Finding.Level} ({Finding.Confidence} confidence)";
+
+    public string Title => Finding.Title;
+
+    public string Explanation => Finding.Explanation;
+
+    public string Evidence => string.Join("; ", Finding.Evidence.Select(e => $"{e.Label}: {MetricFormatter.Format(e.Value, e.Unit)}"));
+
+    public string Checks => string.Join(" ", Finding.Checks.Select((c, i) => $"{i + 1}. {c}"));
+
+    public string Limits => Finding.Limits;
+
+    public static FindingRowViewModel ForError(string error, DateTime now) => new(new Finding(
+        "error", FindingLevel.Information, Confidence.Low, "Diagnostic rule failed", error, [], [], "This rule produced no result.", now, now));
+}
+
 /// <summary>
 /// Editable view of one threshold rule. Byte thresholds are edited in MB, the others in their own unit.
 /// Changes apply only through <see cref="ApplyCommand"/>, so a half-typed number never reaches the engine.

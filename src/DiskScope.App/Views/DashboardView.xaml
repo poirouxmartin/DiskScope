@@ -23,6 +23,7 @@
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.CpuTile}" Content="{Binding}" />
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.MemoryTile}" Content="{Binding}" />
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.CommitTile}" Content="{Binding}" />
+                <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.DiskTile}" Content="{Binding}" />
                 <ItemsControl ItemsSource="{Binding Monitoring.GpuTiles}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -57,6 +58,14 @@
                     <StackPanel>
                         <TextBlock Text="Active alerts (not acknowledged)" Foreground="#4A5560" />
                         <TextBlock Text="{Binding Monitoring.ActiveAlertCount}" FontSize="22" FontWeight="SemiBold" />
+                        <Button Content="Open history &amp; alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                                Command="{Binding NavigateCommand}" CommandParameter="5" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Width="260">
+                    <StackPanel>
+                        <TextBlock Text="Hypotheses (correlations, to verify)" Foreground="#4A5560" />
+                        <TextBlock Text="{Binding Monitoring.FindingCount}" FontSize="22" FontWeight="SemiBold" />
                         <Button Content="Open history &amp; alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="5" />
                     </StackPanel>

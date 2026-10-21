@@ -20,9 +20,10 @@ internal static class MonitorBench
     public static int Run(int seconds)
     {
         using var gpu = new GpuCollector();
+        using var disk = new DiskActivityCollector();
         var store = new InMemoryMetricStore();
         var alerts = new AlertEngine(DefaultRules.Create());
-        IMetricCollector[] collectors = [new CpuCollector(), new MemoryCollector(), new VolumeSpaceCollector(), gpu, new SelfCollector()];
+        IMetricCollector[] collectors = [new CpuCollector(), new MemoryCollector(), new VolumeSpaceCollector(), disk, gpu, new SelfCollector()];
         var scheduler = new MonitoringScheduler(collectors, store);
         long batches = 0;
         scheduler.BatchPublished += b =>

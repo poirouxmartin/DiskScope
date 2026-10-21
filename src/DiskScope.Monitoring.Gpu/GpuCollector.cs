@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using System.Globalization;
 using DiskScope.Core;
+using DiskScope.Monitoring;
 
 namespace DiskScope.Monitoring.Gpu;
 

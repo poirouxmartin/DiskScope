@@ -4,7 +4,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
         <StackPanel Margin="6">
             <TextBlock Style="{StaticResource SectionTitle}" Text="Last 10 minutes" />
-            <UniformGrid Columns="3">
+            <UniformGrid Columns="4">
                 <Border Style="{StaticResource Card}">
                     <ContentPresenter Content="{Binding CpuDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
                 </Border>
@@ -13,6 +13,9 @@
                 </Border>
                 <Border Style="{StaticResource Card}">
                     <ContentPresenter Content="{Binding CommitDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <ContentPresenter Content="{Binding DiskDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
                 </Border>
             </UniformGrid>
 
@@ -36,7 +39,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="CPU and memory counters" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="CPU, memory and disk counters" />
             <DataGrid ItemsSource="{Binding MemoryRows}" AutoGenerateColumns="False" IsReadOnly="True"
                       HeadersVisibility="Column" Margin="6" CanUserSortColumns="True">
                 <DataGrid.Columns>
