@@ -28,6 +28,8 @@
     <ProjectReference Include="..\..\src\DiskScope.Monitoring\DiskScope.Monitoring.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Monitoring.CpuRam\DiskScope.Monitoring.CpuRam.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Processes\DiskScope.Processes.csproj" />
+    <ProjectReference Include="..\..\src\DiskScope.History\DiskScope.History.csproj" />
+    <ProjectReference Include="..\..\src\DiskScope.Diagnostics\DiskScope.Diagnostics.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Storage\DiskScope.Storage.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Scanner\DiskScope.Scanner.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Scanner.Standard\DiskScope.Scanner.Standard.csproj" />
