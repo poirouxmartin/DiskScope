@@ -166,7 +166,7 @@ public sealed class SearchViewModel : ObservableObject
 
         SizeKind kind = filter.SizeKind;
         Results = new ObservableCollection<FileRowViewModel>(
-            result.Ids.Select(id => MainViewModel.ToFileRow(index, id, kind)));
+            result.Ids.Select(id => StorageViewModel.ToFileRow(index, id, kind)));
         ResultText = FormatResultText(result);
     }
 

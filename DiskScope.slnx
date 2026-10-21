@@ -3,6 +3,7 @@
     <Project Path="src/DiskScope.Core/DiskScope.Core.csproj" />
     <Project Path="src/DiskScope.Monitoring/DiskScope.Monitoring.csproj" />
     <Project Path="src/DiskScope.Monitoring.CpuRam/DiskScope.Monitoring.CpuRam.csproj" />
+    <Project Path="src/DiskScope.Monitoring.Gpu/DiskScope.Monitoring.Gpu.csproj" />
     <Project Path="src/DiskScope.Processes/DiskScope.Processes.csproj" />
     <Project Path="src/DiskScope.History/DiskScope.History.csproj" />
     <Project Path="src/DiskScope.Diagnostics/DiskScope.Diagnostics.csproj" />

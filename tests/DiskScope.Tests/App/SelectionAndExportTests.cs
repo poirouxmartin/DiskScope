@@ -14,7 +14,7 @@ public sealed class SelectionAndExportTests
     public void RevealNode_OnDepthThreeFile_ExpandsAncestorsAndSelectsTarget()
     {
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell());
+        var vm = new StorageViewModel(new SaveShell());
         vm.LoadIndex(f.Index);
 
         vm.RevealNode(f.Deep);
@@ -36,7 +36,7 @@ public sealed class SelectionAndExportTests
     public void RevealNode_OtherNode_UnselectsPreviousTarget()
     {
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell());
+        var vm = new StorageViewModel(new SaveShell());
         vm.LoadIndex(f.Index);
         vm.RevealNode(f.Deep);
         NodeViewModel deepVm = vm.RootNodes[0].Children.Single(c => c.Name == "sub")
@@ -55,7 +55,7 @@ public sealed class SelectionAndExportTests
     public void SelectedNodeId_Set_TriggersReveal()
     {
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell());
+        var vm = new StorageViewModel(new SaveShell());
         vm.LoadIndex(f.Index);
 
         vm.SelectedNodeId = f.Deep;
@@ -71,7 +71,7 @@ public sealed class SelectionAndExportTests
     public void LoadIndex_ResetsTreemapRootIdToZero()
     {
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell());
+        var vm = new StorageViewModel(new SaveShell());
         vm.LoadIndex(f.Index);
         vm.TreemapRootId = f.Sub;
         Assert.Equal(f.Sub, vm.TreemapRootId);
@@ -87,7 +87,7 @@ public sealed class SelectionAndExportTests
         // System.IO.Path is qualified: UseWPF also imports System.Windows.Shapes.Path, which makes plain Path ambiguous.
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid() + ".csv");
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell { SavePath = path });
+        var vm = new StorageViewModel(new SaveShell { SavePath = path });
         vm.LoadIndex(f.Index);
         try
         {
@@ -108,7 +108,7 @@ public sealed class SelectionAndExportTests
     public async Task ExportCsv_WithoutSavePath_LeavesStatusUnchanged()
     {
         Fixture f = BuildFixture();
-        var vm = new MainViewModel(new SaveShell { SavePath = null });
+        var vm = new StorageViewModel(new SaveShell { SavePath = null });
         vm.LoadIndex(f.Index);
         string statusBefore = vm.StatusText;
 

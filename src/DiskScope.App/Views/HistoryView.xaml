@@ -1,0 +1,68 @@
+<UserControl x:Class="DiskScope.App.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:DiskScope.App.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+        <StackPanel Margin="6">
+            <TextBlock Style="{StaticResource SectionTitle}" Text="History" />
+            <StackPanel Orientation="Horizontal" Margin="6,2">
+                <TextBlock Text="Metric:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <ComboBox ItemsSource="{Binding HistoryMetrics}" SelectedItem="{Binding HistoryMetric}" DisplayMemberPath="DisplayName" Width="340" />
+                <TextBlock Text="Range:" VerticalAlignment="Center" Margin="12,0,6,0" />
+                <ComboBox ItemsSource="{Binding HistoryRanges}" SelectedItem="{Binding HistoryRange}" Width="110" />
+            </StackPanel>
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <controls:SparklineControl Height="160" Points="{Binding HistoryPoints}" End="{Binding Now}" Window="{Binding HistoryRange}" />
+                    <TextBlock Text="{Binding HistorySummary}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    <TextBlock Foreground="#6B7580" FontSize="11" TextWrapping="Wrap"
+                               Text="Kept in memory since DiskScope started: 1 s points for 10 min, 5 s for 1 h, 1 min for 24 h. Gaps are periods without data." />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Alerts" />
+            <DataGrid ItemsSource="{Binding Alerts}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Started" Binding="{Binding Started}" Width="140" />
+                    <DataGridTextColumn Header="Ended" Binding="{Binding Ended}" Width="70" />
+                    <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="60" />
+                    <DataGridTextColumn Header="Alert" Binding="{Binding Title}" Width="180" />
+                    <DataGridTextColumn Header="Explanation" Binding="{Binding Explanation}" Width="*" />
+                    <DataGridTextColumn Header="Evidence" Binding="{Binding Evidence}" Width="260" />
+                    <DataGridTemplateColumn Header="" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Acknowledge" Command="{Binding AcknowledgeCommand}" Padding="6,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Rules" />
+            <ItemsControl ItemsSource="{Binding Rules}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding Enabled}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <TextBlock Text="Threshold:" Margin="16,0,4,0" VerticalAlignment="Center" />
+                                    <TextBox Text="{Binding ThresholdText, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalContentAlignment="Center" />
+                                    <TextBlock Text="{Binding ThresholdUnit}" Margin="4,0" VerticalAlignment="Center" />
+                                    <Button Content="Apply" Command="{Binding ApplyCommand}" Margin="8,0" Padding="8,0" />
+                                    <TextBlock Text="{Binding Error}" Foreground="#B00020" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding Condition}" Foreground="#4A5560" Margin="0,4,0,0" />
+                                <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" />
+                                <TextBlock Foreground="#6B7580" TextWrapping="Wrap">
+                                    <Run Text="Known false positives: " /><Run Text="{Binding KnownFalsePositives, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

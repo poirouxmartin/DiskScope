@@ -1,0 +1,69 @@
+<UserControl x:Class="DiskScope.App.Views.CpuMemoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+        <StackPanel Margin="6">
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Last 10 minutes" />
+            <UniformGrid Columns="3">
+                <Border Style="{StaticResource Card}">
+                    <ContentPresenter Content="{Binding CpuDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <ContentPresenter Content="{Binding MemoryDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <ContentPresenter Content="{Binding CommitDetailTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                </Border>
+            </UniformGrid>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Logical processors" />
+            <ItemsControl ItemsSource="{Binding Cores}" Margin="6,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Width="110" Margin="3">
+                            <TextBlock>
+                                <Run Text="{Binding Label, Mode=OneWay}" />
+                                <Run Text="{Binding Text, Mode=OneWay}" FontWeight="SemiBold" />
+                            </TextBlock>
+                            <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding Percent, Mode=OneWay}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="CPU and memory counters" />
+            <DataGrid ItemsSource="{Binding MemoryRows}" AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" Margin="6" CanUserSortColumns="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Metric" Binding="{Binding Name}" Width="220" />
+                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="120" />
+                    <DataGridTextColumn Header="Definition" Binding="{Binding Definition}" Width="*" />
+                    <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="260" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Collectors (cost of monitoring)" />
+            <DataGrid ItemsSource="{Binding CollectorStats}" AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" Margin="6">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Collector" Binding="{Binding Collector}" Width="120" />
+                    <DataGridTextColumn Header="Available" Binding="{Binding Availability.IsAvailable}" Width="80" />
+                    <DataGridTextColumn Header="Interval" Binding="{Binding Interval}" Width="90" />
+                    <DataGridTextColumn Header="Collections" Binding="{Binding Collections}" Width="90" />
+                    <DataGridTextColumn Header="Failures" Binding="{Binding Failures}" Width="70" />
+                    <DataGridTextColumn Header="Missed ticks" Binding="{Binding SkippedTicks}" Width="90" />
+                    <DataGridTextColumn Header="Last (ms)" Binding="{Binding LastDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
+                    <DataGridTextColumn Header="Max (ms)" Binding="{Binding MaxDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
+                    <DataGridTextColumn Header="Availability" Binding="{Binding Availability.Reason}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Margin="8,2" Foreground="#6B7580" TextWrapping="Wrap"
+                       Text="CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

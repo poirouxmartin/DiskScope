@@ -1,0 +1,38 @@
+<UserControl x:Class="DiskScope.App.Views.ProcessesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel Margin="6">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+            <TextBlock Text="Filter (name, PID or path):" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" Width="260" VerticalContentAlignment="Center" />
+            <TextBlock Text="Read-only: no process is stopped or modified." Foreground="#6B7580" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </DockPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="#4A5560" Margin="0,4,0,0" />
+        <!-- Tree order (indented) until a column header is clicked; then a flat sort by that column. -->
+        <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
+                  VirtualizingPanel.VirtualizationMode="Recycling">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Name" Width="230" SortMemberPath="Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" Margin="{Binding Indent}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="60" />
+                <DataGridTextColumn Header="CPU (% machine)" Binding="{Binding CpuText}" SortMemberPath="Cpu" Width="110" />
+                <DataGridTextColumn Header="Private bytes" Binding="{Binding PrivateBytesText}" SortMemberPath="PrivateBytes" Width="100" />
+                <DataGridTextColumn Header="Working set" Binding="{Binding WorkingSetText}" SortMemberPath="WorkingSet" Width="100" />
+                <DataGridTextColumn Header="Private WS" Binding="{Binding PrivateWorkingSetText}" SortMemberPath="PrivateWorkingSet" Width="90" />
+                <DataGridTextColumn Header="Threads" Binding="{Binding Threads}" Width="65" />
+                <DataGridTextColumn Header="Handles" Binding="{Binding HandlesText}" SortMemberPath="Handles" Width="70" />
+                <DataGridTextColumn Header="I/O read" Binding="{Binding IoReadText}" SortMemberPath="IoRead" Width="85" />
+                <DataGridTextColumn Header="I/O write" Binding="{Binding IoWriteText}" SortMemberPath="IoWrite" Width="85" />
+                <DataGridTextColumn Header="Started" Binding="{Binding Started}" Width="140" />
+                <DataGridTextColumn Header="Memory growth" Binding="{Binding Growth}" Width="260" />
+                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="500" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

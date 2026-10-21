@@ -112,11 +112,12 @@ public sealed class InMemoryMetricStore : IMetricStore
         {
             lock (_gate)
             {
-                // Finest tier that still covers the start of the range; otherwise the coarsest, which reaches furthest back.
+                // Finest tier that still holds the start of the range, or that never dropped anything (it then holds
+                // everything since the first value, at the best resolution); otherwise the coarsest, which reaches furthest back.
                 Ring chosen = _rings[^1];
                 foreach (Ring ring in _rings)
                 {
-                    if (ring.Count > 0 && ring.OldestStartTicks <= fromUtc.Ticks)
+                    if (ring.Count > 0 && (!ring.HasEvicted || ring.OldestStartTicks <= fromUtc.Ticks))
                     {
                         chosen = ring;
                         break;
@@ -136,6 +137,8 @@ public sealed class InMemoryMetricStore : IMetricStore
 
         public int Count { get; private set; }
 
+        public bool HasEvicted { get; private set; }
+
         public long OldestStartTicks => _buckets[(_head - Count + 1 + _buckets.Length) % _buckets.Length].Start;
 
         public void Add(long ticks, double value)
@@ -152,6 +155,7 @@ public sealed class InMemoryMetricStore : IMetricStore
                 return; // Out-of-order value older than the current bucket: dropped rather than reordering the ring.
             }
 
+            HasEvicted |= Count == _buckets.Length;
             _head = (_head + 1) % _buckets.Length;
             _buckets[_head] = new Bucket(start, value);
             Count = Math.Min(Count + 1, _buckets.Length);

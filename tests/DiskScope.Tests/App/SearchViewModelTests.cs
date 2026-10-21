@@ -96,7 +96,7 @@ public sealed class SearchViewModelTests
     [Fact]
     public void LoadIndex_FillsExtensionsWithLargestGroupFirst()
     {
-        var vm = new MainViewModel(new NullShell());
+        var vm = new StorageViewModel(new NullShell());
 
         vm.LoadIndex(BuildIndex());
 

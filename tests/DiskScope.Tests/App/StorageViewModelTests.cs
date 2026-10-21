@@ -7,13 +7,13 @@ using DiskScope.Storage;
 
 namespace DiskScope.Tests.App;
 
-public sealed class MainViewModelTests
+public sealed class StorageViewModelTests
 {
     [Fact]
     public void LoadIndex_BuildsSingleExpandedRoot()
     {
         NodeIndex index = BuildIndex();
-        var vm = new MainViewModel(new FakeShell());
+        var vm = new StorageViewModel(new FakeShell());
 
         vm.LoadIndex(index);
 
@@ -27,7 +27,7 @@ public sealed class MainViewModelTests
     public void LargestFiles_ContainsFilesOnly_SortedBySizeDescending()
     {
         NodeIndex index = BuildIndex();
-        var vm = new MainViewModel(new FakeShell());
+        var vm = new StorageViewModel(new FakeShell());
 
         vm.LoadIndex(index);
 
@@ -42,7 +42,7 @@ public sealed class MainViewModelTests
     public void SwitchingToAllocated_RebuildsLargestFilesByAllocatedSize()
     {
         NodeIndex index = BuildIndex();
-        var vm = new MainViewModel(new FakeShell());
+        var vm = new StorageViewModel(new FakeShell());
         vm.LoadIndex(index);
         Assert.Equal("C:\\data\\a.bin", vm.LargestFiles[0].Path);
 
@@ -60,7 +60,7 @@ public sealed class MainViewModelTests
     {
         NodeIndex index = BuildIndex();
         var fake = new FakeShell();
-        var vm = new MainViewModel(fake);
+        var vm = new StorageViewModel(fake);
         vm.LoadIndex(index);
         FileRowViewModel top = vm.LargestFiles[0];
 
@@ -76,7 +76,7 @@ public sealed class MainViewModelTests
     {
         NodeIndex index = BuildIndex();
         var fake = new FakeShell();
-        var vm = new MainViewModel(fake);
+        var vm = new StorageViewModel(fake);
         vm.LoadIndex(index);
         NodeViewModel sub = vm.RootNodes[0].Children.Single(c => c.Name == "sub");
 
@@ -92,7 +92,7 @@ public sealed class MainViewModelTests
     {
         NodeIndex index = BuildIndex();
         var fake = new FakeShell();
-        var vm = new MainViewModel(fake);
+        var vm = new StorageViewModel(fake);
         vm.LoadIndex(index);
 
         vm.CopyPathCommand.Execute(NodeViewModel.Placeholder);

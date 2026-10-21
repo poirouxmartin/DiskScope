@@ -1,0 +1,50 @@
+<UserControl x:Class="DiskScope.App.Views.GpuView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+        <StackPanel Margin="6">
+            <TextBlock Text="{Binding GpuStatus}" Margin="8,4" Foreground="#4A5560" />
+            <ItemsControl ItemsSource="{Binding GpuAdapters}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitle}" Text="{Binding Title}" />
+                            <TextBlock Text="{Binding Identity}" Margin="8,0" Foreground="#6B7580" TextWrapping="Wrap" />
+                            <UniformGrid Columns="3">
+                                <Border Style="{StaticResource Card}">
+                                    <ContentPresenter Content="{Binding UsageTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                                </Border>
+                                <Border Style="{StaticResource Card}">
+                                    <ContentPresenter Content="{Binding DedicatedTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                                </Border>
+                                <Border Style="{StaticResource Card}">
+                                    <ContentPresenter Content="{Binding SharedTile}" ContentTemplate="{StaticResource TileTemplate}" />
+                                </Border>
+                            </UniformGrid>
+                            <DataGrid ItemsSource="{Binding EngineRows}" AutoGenerateColumns="False" IsReadOnly="True"
+                                      HeadersVisibility="Column" Margin="6">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Engine" Binding="{Binding Name}" Width="320" />
+                                    <DataGridTextColumn Header="Usage" Binding="{Binding Value}" Width="90" />
+                                    <DataGridTextColumn Header="Definition" Binding="{Binding Definition}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="Processes using a GPU engine (busiest engine, all adapters)" />
+            <DataGrid ItemsSource="{Binding GpuProcesses}" AutoGenerateColumns="False" IsReadOnly="True"
+                      HeadersVisibility="Column" Margin="6" MaxHeight="320">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Process" Binding="{Binding Name}" Width="260" />
+                    <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="70" />
+                    <DataGridTextColumn Header="GPU" Binding="{Binding PercentText}" Width="90" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Margin="8,4" Foreground="#6B7580" TextWrapping="Wrap"
+                       Text="Engines run in parallel and are not added up: the usage figure is the busiest engine, as in Task Manager. Shared GPU memory is system RAM, not video memory. Temperature, clocks, power and fan speed are not shown: no vendor-neutral source has been validated yet." />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

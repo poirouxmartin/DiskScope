@@ -1,22 +1,33 @@
+using System.ComponentModel;
 using System.Windows;
 using DiskScope.App.ViewModels;
 
 namespace DiskScope.App;
 
-public partial class MainWindow : System.Windows.Window
+public partial class MainWindow : Window
 {
+    private readonly ShellViewModel _shell = ShellViewModel.CreateDefault();
+    private bool _disposed;
+
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        DataContext = _shell;
+        Loaded += (_, _) => _shell.Start();
     }
 
-    private void OnTreeSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    protected override async void OnClosing(CancelEventArgs e)
     {
-        // Tree -> view model; SetProperty ignores equal values, so RevealNode does not loop back.
-        if (e.NewValue is NodeViewModel { IsPlaceholder: false } node && DataContext is MainViewModel vm)
+        base.OnClosing(e);
+        if (_disposed)
         {
-            vm.SelectedNodeId = node.Id;
+            return;
         }
+
+        // Stop collectors and the process loop before the window goes away, so no callback hits a closed dispatcher.
+        e.Cancel = true;
+        _disposed = true;
+        await _shell.DisposeAsync();
+        Close();
     }
 }

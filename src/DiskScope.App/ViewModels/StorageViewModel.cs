@@ -11,7 +11,7 @@ using DiskScope.Scanner.Standard;
 
 namespace DiskScope.App.ViewModels;
 
-public sealed class MainViewModel : ObservableObject
+public sealed class StorageViewModel : ObservableObject
 {
     private const int MaxErrorsInSummary = 20;
     private const int MaxLargestFiles = 1000;
@@ -36,7 +36,7 @@ public sealed class MainViewModel : ObservableObject
     private int _selectedNodeId = -1;
     private NodeViewModel? _revealedNode;
 
-    public MainViewModel(IShellActions? shell = null)
+    public StorageViewModel(IShellActions? shell = null)
     {
         _shell = shell ?? new ShellActions();
 
@@ -421,7 +421,7 @@ public sealed class MainViewModel : ObservableObject
         LoadIndex(partial);
     }
 
-    private sealed class ProgressObserver(MainViewModel owner, CancellationTokenSource scan) : IScanObserver
+    private sealed class ProgressObserver(StorageViewModel owner, CancellationTokenSource scan) : IScanObserver
     {
         public void OnPartialResult(NodeIndex partial) =>
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>

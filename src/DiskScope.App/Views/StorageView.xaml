@@ -1,0 +1,276 @@
+<UserControl x:Class="DiskScope.App.Views.StorageView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:DiskScope.App.Controls">
+    <UserControl.Resources>
+        <ContextMenu x:Key="FileRowMenu" x:Shared="False">
+            <MenuItem Header="Copy path"
+                      Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding}" />
+            <MenuItem Header="Open in Explorer"
+                      Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                      CommandParameter="{Binding}" />
+        </ContextMenu>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Top bar -->
+        <DockPanel Grid.Row="0" Margin="6">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Scan" Command="{Binding ScanCommand}"
+                        Margin="4,0" Padding="12,2" />
+                <Button Content="Cancel" Command="{Binding CancelCommand}"
+                        Margin="4,0" Padding="12,2" />
+                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}"
+                        Margin="4,0" Padding="12,2" />
+                <RadioButton Content="Logical" GroupName="size"
+                             IsChecked="{Binding IsLogical, Mode=TwoWay}"
+                             VerticalAlignment="Center" Margin="8,0" />
+                <RadioButton Content="Allocated" GroupName="size"
+                             IsChecked="{Binding IsAllocated, Mode=TwoWay}"
+                             VerticalAlignment="Center" Margin="8,0" />
+            </StackPanel>
+            <TextBox Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}"
+                     VerticalContentAlignment="Center" />
+        </DockPanel>
+
+        <ProgressBar Grid.Row="1" Height="4"
+                     IsIndeterminate="{Binding IsScanning}" />
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusText}" Margin="6,2" />
+
+        <!-- Main: tree on the left, file lists (largest files, search, extensions) on the right -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="2*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TreeView Grid.Row="0"
+                          ItemsSource="{Binding RootNodes}"
+                          Grid.IsSharedSizeScope="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.CanContentScroll="True"
+                          SelectedItemChanged="OnTreeSelectedItemChanged">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <Grid Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                <Grid.ColumnDefinitions>
+                                    <!-- Fixed width: a star column sizes to content inside a TreeViewItem and misaligns the numbers. -->
+                                    <ColumnDefinition Width="320" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Pct" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Size" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Files" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Status" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Copy path"
+                                                  Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding}" />
+                                        <MenuItem Header="Open in Explorer"
+                                                  Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                  CommandParameter="{Binding}" />
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+
+                                <TextBlock Grid.Column="0" Text="{Binding Name}" ToolTip="{Binding Name}"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding PercentText}"
+                                           MinWidth="60" Margin="8,0,0,0" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding TotalSizeText}"
+                                           MinWidth="90" Margin="8,0,0,0" TextAlignment="Right" />
+                                <TextBlock Grid.Column="3" Text="{Binding FileCount, StringFormat=N0}"
+                                           MinWidth="80" Margin="8,0,0,0" TextAlignment="Right" />
+                                <TextBlock Grid.Column="4" Text="{Binding StatusText}"
+                                           Foreground="DarkOrange" Margin="8,0,0,0" />
+                            </Grid>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+
+                <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" ResizeDirection="Rows" />
+
+                <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1">
+                    <controls:TreemapControl Index="{Binding Index}"
+                                             RootId="{Binding TreemapRootId, Mode=TwoWay}"
+                                             SizeKind="{Binding SizeKind}"
+                                             SelectedId="{Binding SelectedNodeId, Mode=TwoWay}" />
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+
+            <TabControl Grid.Column="2">
+                <TabItem Header="Largest files">
+                    <ListView ItemsSource="{Binding LargestFiles}"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}" />
+                                <Setter Property="ContextMenu" Value="{StaticResource FileRowMenu}" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Size" Width="90"
+                                                DisplayMemberBinding="{Binding SizeText}" />
+                                <GridViewColumn Header="Path" Width="500"
+                                                DisplayMemberBinding="{Binding Path=Path}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+
+                <TabItem Header="Search" DataContext="{Binding Search}">
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name contains"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Extensions"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding ExtensionsText, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="jpg, png; empty = any"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Min size (MB)"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="2" Grid.Column="1"
+                                     Text="{Binding MinSizeMbText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Max size (MB)"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <TextBox Grid.Row="3" Grid.Column="1"
+                                     Text="{Binding MaxSizeMbText, UpdateSourceTrigger=PropertyChanged}"
+                                     Margin="4,2" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Modified from"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <DatePicker Grid.Row="4" Grid.Column="1"
+                                        SelectedDate="{Binding ModifiedFrom}"
+                                        Margin="4,2" />
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified to"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <DatePicker Grid.Row="5" Grid.Column="1"
+                                        SelectedDate="{Binding ModifiedTo}"
+                                        Margin="4,2" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Type"
+                                       VerticalAlignment="Center" Margin="4,2" />
+                            <ComboBox Grid.Row="6" Grid.Column="1"
+                                      ItemsSource="{Binding KindOptions}"
+                                      SelectedItem="{Binding Kind}"
+                                      Margin="4,2" />
+                        </Grid>
+
+                        <TextBlock DockPanel.Dock="Top" Text="{Binding InputError}"
+                                   Foreground="Firebrick" Margin="4,2">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding InputError}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock DockPanel.Dock="Top" Text="{Binding ResultText}" Margin="4" />
+
+                        <ListView ItemsSource="{Binding Results}"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TabControl}}" />
+                                    <Setter Property="ContextMenu" Value="{StaticResource FileRowMenu}" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Size" Width="90"
+                                                    DisplayMemberBinding="{Binding SizeText}" />
+                                    <GridViewColumn Header="Path" Width="500"
+                                                    DisplayMemberBinding="{Binding Path}" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
+                </TabItem>
+
+                <TabItem Header="Extensions">
+                    <ListView ItemsSource="{Binding Extensions}"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Extension" Width="120"
+                                                DisplayMemberBinding="{Binding DisplayName}" />
+                                <GridViewColumn Header="Files" Width="80"
+                                                DisplayMemberBinding="{Binding FileCount, StringFormat=N0}" />
+                                <GridViewColumn Header="Size" Width="90"
+                                                DisplayMemberBinding="{Binding SizeText}" />
+                                <GridViewColumn Header="Share" Width="70"
+                                                DisplayMemberBinding="{Binding PercentText}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <!-- Summary and errors -->
+        <Expander Grid.Row="4" Header="Summary and errors">
+            <ScrollViewer MaxHeight="200">
+                <TextBlock Text="{Binding Summary}" FontFamily="Consolas" />
+            </ScrollViewer>
+        </Expander>
+    </Grid>
+</UserControl>

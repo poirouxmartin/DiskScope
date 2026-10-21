@@ -50,6 +50,20 @@ public sealed class HistoryAndAlertTests
     }
 
     [Fact]
+    public void Store_RangeStartingBeforeFirstValue_UsesFinestTier()
+    {
+        // Regression: right after start-up no tier covers "now - 1 min", and the query used to fall back to the
+        // 1 min tier, giving a single point instead of the 10 raw seconds.
+        var store = new InMemoryMetricStore();
+        for (int s = 0; s < 10; s++)
+        {
+            store.Append(Batch(T0.AddSeconds(s), MetricValue.Measured("m", s)));
+        }
+
+        Assert.Equal(10, store.Query("m", T0.AddSeconds(9 - 60), T0.AddSeconds(9)).Count);
+    }
+
+    [Fact]
     public void Store_InvalidTiers_Throw()
     {
         Assert.Throws<ArgumentException>(() => new InMemoryMetricStore([]));
