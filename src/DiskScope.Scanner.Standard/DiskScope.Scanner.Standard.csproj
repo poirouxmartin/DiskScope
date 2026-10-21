@@ -9,4 +9,8 @@
     <ProjectReference Include="..\DiskScope.Scanner\DiskScope.Scanner.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DiskScope.Tests" />
+  </ItemGroup>
+
 </Project>

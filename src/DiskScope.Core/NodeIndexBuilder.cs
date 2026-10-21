@@ -118,7 +118,37 @@ public sealed class NodeIndexBuilder
         }
 
         _built = true;
-        return new NodeIndex(
+        return CreateIndex(_status.AsSpan(0, _count).ToArray(), _errors);
+    }
+
+    /// <summary>
+    /// Provisional index of everything added so far; the builder stays writable.
+    /// Must be called from the writer thread (the builder is single-writer, so no lock is needed).
+    /// Directories still waiting to be enumerated are flagged NotScanned in the copy, so their ancestors
+    /// read SubtreeIncomplete and the snapshot can never pass for a complete result.
+    /// Cost: one copy of every column, O(Count).
+    /// </summary>
+    public NodeIndex Snapshot(IEnumerable<int> pendingDirectories)
+    {
+        ThrowIfBuilt();
+        ArgumentNullException.ThrowIfNull(pendingDirectories);
+        if (_count == 0)
+        {
+            throw new InvalidOperationException("Snapshot requires a root node (call AddRoot first).");
+        }
+
+        NodeStatus[] status = _status.AsSpan(0, _count).ToArray();
+        foreach (int id in pendingDirectories)
+        {
+            CheckId(id, nameof(pendingDirectories));
+            status[id] |= NodeStatus.NotScanned;
+        }
+
+        return CreateIndex(status, new List<ScanError>(_errors));
+    }
+
+    private NodeIndex CreateIndex(NodeStatus[] status, List<ScanError> errors) =>
+        new(
             _count,
             _parent.AsSpan(0, _count).ToArray(),
             _nameOffset.AsSpan(0, _count).ToArray(),
@@ -130,9 +160,8 @@ public sealed class NodeIndexBuilder
             _allocated.AsSpan(0, _count).ToArray(),
             _lastWriteTicks.AsSpan(0, _count).ToArray(),
             _fileReference.AsSpan(0, _count).ToArray(),
-            _status.AsSpan(0, _count).ToArray(),
-            _errors);
-    }
+            status,
+            errors);
 
     private int Append(
         int parentId,

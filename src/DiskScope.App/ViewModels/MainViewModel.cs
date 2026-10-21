@@ -16,6 +16,9 @@ public sealed class MainViewModel : ObservableObject
     private const int MaxErrorsInSummary = 20;
     private const int MaxLargestFiles = 1000;
 
+    // First provisional tree after 2 s; the engine doubles the delay after each one (see ScanOptions).
+    private static readonly TimeSpan PartialResultDelay = TimeSpan.FromSeconds(2);
+
     private readonly IShellActions _shell;
     private string _rootPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     private bool _isScanning;
@@ -328,7 +331,7 @@ public sealed class MainViewModel : ObservableObject
         _cts = cts;
         try
         {
-            var request = new ScanRequest(RootPath);
+            var request = new ScanRequest(RootPath, new ScanOptions { PartialResultInterval = PartialResultDelay });
             var orchestrator = new ScanOrchestrator([new StandardScanEngine()]);
 
             IScanEngine engine;
@@ -343,7 +346,7 @@ public sealed class MainViewModel : ObservableObject
             }
 
             StatusText = "Scanning...";
-            ScanResult result = await engine.ScanAsync(request, new ProgressObserver(this), cts.Token);
+            ScanResult result = await engine.ScanAsync(request, new ProgressObserver(this, cts), cts.Token);
             Summary = BuildSummary(result);
             LoadIndex(result.Index);
             StatusText = $"Scan finished: {result.Outcome}";
@@ -411,8 +414,25 @@ public sealed class MainViewModel : ObservableObject
         return sb.ToString();
     }
 
-    private sealed class ProgressObserver(MainViewModel owner) : IScanObserver
+    /// <summary>Shows a provisional index while a scan runs. The tree is rebuilt, so expansion state is not kept.</summary>
+    internal void LoadPartialIndex(NodeIndex partial)
     {
+        Summary = "PARTIAL RESULT: scan in progress, unvisited directories are flagged NotScanned.";
+        LoadIndex(partial);
+    }
+
+    private sealed class ProgressObserver(MainViewModel owner, CancellationTokenSource scan) : IScanObserver
+    {
+        public void OnPartialResult(NodeIndex partial) =>
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                // A late partial must never overwrite the final result or a newer scan.
+                if (ReferenceEquals(owner._cts, scan))
+                {
+                    owner.LoadPartialIndex(partial);
+                }
+            }));
+
         public void OnProgress(in ScanProgress progress)
         {
             // 'in' parameters cannot be captured by a lambda (CS1628), so copy to a local first.

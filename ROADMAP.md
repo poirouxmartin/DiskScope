@@ -26,13 +26,12 @@ Then: search and filters (name, extensions, size range, modification date range,
 
 Then: squarified treemap (Core layout, pure and tested; one WPF element drawing in OnRender, capped at 100 000 rectangles, areas under 9 px² dropped; click selects, double-click zooms into a directory, right-click zooms out) synchronized with the tree (tree selection to treemap, treemap selection reveals and selects the node in the tree); CSV export (RFC 4180, depth-first, no path string per file, unknown dates left empty). Rendering checked in the running app. NOT verified in the running app: mouse click selection in the treemap (posted clicks do not reach WPF and real clicks were refused while the session was locked); the view-model side is covered by tests. 96 tests.
 
+Then (2026-10-21): treemap mouse interaction checked in the running app with real clicks on `C:\Program Files\dotnet` (click selects and reveals the node in the tree, double-click zooms into the directory, right-click zooms out). Partial results during the scan: `NodeIndexBuilder.Snapshot` copies the builder on the scan thread and flags pending directories NotScanned, so the root reads SubtreeIncomplete; `ScanOptions.PartialResultInterval` (app: 2 s, doubling after each snapshot, capped at 30 s, never shorter than 10x the last snapshot cost); `IScanObserver.OnPartialResult`. Checked in the running app on `C:\Windows` (summary shows PARTIAL RESULT during the scan). Known limit: each partial refresh rebuilds the tree, so expansion state is lost. Changes during the scan: a test seam in the standard engine deletes or renames a directory between listing and enumeration (Vanished, NotFound error, siblings still counted). 107 tests.
+
 ### Remaining, in order
 
-1. Manual check of treemap mouse interaction (click select, double-click zoom, right-click zoom out) on an unlocked session.
-2. Partial-tree publication during scan (reader-safe snapshot of the builder).
-3. Vanished-during-scan test via an injection point in the engine.
-4. NTFS engine prototype (needs an elevated session, see docs/NTFS-RISKS.md).
-5. Reference benchmarks on a quiet machine (docs/BENCHMARK-PROTOCOL.md).
+1. NTFS engine prototype (needs an elevated session, see docs/NTFS-RISKS.md).
+2. Reference benchmarks on a quiet machine (docs/BENCHMARK-PROTOCOL.md).
 
 Open decision: hard links counted once per path (current behavior) or once per file reference.
 

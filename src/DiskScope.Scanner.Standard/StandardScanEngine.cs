@@ -16,6 +16,20 @@ namespace DiskScope.Scanner.Standard;
 public sealed class StandardScanEngine : IScanEngine
 {
     private const int BufferSize = 64 * 1024;
+
+    // Test seam: runs on the scan thread just before a directory handle is opened,
+    // so a test can delete or lock the directory between listing and enumeration.
+    private readonly Action<string>? _beforeDirectoryOpen;
+
+    public StandardScanEngine()
+    {
+    }
+
+    internal StandardScanEngine(Action<string> beforeDirectoryOpen)
+    {
+        _beforeDirectoryOpen = beforeDirectoryOpen;
+    }
+
     public string Name => "Standard";
 
     public EngineAvailability CheckAvailability(ScanRequest request) =>
@@ -44,6 +58,7 @@ public sealed class StandardScanEngine : IScanEngine
         var counters = new Counters();
         var sw = Stopwatch.StartNew();
         var lastReport = TimeSpan.Zero;
+        var partials = new PartialResultSchedule(options);
         var outcome = ScanOutcome.Completed;
         string? failure = null;
 
@@ -65,11 +80,21 @@ public sealed class StandardScanEngine : IScanEngine
                     }
 
                     var (dirId, dirPath) = stack.Pop();
+                    _beforeDirectoryOpen?.Invoke(dirPath);
                     EnumerateDirectory(builder, stack, dirId, dirPath, buffer, counters);
                     if (sw.Elapsed - lastReport >= options.ProgressInterval)
                     {
                         lastReport = sw.Elapsed;
                         Report(observer, counters, dirPath, lastReport);
+                    }
+
+                    // An empty stack means the final result is moments away; a snapshot then would carry no NotScanned flag.
+                    if (observer is not null && stack.Count > 0 && partials.IsDue(sw.Elapsed))
+                    {
+                        TimeSpan start = sw.Elapsed;
+                        NodeIndex partial = builder.Snapshot(stack.Select(s => s.Id));
+                        partials.Published(sw.Elapsed, sw.Elapsed - start);
+                        observer.OnPartialResult(partial);
                     }
                 }
             }
