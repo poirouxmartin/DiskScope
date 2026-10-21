@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/DiskScope.Core/DiskScope.Core.csproj" />
+    <Project Path="src/DiskScope.Monitoring/DiskScope.Monitoring.csproj" />
+    <Project Path="src/DiskScope.Monitoring.CpuRam/DiskScope.Monitoring.CpuRam.csproj" />
+    <Project Path="src/DiskScope.Processes/DiskScope.Processes.csproj" />
     <Project Path="src/DiskScope.Storage/DiskScope.Storage.csproj" />
     <Project Path="src/DiskScope.Scanner/DiskScope.Scanner.csproj" />
     <Project Path="src/DiskScope.Scanner.Standard/DiskScope.Scanner.Standard.csproj" />
