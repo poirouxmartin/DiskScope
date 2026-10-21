@@ -19,6 +19,8 @@
     <ProjectReference Include="..\DiskScope.Processes\DiskScope.Processes.csproj" />
     <ProjectReference Include="..\DiskScope.History\DiskScope.History.csproj" />
     <ProjectReference Include="..\DiskScope.Diagnostics\DiskScope.Diagnostics.csproj" />
+    <ProjectReference Include="..\DiskScope.Maintenance\DiskScope.Maintenance.csproj" />
+    <ProjectReference Include="..\DiskScope.Reports\DiskScope.Reports.csproj" />
   </ItemGroup>
 
   <ItemGroup>

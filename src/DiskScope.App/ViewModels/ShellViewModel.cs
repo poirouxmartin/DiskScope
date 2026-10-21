@@ -9,14 +9,16 @@ public sealed class ShellViewModel : ObservableObject, IAsyncDisposable
     public const int ProcessesTab = 3;
     public const int GpuTab = 4;
     public const int HistoryTab = 5;
+    public const int StartupTab = 6;
 
     private int _selectedTab;
 
-    public ShellViewModel(StorageViewModel storage, MonitoringViewModel monitoring, ProcessesViewModel processes)
+    public ShellViewModel(StorageViewModel storage, MonitoringViewModel monitoring, ProcessesViewModel processes, StartupViewModel startup)
     {
         Storage = storage;
         Monitoring = monitoring;
         Processes = processes;
+        Startup = startup;
         Monitoring.ProcessNameResolver = processes.TryGetName;
         NavigateCommand = new ParameterCommand(p =>
         {
@@ -37,17 +39,20 @@ public sealed class ShellViewModel : ObservableObject, IAsyncDisposable
 
     public ProcessesViewModel Processes { get; }
 
+    public StartupViewModel Startup { get; }
+
     public ParameterCommand NavigateCommand { get; }
 
     public int SelectedTab { get => _selectedTab; set => SetProperty(ref _selectedTab, value); }
 
     public static ShellViewModel CreateDefault() =>
-        new(new StorageViewModel(), MonitoringViewModel.CreateDefault(), new ProcessesViewModel());
+        new(new StorageViewModel(), MonitoringViewModel.CreateDefault(), new ProcessesViewModel(), new StartupViewModel());
 
     public void Start()
     {
         Monitoring.Start();
         Processes.Start();
+        _ = Startup.RefreshAsync();
     }
 
     public async ValueTask DisposeAsync()

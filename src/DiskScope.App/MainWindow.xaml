@@ -29,6 +29,9 @@
             <TabItem Header="History &amp; alerts">
                 <views:HistoryView DataContext="{Binding Monitoring}" />
             </TabItem>
+            <TabItem Header="Startup &amp; services">
+                <views:StartupView DataContext="{Binding Startup}" />
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>

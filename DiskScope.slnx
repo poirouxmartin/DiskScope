@@ -7,6 +7,8 @@
     <Project Path="src/DiskScope.Processes/DiskScope.Processes.csproj" />
     <Project Path="src/DiskScope.History/DiskScope.History.csproj" />
     <Project Path="src/DiskScope.Diagnostics/DiskScope.Diagnostics.csproj" />
+    <Project Path="src/DiskScope.Maintenance/DiskScope.Maintenance.csproj" />
+    <Project Path="src/DiskScope.Reports/DiskScope.Reports.csproj" />
     <Project Path="src/DiskScope.Storage/DiskScope.Storage.csproj" />
     <Project Path="src/DiskScope.Scanner/DiskScope.Scanner.csproj" />
     <Project Path="src/DiskScope.Scanner.Standard/DiskScope.Scanner.Standard.csproj" />
