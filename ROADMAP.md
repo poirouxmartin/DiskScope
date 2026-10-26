@@ -2,7 +2,7 @@
 
 Status as of 2026-10-26. Part 1 is complete except the items blocked by the environment (elevation, quiet machine); summary in docs/STORAGE-REPORT.md. Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
 
-Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit are in place; nothing is pushed and no GitHub repository exists yet (needs the owner's go).
+Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit of the whole history are in place. The public repository exists (`main` at 9c4ab12, CI green there); later work is on a local branch, not pushed (needs the owner's go). Checklist: docs/PUBLISHING.md.
 
 ## Part 1: Storage module (done, except blocked items)
 
@@ -31,6 +31,8 @@ Then: squarified treemap (Core layout, pure and tested; one WPF element drawing 
 Then (2026-10-21): treemap mouse interaction checked in the running app with real clicks on `C:\Program Files\dotnet` (click selects and reveals the node in the tree, double-click zooms into the directory, right-click zooms out). Partial results during the scan: `NodeIndexBuilder.Snapshot` copies the builder on the scan thread and flags pending directories NotScanned, so the root reads SubtreeIncomplete; `ScanOptions.PartialResultInterval` (app: 2 s, doubling after each snapshot, capped at 30 s, never shorter than 10x the last snapshot cost); `IScanObserver.OnPartialResult`. Checked in the running app on `C:\Windows` (summary shows PARTIAL RESULT during the scan). Known limit: each partial refresh rebuilds the tree, so expansion state is lost. Changes during the scan: a test seam in the standard engine deletes or renames a directory between listing and enumeration (Vanished, NotFound error, siblings still counted). 107 tests.
 
 Then: NTFS prototype, parts that do not need elevation (USN record parser, tree rebuild with orphans, root reference, `usn-probe` benchmark command). Status and what is not verified: docs/NTFS-RISKS.md section 8. 123 tests.
+
+Then (2026-10-26): limits found on real use and fixable without elevation: last change in the subtree (tree column, CSV column), lookup by path and `inspect` CLI command (denied directories listed), `GetKnownTotalSize` (unknown totals show `n/a`, never 0), tree expansion and selection kept across partial refreshes. Details: docs/STORAGE-REPORT.md. 255 tests.
 
 ### Remaining (blocked by the environment)
 
