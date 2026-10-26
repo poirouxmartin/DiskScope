@@ -29,7 +29,7 @@ Check the printed header of `scan` for which of these it already emits. Anything
 1. Release build. Run from the repo root:
    `dotnet run -c Release --project src/DiskScope.Benchmarks -- scan <path>`
 2. Machine: AC power, heavy applications closed. Record the power state in Notes.
-3. Correctness first: run `compare <path>` on the dataset before any timing. Exit code 1 (mismatch) blocks timing for that dataset.
+3. Correctness first: run `compare <path>` on the dataset before any timing. Exit code 1 (mismatch) blocks timing for that dataset. Exception: D2 and D3 are live trees and the two passes run minutes apart, so they rarely compare equal; for them, check stable subtrees instead (on D3: `Program Files`, `ProgramData`, `Windows`), which must be equal, and record the live-tree delta in Notes.
 4. Defaults are 1 warmup and 5 measured runs (`--warmup 1 --runs 5`). Warmups are tagged in the output and excluded from median and min.
 5. Report the median and the min, plus the printed header line, in the RESULTS row.
 6. Any non-zero exit code invalidates the run. Exit codes: 1 scan not completed, compare mismatch, or I/O failure; 2 usage error; 3 refused by precondition.
