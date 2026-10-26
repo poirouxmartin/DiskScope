@@ -256,8 +256,10 @@ public sealed class StorageViewModel : ObservableObject
             return;
         }
 
+        TreeState previous = CaptureTreeState();
         var root = new NodeViewModel(index, NodeIndex.RootId, _sizeKind, parentTotal: 0);
         root.IsExpanded = true;
+        RestoreTreeState(index, root, previous);
         RootNodes = new ObservableCollection<NodeViewModel> { root };
 
         SizeKind kind = _sizeKind;
@@ -269,6 +271,89 @@ public sealed class StorageViewModel : ObservableObject
             ExtensionStats.Compute(index, kind).Select(stat => ToExtensionRow(stat, rootTotal)));
 
         _ = Search.RefreshAsync();
+    }
+
+    private sealed record TreeState(string RootName, List<(int Id, string Name)> Expanded, (int Id, string Name)? Selected);
+
+    /// <summary>Expanded and selected nodes of the current tree, in ascending id order (so parents come first).</summary>
+    private TreeState CaptureTreeState()
+    {
+        var expanded = new List<(int Id, string Name)>();
+        (int, string)? selected = null;
+        if (RootNodes.Count == 0)
+        {
+            return new TreeState(string.Empty, expanded, selected);
+        }
+
+        var pending = new Stack<NodeViewModel>();
+        pending.Push(RootNodes[0]);
+        while (pending.Count > 0)
+        {
+            NodeViewModel node = pending.Pop();
+            if (node.IsSelected)
+            {
+                selected = (node.Id, node.Name);
+            }
+
+            if (!node.IsExpanded || !node.ChildrenLoaded)
+            {
+                continue;
+            }
+
+            expanded.Add((node.Id, node.Name));
+            foreach (NodeViewModel child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        expanded.Sort((a, b) => a.Id.CompareTo(b.Id));
+        return new TreeState(RootNodes[0].Name, expanded, selected);
+    }
+
+    /// <summary>
+    /// Re-expands and reselects the nodes of <paramref name="state"/> in a rebuilt tree. Node ids are stable
+    /// within one scan (the builder is append-only), so a partial snapshot, the final index and a size switch
+    /// keep the user's place. A node is restored only if the same id carries the same name and its parent was
+    /// restored too; anything else (another scan, another root) is dropped silently.
+    /// </summary>
+    private static void RestoreTreeState(NodeIndex index, NodeViewModel root, TreeState state)
+    {
+        if (!string.Equals(state.RootName, root.Name, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var restored = new Dictionary<int, NodeViewModel> { [NodeIndex.RootId] = root };
+        foreach ((int id, string name) in state.Expanded)
+        {
+            if (Find(id, name) is { } node)
+            {
+                node.IsExpanded = true;
+                restored[id] = node;
+            }
+        }
+
+        if (state.Selected is { } selected && Find(selected.Id, selected.Name) is { } selectedNode)
+        {
+            selectedNode.IsSelected = true;
+        }
+
+        NodeViewModel? Find(int id, string name)
+        {
+            if (id == NodeIndex.RootId)
+            {
+                return root;
+            }
+
+            if (id >= index.Count || !index.GetName(id).SequenceEqual(name)
+                || !restored.TryGetValue(index.GetParent(id), out NodeViewModel? parent))
+            {
+                return null;
+            }
+
+            return parent.Children.FirstOrDefault(c => c.Id == id);
+        }
     }
 
     internal static FileRowViewModel ToFileRow(NodeIndex index, int id, SizeKind kind)
@@ -414,7 +499,7 @@ public sealed class StorageViewModel : ObservableObject
         return sb.ToString();
     }
 
-    /// <summary>Shows a provisional index while a scan runs. The tree is rebuilt, so expansion state is not kept.</summary>
+    /// <summary>Shows a provisional index while a scan runs. The tree is rebuilt; expanded and selected nodes are kept.</summary>
     internal void LoadPartialIndex(NodeIndex partial)
     {
         Summary = "PARTIAL RESULT: scan in progress, unvisited directories are flagged NotScanned.";

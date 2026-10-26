@@ -102,6 +102,82 @@ public sealed class StorageViewModelTests
         Assert.Empty(fake.Shown);
     }
 
+    [Fact]
+    public void PartialThenFinalIndex_KeepsExpandedAndSelectedNodes()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\data");
+        int sub = builder.Add(root, "sub", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        int inner = builder.Add(sub, "inner", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.Add(inner, "x.bin", NodeKind.File, FileAttributes.Normal, 10, 0, 0, 0);
+        var vm = new StorageViewModel(new FakeShell());
+        vm.LoadPartialIndex(builder.Snapshot(new[] { sub }));
+        NodeViewModel subNode = vm.RootNodes[0].Children.Single(c => c.Id == sub);
+        subNode.IsExpanded = true;
+        subNode.Children.Single(c => c.Id == inner).IsSelected = true;
+
+        builder.Add(sub, "late.bin", NodeKind.File, FileAttributes.Normal, 20, 0, 0, 0);
+        vm.LoadIndex(builder.Build());
+
+        NodeViewModel newSub = vm.RootNodes[0].Children.Single(c => c.Id == sub);
+        Assert.NotSame(subNode, newSub);
+        Assert.True(newSub.IsExpanded);
+        Assert.Equal(new[] { "late.bin", "inner" }, newSub.Children.Select(c => c.Name).ToArray());
+        Assert.True(newSub.Children.Single(c => c.Id == inner).IsSelected);
+        Assert.False(newSub.Children.Single(c => c.Id == inner).IsExpanded);
+    }
+
+    [Fact]
+    public void SwitchingSizeKind_KeepsExpandedNodes()
+    {
+        var vm = new StorageViewModel(new FakeShell());
+        vm.LoadIndex(BuildIndex());
+        vm.RootNodes[0].Children.Single(c => c.Name == "sub").IsExpanded = true;
+
+        vm.IsAllocated = true;
+
+        Assert.True(vm.RootNodes[0].Children.Single(c => c.Name == "sub").IsExpanded);
+    }
+
+    [Fact]
+    public void IndexOfAnotherRoot_DoesNotInheritExpansion()
+    {
+        var vm = new StorageViewModel(new FakeShell());
+        vm.LoadIndex(BuildIndex());
+        vm.RootNodes[0].Children.Single(c => c.Name == "sub").IsExpanded = true;
+
+        var other = new NodeIndexBuilder();
+        int root = other.AddRoot("D:\\other");
+        int dir = other.Add(root, "sub", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        other.Add(dir, "y.bin", NodeKind.File, FileAttributes.Normal, 1, 0, 0, 0);
+        vm.LoadIndex(other.Build());
+
+        Assert.All(vm.RootNodes[0].Children, c => Assert.False(c.IsExpanded));
+    }
+
+    [Fact]
+    public void UnreadableDirectory_ShowsUnknownSize_AndSubtreeLastChange()
+    {
+        long ticks = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc).Ticks;
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\data");
+        int locked = builder.Add(root, "locked", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.AddStatus(locked, NodeStatus.AccessDenied);
+        int dir = builder.Add(root, "dir", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.Add(dir, "f.bin", NodeKind.File, FileAttributes.Normal, 10, 0, ticks, 0);
+        var vm = new StorageViewModel(new FakeShell());
+
+        vm.LoadIndex(builder.Build());
+
+        NodeViewModel lockedNode = vm.RootNodes[0].Children.Single(c => c.Id == locked);
+        NodeViewModel dirNode = vm.RootNodes[0].Children.Single(c => c.Id == dir);
+        Assert.Equal("n/a", lockedNode.TotalSizeText);
+        Assert.Equal("n/a", lockedNode.PercentText);
+        Assert.Equal("n/a", lockedNode.LastChangeText);
+        Assert.Equal(new DateTime(ticks, DateTimeKind.Utc).ToLocalTime().ToString("yyyy-MM-dd"), dirNode.LastChangeText);
+        Assert.NotEqual("n/a", dirNode.TotalSizeText);
+    }
+
     // Logical ranking: a.bin 10000, sub/d.bin 6000, sub/c.bin 5000, b.bin 100 (sub dir totals 11000, must be excluded).
     // Allocated ranking: b.bin 8192, a.bin 4096, sub/c.bin 1024, sub/d.bin 1024.
     private static NodeIndex BuildIndex()

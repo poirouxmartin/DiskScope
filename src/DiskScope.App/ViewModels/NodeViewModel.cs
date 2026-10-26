@@ -10,6 +10,8 @@ public sealed class NodeViewModel : ObservableObject
     /// <summary>Stand-in child shown under a directory until its children are materialized.</summary>
     public static readonly NodeViewModel Placeholder = new();
 
+    private const string Unknown = "n/a";
+
     private readonly NodeIndex? _index;
     private readonly SizeKind _sizeKind;
     private bool _isExpanded;
@@ -25,12 +27,20 @@ public sealed class NodeViewModel : ObservableObject
         Name = index.GetNameString(id);
         Kind = index.GetKind(id);
         TotalSize = index.GetTotalSize(id, sizeKind);
-        TotalSizeText = ByteFormatter.Format(TotalSize);
-        LogicalText = ByteFormatter.Format(index.GetTotalLogicalSize(id));
-        AllocatedText = ByteFormatter.Format(index.GetTotalAllocatedSize(id));
         PercentOfParent = ComputePercentOfParent(id, TotalSize, parentTotal);
-        PercentText = PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %";
+
+        // A directory whose own listing failed has a total of 0 in the index: show n/a, never "0 B".
+        bool sizeKnown = index.GetKnownTotalSize(id, sizeKind) is not null;
+        TotalSizeText = sizeKnown ? ByteFormatter.Format(TotalSize) : Unknown;
+        PercentText = sizeKnown ? PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %" : Unknown;
+        LogicalText = FormatKnown(index.GetKnownTotalSize(id, SizeKind.Logical));
+        AllocatedText = FormatKnown(index.GetKnownTotalSize(id, SizeKind.Allocated));
         FileCount = index.GetRecursiveFileCount(id);
+
+        DateTime lastChange = index.GetSubtreeLastWriteUtc(id);
+        LastChangeText = lastChange.Ticks == 0
+            ? Unknown
+            : lastChange.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
         NodeStatus status = index.GetStatus(id);
         IsIncomplete = status != NodeStatus.None;
@@ -65,6 +75,9 @@ public sealed class NodeViewModel : ObservableObject
     public string PercentText { get; } = string.Empty;
 
     public long FileCount { get; }
+
+    /// <summary>Latest change anywhere in the subtree (local date); for an incomplete subtree, the latest change seen.</summary>
+    public string LastChangeText { get; } = string.Empty;
 
     public bool IsIncomplete { get; }
 
@@ -116,6 +129,8 @@ public sealed class NodeViewModel : ObservableObject
         ChildrenLoaded = true;
         Children = new ObservableCollection<NodeViewModel>(loaded);
     }
+
+    private static string FormatKnown(long? bytes) => bytes is { } known ? ByteFormatter.Format(known) : Unknown;
 
     private static double ComputePercentOfParent(int id, long totalSize, long parentTotal)
     {

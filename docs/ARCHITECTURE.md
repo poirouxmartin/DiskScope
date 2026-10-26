@@ -40,7 +40,14 @@ attributes, logical and allocated size, last write ticks, file reference, status
 per-node object, so a million nodes cost a few arrays rather than a million allocations.
 
 Invariant: parent ids are always smaller than child ids. `NodeIndexBuilder` enforces it by
-appending only and requiring an existing directory as parent. Aggregation depends on it.
+appending only and requiring an existing directory as parent. Aggregation depends on it. Because
+the builder only appends, a node keeps its id across partial snapshots and the final index of one
+scan; the tree uses this to keep expanded folders open while results refresh.
+
+Aggregation (one descending pass) computes totals, file and directory counts, and the latest
+last-write time of each subtree. Unknown dates are 0, so they never win the maximum. A node whose
+own listing failed has totals of 0 in the arrays; `GetKnownTotalSize` returns null for it, and
+the tree and the CSV export go through that accessor (the treemap simply draws nothing for it).
 
 Names are copied into one char pool. Lookups return spans, and `GetNameString` allocates only on
 request. Paths are never stored: `GetFullPath` walks the parent chain and joins the names.

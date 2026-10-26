@@ -15,7 +15,7 @@ namespace DiskScope.Storage;
 /// </remarks>
 public static class CsvExporter
 {
-    public const string Header = "Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,Status";
+    public const string Header = "Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,SubtreeLastWriteUtc,Status";
 
     private const int CancellationCheckInterval = 4096;
     private const string DateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -92,15 +92,17 @@ public static class CsvExporter
         writer.Write(',');
         WriteNumber(writer, index.GetAllocatedSize(id));
         writer.Write(',');
-        WriteNumber(writer, index.GetTotalLogicalSize(id));
+        WriteKnownNumber(writer, index.GetKnownTotalSize(id, SizeKind.Logical));
         writer.Write(',');
-        WriteNumber(writer, index.GetTotalAllocatedSize(id));
+        WriteKnownNumber(writer, index.GetKnownTotalSize(id, SizeKind.Allocated));
         writer.Write(',');
         WriteNumber(writer, index.GetRecursiveFileCount(id));
         writer.Write(',');
         WriteNumber(writer, index.GetRecursiveDirectoryCount(id));
         writer.Write(',');
         WriteDate(writer, index.GetLastWriteUtc(id));
+        writer.Write(',');
+        WriteDate(writer, index.GetSubtreeLastWriteUtc(id));
         writer.Write(',');
 
         NodeStatus status = index.GetStatus(id);
@@ -154,6 +156,15 @@ public static class CsvExporter
         Span<char> buffer = stackalloc char[20];
         value.TryFormat(buffer, out int written, ReadOnlySpan<char>.Empty, CultureInfo.InvariantCulture);
         writer.Write(buffer.Slice(0, written));
+    }
+
+    /// <summary>An unknown total is left empty, never written as 0.</summary>
+    private static void WriteKnownNumber(TextWriter writer, long? value)
+    {
+        if (value is { } known)
+        {
+            WriteNumber(writer, known);
+        }
     }
 
     private static void WriteDate(TextWriter writer, DateTime utc)

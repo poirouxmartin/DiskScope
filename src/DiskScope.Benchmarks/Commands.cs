@@ -121,6 +121,71 @@ internal static class Commands
         return equal ? 0 : 1;
     }
 
+    /// <summary>One scan, then every unreadable directory with its error, and optionally the details of one node.</summary>
+    public static int Inspect(string path, string? nodePath)
+    {
+        ScanResult result = new StandardScanEngine()
+            .ScanAsync(new ScanRequest(path), null, CancellationToken.None)
+            .GetAwaiter()
+            .GetResult();
+        Console.WriteLine($"Path:    {path}");
+        Console.WriteLine($"Outcome: {result.Outcome} in {result.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s");
+        List<string> lines = InspectLines(result.Index, nodePath, out bool found);
+        foreach (string line in lines)
+        {
+            Console.WriteLine(line);
+        }
+
+        return result.Outcome == ScanOutcome.Completed && found ? 0 : 1;
+    }
+
+    /// <summary>
+    /// Error list (kind, Win32 code, path), then the node at <paramref name="nodePath"/> if given.
+    /// <paramref name="found"/> is false when the node is not in the index. Unknown values print as n/a, never 0.
+    /// </summary>
+    internal static List<string> InspectLines(NodeIndex index, string? nodePath, out bool found)
+    {
+        var lines = new List<string> { $"Errors:  {index.Errors.Count}" };
+        foreach (ScanError error in index.Errors)
+        {
+            lines.Add($"  {error.Kind} {error.Win32Error} {index.GetFullPath(error.NodeId)}");
+        }
+
+        found = true;
+        if (nodePath is null)
+        {
+            return lines;
+        }
+
+        int id = index.FindByPath(nodePath);
+        if (id < 0)
+        {
+            found = false;
+            lines.Add($"Node not found: {nodePath}");
+            return lines;
+        }
+
+        lines.Add($"Node:    {index.GetFullPath(id)} ({index.GetKind(id)})");
+        lines.Add($"  status:             {index.GetStatus(id)}");
+        lines.Add($"  logical bytes:      {Known(index.GetKnownTotalSize(id, SizeKind.Logical))}");
+        lines.Add($"  allocated bytes:    {Known(index.GetKnownTotalSize(id, SizeKind.Allocated))}");
+        lines.Add($"  files:              {index.GetRecursiveFileCount(id).ToString(CultureInfo.InvariantCulture)}");
+        lines.Add($"  directories:        {index.GetRecursiveDirectoryCount(id).ToString(CultureInfo.InvariantCulture)}");
+        lines.Add($"  last write:         {Date(index.GetLastWriteUtc(id))}");
+        lines.Add($"  subtree last write: {Date(index.GetSubtreeLastWriteUtc(id))}");
+        if (index.GetStatus(id) != NodeStatus.None)
+        {
+            lines.Add("  incomplete: sizes, counts and the subtree date are lower bounds.");
+        }
+
+        return lines;
+
+        static string Known(long? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "n/a";
+
+        static string Date(DateTime utc) =>
+            utc.Ticks == 0 ? "n/a" : utc.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
+    }
+
     /// <param name="beforeEnumerate">Test seam: called with each directory path just before it is enumerated.</param>
     internal static Baseline WalkBaseline(string path, Action<string>? beforeEnumerate = null)
     {

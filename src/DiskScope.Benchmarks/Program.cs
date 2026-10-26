@@ -22,6 +22,7 @@ internal static class Program
             {
                 "scan" => RunScan(args),
                 "compare" => RunCompare(args),
+                "inspect" => RunInspect(args),
                 "synthetic" => RunSynthetic(args),
                 "generate" => RunGenerate(args),
                 "monitor" => args.Length == 1
@@ -96,6 +97,22 @@ internal static class Program
         }
 
         return Commands.Compare(path);
+    }
+
+    private static int RunInspect(string[] args)
+    {
+        if (args.Length is not (2 or 4) || (args.Length == 4 && args[2] != "--node"))
+        {
+            return Usage("inspect takes <path> [--node <path>].");
+        }
+
+        string path = Path.GetFullPath(args[1]);
+        if (!Directory.Exists(path))
+        {
+            return Usage($"Path not found: {path}");
+        }
+
+        return Commands.Inspect(path, args.Length == 4 ? Path.GetFullPath(args[3]) : null);
     }
 
     private static int RunSynthetic(string[] args)
@@ -184,6 +201,8 @@ internal static class Program
         Console.Error.WriteLine("      Timed runs of StandardScanEngine, release build recommended. Warmups are tagged.");
         Console.Error.WriteLine("  compare <path>");
         Console.Error.WriteLine("      Engine file count and logical bytes vs a manual directory walk. Correctness check.");
+        Console.Error.WriteLine("  inspect <path> [--node <path>]");
+        Console.Error.WriteLine("      One scan, then every unreadable directory with its error, and the details of one node.");
         Console.Error.WriteLine("  synthetic [--nodes N=1000000]");
         Console.Error.WriteLine("      NodeIndexBuilder Add, Build and allocation cost on a synthetic tree.");
         Console.Error.WriteLine("  generate <dir> [--files N=200000] [--seed S=1]");
@@ -193,7 +212,7 @@ internal static class Program
         Console.Error.WriteLine("  usn-probe <drive letter>");
         Console.Error.WriteLine("      FSCTL_ENUM_USN_DATA enumeration and tree rebuild on a whole NTFS volume. Needs an elevated console.");
         Console.Error.WriteLine();
-        Console.Error.WriteLine("Exit codes: 0 ok; 1 scan not completed, compare mismatch, or I/O failure;");
+        Console.Error.WriteLine("Exit codes: 0 ok; 1 scan not completed, compare mismatch, node not found, or I/O failure;");
         Console.Error.WriteLine("            2 usage or invalid argument; 3 refused by precondition (non-empty target, low free space).");
         return ExitUsage;
     }

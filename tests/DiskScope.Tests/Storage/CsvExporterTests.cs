@@ -13,7 +13,7 @@ public sealed class CsvExporterTests
     {
         string[] lines = Lines(Export(BuildSimple()));
 
-        Assert.Equal("Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,Status", lines[0]);
+        Assert.Equal("Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,SubtreeLastWriteUtc,Status", lines[0]);
     }
 
     [Fact]
@@ -67,6 +67,39 @@ public sealed class CsvExporterTests
         Assert.Equal("2024-03-05T07:08:09Z", knownFields[8]);
         Assert.Equal(string.Empty, unknownFields[8]);
         Assert.Equal(string.Empty, unknownFields[9]);
+        Assert.Equal(string.Empty, unknownFields[10]);
+    }
+
+    [Fact]
+    public void SubtreeLastWriteUtc_OfDirectory_IsLatestDateBelowIt()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\d");
+        long dirTicks = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc).Ticks;
+        long fileTicks = new DateTime(2024, 3, 5, 7, 8, 9, DateTimeKind.Utc).Ticks;
+        int dir = builder.Add(root, "old", NodeKind.Directory, FileAttributes.Directory, 0, 0, dirTicks, 0);
+        builder.Add(dir, "recent.txt", NodeKind.File, FileAttributes.Normal, 1, 0, fileTicks, 0);
+        string[] dirFields = Lines(Export(builder.Build()))[2].Split(',');
+
+        Assert.Equal("2020-01-01T00:00:00Z", dirFields[8]);
+        Assert.Equal("2024-03-05T07:08:09Z", dirFields[9]);
+    }
+
+    [Fact]
+    public void Totals_OfUnreadableDirectory_AreEmptyNotZero()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\s");
+        int locked = builder.Add(root, "locked", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.AddStatus(locked, NodeStatus.AccessDenied);
+        builder.Add(root, "f.txt", NodeKind.File, FileAttributes.Normal, 7, 4096, 0, 0);
+        string[] lines = Lines(Export(builder.Build()));
+        string[] rootFields = lines[1].Split(',');
+        string[] lockedFields = lines[2].Split(',');
+
+        Assert.Equal(string.Empty, lockedFields[4]);
+        Assert.Equal(string.Empty, lockedFields[5]);
+        Assert.Equal("7", rootFields[4]); // A lower bound: the status column flags the root SubtreeIncomplete.
     }
 
     [Fact]
