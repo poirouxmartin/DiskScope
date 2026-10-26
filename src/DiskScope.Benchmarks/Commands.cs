@@ -19,7 +19,7 @@ internal static class Commands
             Console.Error.WriteLine($"[trace] {p.Elapsed.TotalSeconds,7:F1} s nodes={p.Nodes} errors={p.Errors} dir={p.CurrentDirectory}");
     }
 
-    private sealed record Baseline(long Files, long LogicalBytes, long SkippedLinks, long LengthFailures);
+    internal sealed record Baseline(long Files, long LogicalBytes, long SkippedLinks, long LengthFailures, long VanishedDirectories);
 
     public static int Scan(string path, int runs, int warmup)
     {
@@ -113,14 +113,15 @@ internal static class Commands
 
         Console.WriteLine($"Path:     {path}");
         Console.WriteLine($"Engine:   {result.EngineName} outcome={result.Outcome} files={engineFiles} logical={engineBytes} bytes errors={engineErrors}");
-        Console.WriteLine($"Baseline: files={baseline.Files} logical={baseline.LogicalBytes} bytes links-skipped={baseline.SkippedLinks} length-failures={baseline.LengthFailures}");
+        Console.WriteLine($"Baseline: files={baseline.Files} logical={baseline.LogicalBytes} bytes links-skipped={baseline.SkippedLinks} length-failures={baseline.LengthFailures} vanished-dirs={baseline.VanishedDirectories}");
         Console.WriteLine($"Delta:    files {Signed(engineFiles - baseline.Files)} ({Percent(engineFiles, baseline.Files)}), logical {Signed(engineBytes - baseline.LogicalBytes)} bytes ({Percent(engineBytes, baseline.LogicalBytes)})");
-        Console.WriteLine("Baseline caveats: skips every entry carrying ReparsePoint (junctions, symlinks, and cloud placeholders that carry the attribute); enumeration errors are hidden by IgnoreInaccessible and not counted.");
+        Console.WriteLine("Baseline caveats: skips every entry carrying ReparsePoint (junctions, symlinks, and cloud placeholders that carry the attribute); enumeration errors are hidden by IgnoreInaccessible and not counted; on a live tree (profile, volume) the two passes run minutes apart, so a small mismatch is expected.");
         Console.WriteLine(equal ? "RESULT: equal" : "RESULT: MISMATCH");
         return equal ? 0 : 1;
     }
 
-    private static Baseline WalkBaseline(string path)
+    /// <param name="beforeEnumerate">Test seam: called with each directory path just before it is enumerated.</param>
+    internal static Baseline WalkBaseline(string path, Action<string>? beforeEnumerate = null)
     {
         var options = new EnumerationOptions
         {
@@ -134,40 +135,51 @@ internal static class Commands
         long bytes = 0;
         long links = 0;
         long lengthFailures = 0;
+        long vanished = 0;
         var pending = new Stack<DirectoryInfo>();
         pending.Push(new DirectoryInfo(path));
 
         while (pending.Count > 0)
         {
             DirectoryInfo directory = pending.Pop();
-            foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos("*", options))
+            beforeEnumerate?.Invoke(directory.FullName);
+            try
             {
-                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos("*", options))
                 {
-                    links++;
-                    continue;
-                }
-
-                if (entry is DirectoryInfo subdirectory)
-                {
-                    pending.Push(subdirectory);
-                }
-                else if (entry is FileInfo file)
-                {
-                    try
+                    if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
                     {
-                        bytes += file.Length;
-                        files++;
+                        links++;
+                        continue;
                     }
-                    catch (IOException)
+
+                    if (entry is DirectoryInfo subdirectory)
                     {
-                        lengthFailures++;
+                        pending.Push(subdirectory);
+                    }
+                    else if (entry is FileInfo file)
+                    {
+                        try
+                        {
+                            bytes += file.Length;
+                            files++;
+                        }
+                        catch (IOException)
+                        {
+                            lengthFailures++;
+                        }
                     }
                 }
             }
+            catch (DirectoryNotFoundException)
+            {
+                // A live tree (temp folders, build output) loses directories between listing and visit. Aborting the
+                // whole walk would throw away minutes of work; count it so the caller sees the baseline is partial.
+                vanished++;
+            }
         }
 
-        return new Baseline(files, bytes, links, lengthFailures);
+        return new Baseline(files, bytes, links, lengthFailures, vanished);
     }
 
     public static int Synthetic(int nodeCount)

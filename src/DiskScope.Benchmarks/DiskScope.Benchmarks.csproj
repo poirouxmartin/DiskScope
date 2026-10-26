@@ -19,4 +19,8 @@
     <ProjectReference Include="..\DiskScope.Diagnostics\DiskScope.Diagnostics.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="DiskScope.Tests" />
+  </ItemGroup>
+
 </Project>
