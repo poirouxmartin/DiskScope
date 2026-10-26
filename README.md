@@ -20,7 +20,7 @@ DiskScope measures; it does not "optimize" behind your back. It never deletes, m
 
 ### Monitoring
 
-- **Dashboard**: CPU, memory in use, commit charge, GPU, free space per volume, active alerts, memory growth suspicions, DiskScope's own CPU. Each card opens its module.
+- **Dashboard**: CPU, memory in use, commit charge, GPU, free space per volume, active alerts, memory growth suspicions, DiskScope's own CPU. Each card opens its module and shows the average, maximum and trend over its window (least-squares change, shown only once half the window is covered).
 - **CPU & memory**: global and per-logical-processor usage, user/kernel split, physical memory, commit charge and limit, cache, kernel pools, process/thread/handle counts. Every counter lists its definition and Windows source.
 - **Processes**: parent/child tree (PID reuse detected with creation times), CPU % of the machine, private bytes, working set, private working set, threads, handles, I/O, start time, path. Sustained private memory growth is flagged as a suspicion to verify, not as a leak.
 - **GPU**: per adapter, usage per engine type (3D, copy, video decode/encode/processing, compute), dedicated and shared memory, processes using the GPU. Engines are not added together; shared memory is not presented as VRAM.
@@ -29,7 +29,7 @@ DiskScope measures; it does not "optimize" behind your back. It never deletes, m
 - **Hypotheses**: correlations such as "low memory coincided with heavy disk activity: paging is likely", each with its confidence, data, checks to run and limits. Never presented as a proven cause.
 - **Startup & services**: read-only inventory of Run keys, startup folders, logon/boot scheduled tasks and services, with CSV export. No invented "impact score".
 - **Reports**: history CSV, process CSV, JSON and self-contained HTML reports. No machine name, user name or command line in them.
-- The cost of monitoring is itself measured and displayed (collection time per collector, DiskScope CPU and memory).
+- The cost of monitoring is itself measured and displayed (wall-clock and CPU time per collector, DiskScope CPU and memory).
 
 | CPU & memory | GPU |
 |---|---|
@@ -85,6 +85,7 @@ Roadmap: `ROADMAP.md`.
 
 ## Documentation
 
+- `docs/STORAGE-REPORT.md`: final report of the storage module (what works, evidence, open items).
 - `docs/ARCHITECTURE.md`: modules, storage index, counting rules, engine contract.
 - `docs/MONITORING.md`: every metric, its formula, source and limits; history; alert rules.
 - `docs/GPU-COMPATIBILITY.md`: GPU sources, definitions and tested hardware.

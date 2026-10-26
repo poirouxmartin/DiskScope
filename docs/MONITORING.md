@@ -16,6 +16,7 @@ collectors (IMetricCollector)  ->  MonitoringScheduler  ->  IMetricStore (histor
 - A collector that throws publishes a batch where all its metrics are `Unavailable`, plus the error. The others keep running.
 - A failing history store does not stop monitoring: the failure is counted (`StoreFailures`) and shown in the status bar.
 - Timestamps come from `MonitoringClock`: the wall clock is read once, then time advances with `Stopwatch`, so batches never go back in time when the system clock changes.
+- Cost of each collector (`CollectorStats`): wall-clock duration (last, max, total) and the CPU time of the collecting thread (`ThreadCpuClock`, GetThreadTimes). On a saturated machine the wall-clock figure mostly measures waiting for a processor; the CPU figure is the work itself. Windows counts thread time in clock ticks (about 15.6 ms), so only the mean over many collections is meaningful. One unreadable sample makes the CPU total unknown (`n/a`), never a low number.
 
 ## CPU (`DiskScope.Monitoring.CpuRam`)
 
@@ -71,6 +72,7 @@ See `docs/GPU-COMPATIBILITY.md`.
 - Every value goes to every tier on arrival; each bucket keeps min, average, max and sample count.
 - A query uses the finest tier that still holds the start of the range, or that never dropped anything.
 - Unavailable values are not stored: a period without data is a gap, drawn as a gap.
+- Tiles summarize their window with `MetricTrend`: average weighted by sample count, min and max from the stored extremes, and the change over the window from a weighted least-squares line on the real timestamps (gaps are skipped, not read as zeros). The change is shown only with at least 3 points covering half the window; before that the tile says how much history it needs. Percent metrics change in percentage points (`pts`). A trend describes the window; it is not a forecast.
 - Not persisted: history is lost when DiskScope exits. Persistence (SQLite, with batched writes and schema migrations, as the spec suggests) is a later step; it would add the first external dependency and needs a decision.
 
 ## Alerts (`DiskScope.Diagnostics`)

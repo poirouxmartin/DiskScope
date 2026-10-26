@@ -1,6 +1,6 @@
 # DiskScope roadmap
 
-Status as of 2026-10-21. Part 1 is complete except the items blocked by the environment (elevation, quiet machine). Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
+Status as of 2026-10-26. Part 1 is complete except the items blocked by the environment (elevation, quiet machine); summary in docs/STORAGE-REPORT.md. Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
 
 Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit are in place; nothing is pushed and no GitHub repository exists yet (needs the owner's go).
 
@@ -88,6 +88,13 @@ Other rules kept from the spec:
 - F (partial). Read-only start-up and services inventory with CSV export (`DiskScope.Maintenance`); checked in the app on the dev machine (68 entries, 345 services, every source read). Hardware sensors: not started (see below).
 - G (partial). Disk activity collector; `Finding`, `Confidence`, `IDiagnosticRule` in Core; two coincidence hypotheses (CPU or low memory with heavy disk activity) and a disk latency alert. ETW: not started (see below).
 - H. History CSV, process CSV, JSON and HTML reports (`DiskScope.Reports`); HTML export checked end to end from the running app (real data, no user or machine name in the file). Docs updated. 209 tests.
+
+### Done (2026-10-26)
+
+- Tested on a second, busy machine (work laptop, not elevated): build, 214 tests, full-volume scan, monitoring for 5 minutes, app memory over 10 minutes. Fixes: `compare` survives a directory vanishing mid-walk; view models have UI Automation names.
+- Metric tiles show average, maximum and a least-squares trend over their window (`MetricTrend`, Core); no trend before half the window is covered.
+- Collector cost: CPU time of the collecting thread (GetThreadTimes) next to wall-clock time, which on a saturated machine mostly measures waiting.
+- Privacy: commits authored with a work address were re-authored with the personal one before any push; tracked files, history patches, screenshots and the spec .docx metadata checked for work or personal data. 231 tests.
 
 ### Remaining, in order
 
