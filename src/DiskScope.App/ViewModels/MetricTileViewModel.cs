@@ -86,6 +86,9 @@ public sealed class CoreViewModel(int index) : ObservableObject
         Percent = value?.Value ?? 0; // the bar needs a length; the text says n/a when unknown
         Text = MetricFormatter.Format(value?.Value, MetricUnit.Percent);
     }
+
+    // The UI Automation name of the item; without it screen readers read the type name.
+    public override string ToString() => Label;
 }
 
 /// <summary>Label, value and source of one metric, for detail tables.</summary>
@@ -104,4 +107,6 @@ public sealed class MetricRowViewModel(MetricDescriptor descriptor) : Observable
     public string Value { get => _value; private set => SetProperty(ref _value, value); }
 
     public void Update(MetricValue? latest) => Value = MetricFormatter.Format(latest?.Value, Descriptor.Unit);
+
+    public override string ToString() => Name;
 }
