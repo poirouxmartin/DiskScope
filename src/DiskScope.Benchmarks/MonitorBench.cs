@@ -58,12 +58,13 @@ internal static class MonitorBench
 
         var c = CultureInfo.InvariantCulture;
         Console.WriteLine(string.Format(c, "duration          {0:F0} s, {1} batches, {2} logical processors", sw.Elapsed.TotalSeconds, batches, Environment.ProcessorCount));
-        Console.WriteLine("collector         avail  count  fail  missed  mean ms  max ms");
+        // "mean ms" is wall-clock (waiting for a processor included); "cpu ms" is the collecting thread's own CPU time.
+        Console.WriteLine("collector         avail  count  fail  missed  mean ms  max ms  cpu ms");
         foreach (CollectorStats s in scheduler.GetStats())
         {
             double mean = s.Collections > 0 ? s.TotalDuration.TotalMilliseconds / s.Collections : double.NaN;
-            Console.WriteLine(string.Format(c, "{0,-17} {1,-6} {2,5} {3,5} {4,7} {5,8:F2} {6,7:F2}",
-                s.Collector, s.Availability.IsAvailable, s.Collections, s.Failures, s.SkippedTicks, mean, s.MaxDuration.TotalMilliseconds));
+            Console.WriteLine(string.Format(c, "{0,-17} {1,-6} {2,5} {3,5} {4,7} {5,8:F2} {6,7:F2} {7,7:F2}",
+                s.Collector, s.Availability.IsAvailable, s.Collections, s.Failures, s.SkippedTicks, mean, s.MaxDuration.TotalMilliseconds, s.MeanCpuMilliseconds));
         }
 
         processDurations.Sort();

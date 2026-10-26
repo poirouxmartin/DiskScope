@@ -62,11 +62,12 @@
                     <DataGridTextColumn Header="Missed ticks" Binding="{Binding SkippedTicks}" Width="90" />
                     <DataGridTextColumn Header="Last (ms)" Binding="{Binding LastDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
                     <DataGridTextColumn Header="Max (ms)" Binding="{Binding MaxDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
+                    <DataGridTextColumn Header="Mean CPU" Binding="{Binding MeanCpuText}" Width="80" />
                     <DataGridTextColumn Header="Availability" Binding="{Binding Availability.Reason}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
             <TextBlock Margin="8,2" Foreground="#6B7580" TextWrapping="Wrap"
-                       Text="CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured." />
+                       Text="Last and Max are wall-clock times and include waiting for a processor; Mean CPU is the collecting thread's own CPU time, counted by Windows in clock ticks (about 15.6 ms), so it is only meaningful over many collections. CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured." />
         </StackPanel>
     </ScrollViewer>
 </UserControl>
