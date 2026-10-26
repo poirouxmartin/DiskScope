@@ -27,6 +27,8 @@ public sealed class GpuAdapterViewModel
 
     public string Title => $"GPU {Index}: {Info.Name}";
 
+    public override string ToString() => Title;
+
     public string Identity => string.Create(CultureInfo.InvariantCulture,
         $"Vendor 0x{Info.VendorId:X4}, LUID {Info.Luid}, dedicated video memory {MetricFormatter.FormatBytes(Info.DedicatedVideoMemory)}, " +
         $"shared system memory limit {MetricFormatter.FormatBytes(Info.SharedSystemMemory)} (DXGI)");

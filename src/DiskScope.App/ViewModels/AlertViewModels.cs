@@ -15,6 +15,8 @@ public sealed class AlertRowViewModel(AlertEvent alert, Action<Guid> acknowledge
 
     public string Title => Alert.Title;
 
+    public override string ToString() => Title;
+
     public string Explanation => Alert.Explanation;
 
     public string Evidence => string.Join(
@@ -36,6 +38,8 @@ public sealed class FindingRowViewModel(Finding finding)
     public string Level => $"{Finding.Level} ({Finding.Confidence} confidence)";
 
     public string Title => Finding.Title;
+
+    public override string ToString() => Title;
 
     public string Explanation => Finding.Explanation;
 
@@ -72,6 +76,8 @@ public sealed class RuleViewModel : ObservableObject
     }
 
     public string Name => _rule.Name;
+
+    public override string ToString() => Name;
 
     public string Condition =>
         $"{_rule.MetricId} {(_rule.Comparison == ThresholdComparison.Above ? ">" : "<")} threshold for {_rule.MinDuration.TotalSeconds:0} s " +

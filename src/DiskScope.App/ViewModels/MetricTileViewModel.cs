@@ -29,6 +29,8 @@ public sealed class MetricTileViewModel : ObservableObject
 
     public string Title => Descriptor.DisplayName;
 
+    public override string ToString() => Title;
+
     public string ToolTip { get; }
 
     public TimeSpan Window { get; }

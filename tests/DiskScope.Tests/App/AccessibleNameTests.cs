@@ -22,4 +22,12 @@ public sealed class AccessibleNameTests
 
         Assert.Equal("CPU usage", row.ToString());
     }
+
+    [Fact]
+    public void MetricTileViewModel_IsNamedByItsTitle()
+    {
+        var tile = new MetricTileViewModel(new MetricDescriptor("cpu.total", "CPU usage", MetricUnit.Percent, "test"), TimeSpan.FromMinutes(1));
+
+        Assert.Equal("CPU usage", tile.ToString());
+    }
 }
