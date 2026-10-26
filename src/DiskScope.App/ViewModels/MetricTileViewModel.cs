@@ -7,6 +7,7 @@ public sealed class MetricTileViewModel : ObservableObject
 {
     private string _valueText = MetricFormatter.Unknown;
     private string _peakText = string.Empty;
+    private string _trendText = string.Empty;
     private bool _isAvailable;
     private IReadOnlyList<MetricPoint> _points = Array.Empty<MetricPoint>();
     private DateTime _end;
@@ -60,10 +61,20 @@ public sealed class MetricTileViewModel : ObservableObject
         Points = points;
         End = end;
         Maximum = maximum;
-        PeakText = points.Count > 0
-            ? $"max {MetricFormatter.Format(points.Max(p => p.Max), Descriptor.Unit)} over {FormatWindow(Window)}"
-            : "no data yet";
+        MetricTrend? trend = MetricTrend.Compute(points, Window);
+        PeakText = trend is null
+            ? "no data yet"
+            : $"avg {MetricFormatter.Format(trend.Average, Descriptor.Unit)}, max {MetricFormatter.Format(trend.Max, Descriptor.Unit)} over {FormatWindow(Window)}";
+        TrendText = trend switch
+        {
+            null => string.Empty,
+            { Change: { } change } => $"trend {MetricTrend.FormatChange(change, Descriptor.Unit)} per {FormatWindow(Window)}",
+            _ => $"trend n/a: needs {FormatWindow(Window / 2)} of history",
+        };
     }
+
+    /// <summary>Change over the window from a least-squares line; empty before the first point.</summary>
+    public string TrendText { get => _trendText; private set => SetProperty(ref _trendText, value); }
 
     private static string FormatWindow(TimeSpan w) =>
         w.TotalMinutes >= 1 ? $"{w.TotalMinutes:0} min" : $"{w.TotalSeconds:0} s";

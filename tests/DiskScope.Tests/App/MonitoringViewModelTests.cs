@@ -37,7 +37,24 @@ public sealed class MonitoringViewModelTests
         Assert.Equal("42", vm.CpuTile!.ValueText);
         Assert.True(vm.CpuTile.IsAvailable);
         Assert.Single(vm.CpuTile.Points);
-        Assert.Contains("max 42 over 1 min", vm.CpuTile.PeakText);
+        Assert.Equal("avg 42, max 42 over 1 min", vm.CpuTile.PeakText);
+
+        // One point cannot carry a slope: the tile says so instead of printing a flat "+0".
+        Assert.Equal("trend n/a: needs 30 s of history", vm.CpuTile.TrendText);
+    }
+
+    [Fact]
+    public void Tile_WithEnoughHistory_ShowsSignedChangeOverWindow()
+    {
+        var tile = new MetricTileViewModel(new MetricDescriptor("mem.used", "In use", MetricUnit.Bytes, "test"), TimeSpan.FromMinutes(10));
+        DateTime t = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        const double Gb = 1024.0 * 1024 * 1024;
+
+        // 1 GB per 5 minutes, i.e. +2 GB over the 10-minute window.
+        MetricPoint[] points = Enumerable.Range(0, 6).Select(i => new MetricPoint(t.AddMinutes(i), i * 0.2 * Gb, i * 0.2 * Gb, i * 0.2 * Gb, 1)).ToArray();
+        tile.Update(MetricValue.Measured("mem.used", Gb), points, t.AddMinutes(5), double.NaN);
+
+        Assert.Equal("trend +2.0 GB per 10 min", tile.TrendText);
     }
 
     [Fact]

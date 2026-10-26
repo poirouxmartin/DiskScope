@@ -30,6 +30,7 @@
                                            Points="{Binding Points}" End="{Binding End}"
                                            Window="{Binding Window}" Maximum="{Binding Maximum}" />
                 <TextBlock Text="{Binding PeakText}" Foreground="#6B7580" FontSize="11" />
+                <TextBlock Text="{Binding TrendText}" Foreground="#6B7580" FontSize="11" />
             </StackPanel>
         </DataTemplate>
     </Application.Resources>
