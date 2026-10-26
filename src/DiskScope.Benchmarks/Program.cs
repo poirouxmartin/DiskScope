@@ -195,6 +195,6 @@ internal static class Program
         Console.Error.WriteLine();
         Console.Error.WriteLine("Exit codes: 0 ok; 1 scan not completed, compare mismatch, or I/O failure;");
         Console.Error.WriteLine("            2 usage or invalid argument; 3 refused by precondition (non-empty target, low free space).");
-        return error is null ? ExitUsage : ExitUsage;
+        return ExitUsage;
     }
 }

@@ -16,7 +16,8 @@ internal static class Commands
     private sealed class TraceObserver : IScanObserver
     {
         public void OnProgress(in ScanProgress p) =>
-            Console.Error.WriteLine($"[trace] {p.Elapsed.TotalSeconds,7:F1} s nodes={p.Nodes} errors={p.Errors} dir={p.CurrentDirectory}");
+            // Invariant like the rest of the CLI output, so log parsers do not depend on the machine's culture.
+            Console.Error.WriteLine(FormattableString.Invariant($"[trace] {p.Elapsed.TotalSeconds,7:F1} s nodes={p.Nodes} errors={p.Errors} dir={p.CurrentDirectory}"));
     }
 
     internal sealed record Baseline(long Files, long LogicalBytes, long SkippedLinks, long LengthFailures, long VanishedDirectories);
@@ -102,7 +103,7 @@ internal static class Commands
             .ScanAsync(request, new TraceObserver(), CancellationToken.None)
             .GetAwaiter()
             .GetResult();
-        Console.Error.WriteLine($"[trace] engine done in {result.Elapsed.TotalSeconds:F1} s, starting baseline walk");
+        Console.Error.WriteLine(FormattableString.Invariant($"[trace] engine done in {result.Elapsed.TotalSeconds:F1} s, starting baseline walk"));
         NodeIndex index = result.Index;
         long engineFiles = index.GetRecursiveFileCount(NodeIndex.RootId);
         long engineBytes = index.GetTotalLogicalSize(NodeIndex.RootId);
