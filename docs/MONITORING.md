@@ -54,6 +54,17 @@ The two sources fail independently: one failing call only makes its own metrics 
 - Memory growth: `MemoryGrowthDetector` flags private bytes that grew for at least 5 min of a 10 min window, by at least max(100 MB, 20 %), with 80 % non-decreasing steps and growth in both halves of the span. Shown as "sustained growth, to verify (not a proven leak)". Known false positives: caches filling up, large documents loading.
 - Not implemented yet: command line, user, signature (on demand), exited processes in history.
 
+### By application (`ApplicationConsumerTracker`)
+
+The "By application" tab groups processes by image name (case-insensitive) at each refresh, keeps 5 minutes of history per group (CPU % sum and private bytes sum), and answers "what would closing it return".
+
+- Sums cover the processes that could be opened; a group with an unreadable member shows how many were `n/a`, and its sums are lower bounds. A sum no member reported stays `n/a`, never 0.
+- CPU average and maximum, and the private bytes trend, use `MetricTrend` over the window (no trend before half the window is covered, shown as "collecting").
+- Kind, most cautious wins: DiskScope itself; any member running from the Windows directory is a Windows component ("do not end it"); any member that refused the open, or whose path is unknown, makes the group "not inspectable" (no advice: protected, elevated or security processes look like this); otherwise an application.
+- Estimate for an application: its private working set (physical memory returned on exit) and its private bytes (commit returned on exit). Shared pages (DLLs, mapped files) and the file cache stay, so they are not counted. The total in the summary covers applications only.
+- DiskScope never ends a process. The advice never says "safe": closing an application can lose unsaved work, and only the user can judge that.
+- Limits: two programs with the same image name (for example two `python.exe` installs) form one group. Whether a process has a window, or is a background helper restarted by its parent, is not known yet. GPU memory per application is not included.
+
 ## GPU (`DiskScope.Monitoring.Gpu`)
 
 See `docs/GPU-COMPATIBILITY.md`.

@@ -136,11 +136,36 @@ public sealed class MonitoringViewModelTests
         PrivateBytes = 1024,
     };
 
-    private static ProcessesViewModel.Snapshot Snap(params ProcessSnapshot[] processes) =>
-        new(new ProcessReadResult(processes, 0, TimeSpan.Zero),
-            processes.ToDictionary(p => p.Key, _ => (double?)null),
+    private static ProcessesViewModel.Snapshot Snap(params ProcessSnapshot[] processes)
+    {
+        var cpu = processes.ToDictionary(p => p.Key, _ => (double?)null);
+        return new(new ProcessReadResult(processes, 0, TimeSpan.Zero),
+            cpu,
             ProcessTree.Build(processes),
-            new Dictionary<ProcessKey, string>());
+            new Dictionary<ProcessKey, string>(),
+            new ApplicationConsumerTracker(@"C:\Windows", -1).Update(processes, cpu, DateTime.UtcNow));
+    }
+
+    [Fact]
+    public void Consumers_GroupedLargestFirst_RowsUpdatedInPlace_AndExitedOnesRemoved()
+    {
+        var vm = new ProcessesViewModel();
+        ProcessSnapshot Sized(int pid, string name, long bytes) => Proc(pid, 0, name, pid * 10) with { ImagePath = @"C:\Apps\" + name, PrivateBytes = bytes };
+
+        vm.Apply(Snap(Sized(1, "a.exe", 100), Sized(2, "b.exe", 300), Sized(3, "b.exe", 300), Sized(4, "c.exe", 50)));
+
+        Assert.Equal(new[] { "b.exe", "a.exe", "c.exe" }, vm.Consumers.Select(c => c.Name).ToArray());
+        Assert.Equal("2", vm.Consumers[0].ProcessCountText);
+        ConsumerRowViewModel a = vm.Consumers[1];
+
+        vm.Apply(Snap(Sized(1, "a.exe", 1000), Sized(2, "b.exe", 300)));
+
+        Assert.Equal(new[] { "a.exe", "b.exe" }, vm.Consumers.Select(c => c.Name).ToArray());
+        Assert.Same(a, vm.Consumers[0]);
+        Assert.Equal("1,000 B", a.PrivateBytesText);
+        Assert.StartsWith("Closing it returns about n/a of RAM and 1,000 B of commit.", a.Advice);
+        Assert.Contains("2 user applications", vm.ConsumerSummary);
+    }
 
     [Fact]
     public void Processes_TreeOrderWithDepth_AndInPlaceUpdateKeepsRows()

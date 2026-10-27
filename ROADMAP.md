@@ -1,6 +1,6 @@
 # DiskScope roadmap
 
-Status as of 2026-10-26. Part 1 is complete except the items blocked by the environment (elevation, quiet machine); summary in docs/STORAGE-REPORT.md. Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
+Status as of 2026-10-26. Part 1 is complete except the items blocked by the environment (elevation, quiet machine); summary in docs/STORAGE-REPORT.md. Part 2 is in progress (summary in docs/MONITORING-REPORT.md): steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
 
 Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit of the whole history are in place. The public repository exists (`main` at 9c4ab12, CI green there); later work is on a local branch, not pushed (needs the owner's go). Checklist: docs/PUBLISHING.md.
 
@@ -97,6 +97,10 @@ Other rules kept from the spec:
 - Metric tiles show average, maximum and a least-squares trend over their window (`MetricTrend`, Core); no trend before half the window is covered.
 - Collector cost: CPU time of the collecting thread (GetThreadTimes) next to wall-clock time, which on a saturated machine mostly measures waiting.
 - Privacy: commits authored with a work address were re-authored with the personal one before any push; tracked files, history patches, screenshots and the spec .docx metadata checked for work or personal data. 231 tests.
+
+### Done (2026-10-27)
+
+- "By application" view in the Processes tab (`ApplicationConsumerTracker`, Processes): processes grouped by image name, 5 minutes of history per group (CPU now, average, maximum; private bytes trend), and what closing each application would return (private working set and private bytes). Windows components, processes that cannot be inspected and DiskScope get no estimate; nothing is ever ended. Checked in the running app on the work laptop. Summary of Part 2: docs/MONITORING-REPORT.md. 270 tests.
 
 ### Remaining, in order
 

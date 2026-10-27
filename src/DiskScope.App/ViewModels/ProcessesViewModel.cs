@@ -95,6 +95,77 @@ public sealed class ProcessRowViewModel : ObservableObject
     private static string Bytes(long? v) => MetricFormatter.Format(v, MetricUnit.Bytes);
 }
 
+/// <summary>One application (processes grouped by image name) in the "by application" view.</summary>
+public sealed class ConsumerRowViewModel : ObservableObject
+{
+    private ApplicationConsumer _consumer;
+    private string _advice;
+
+    public ConsumerRowViewModel(ApplicationConsumer consumer, string advice)
+    {
+        _consumer = consumer;
+        _advice = advice;
+    }
+
+    public string Name => _consumer.Name;
+
+    public ConsumerKind Kind => _consumer.Kind;
+
+    public string KindText => _consumer.Kind switch
+    {
+        ConsumerKind.Application => "Application",
+        ConsumerKind.WindowsComponent => "Windows",
+        ConsumerKind.NotInspectable => "Not inspectable",
+        _ => "DiskScope",
+    };
+
+    public int ProcessCount => _consumer.ProcessCount;
+
+    public string ProcessCountText => _consumer.InaccessibleCount == 0
+        ? _consumer.ProcessCount.ToString(CultureInfo.InvariantCulture)
+        : Invariant($"{_consumer.ProcessCount} ({_consumer.InaccessibleCount} n/a)");
+
+    public double? Cpu => _consumer.CpuPercent;
+
+    public string CpuText => MetricFormatter.Format(Cpu, MetricUnit.Percent);
+
+    public double? CpuAverage => _consumer.CpuTrend?.Average;
+
+    public string CpuAverageText => MetricFormatter.Format(CpuAverage, MetricUnit.Percent);
+
+    public double? CpuMax => _consumer.CpuTrend?.Max;
+
+    public string CpuMaxText => MetricFormatter.Format(CpuMax, MetricUnit.Percent);
+
+    public long? PrivateBytes => _consumer.PrivateBytes;
+
+    public string PrivateBytesText => MetricFormatter.Format(PrivateBytes, MetricUnit.Bytes);
+
+    public long? PrivateWorkingSet => _consumer.PrivateWorkingSetBytes;
+
+    public string PrivateWorkingSetText => MetricFormatter.Format(PrivateWorkingSet, MetricUnit.Bytes);
+
+    /// <summary>Private bytes change over the window; "collecting" until the trend has enough history.</summary>
+    public string PrivateTrendText => _consumer.PrivateBytesTrend switch
+    {
+        null => MetricFormatter.Unknown,
+        { Change: { } change } => MetricTrend.FormatChange(change, MetricUnit.Bytes),
+        _ => "collecting",
+    };
+
+    public string Advice => _advice;
+
+    /// <summary>Every column may change at each refresh, so one "all properties" notification.</summary>
+    public void Update(ApplicationConsumer consumer, string advice)
+    {
+        _consumer = consumer;
+        _advice = advice;
+        RaisePropertyChanged(string.Empty);
+    }
+
+    public override string ToString() => Name;
+}
+
 /// <summary>
 /// Process explorer: refreshes every <see cref="RefreshInterval"/> on a background task (enumeration, CPU deltas,
 /// tree, growth detection), then applies the result on the UI thread in place, so selection and scroll survive.
@@ -107,6 +178,9 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     private readonly ProcessCpuTracker _cpu = new(Environment.ProcessorCount);
     private readonly MemoryGrowthDetector<ProcessKey> _growth = new();
     private readonly Dictionary<ProcessKey, ProcessRowViewModel> _rows = new();
+    private readonly ApplicationConsumerTracker _consumers = new(Environment.GetFolderPath(Environment.SpecialFolder.Windows), Environment.ProcessId);
+    private readonly Dictionary<string, ConsumerRowViewModel> _consumerRows = new(StringComparer.OrdinalIgnoreCase);
+    private string _consumerSummary = "Not refreshed yet";
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private string _filterText = string.Empty;
@@ -125,6 +199,11 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     public RelayCommand ExportCommand { get; }
 
     public ObservableCollection<ProcessRowViewModel> Rows { get; } = new();
+
+    /// <summary>Processes grouped by image name, largest private bytes first. Not filtered.</summary>
+    public ObservableCollection<ConsumerRowViewModel> Consumers { get; } = new();
+
+    public string ConsumerSummary { get => _consumerSummary; private set => SetProperty(ref _consumerSummary, value); }
 
     public string FilterText
     {
@@ -257,7 +336,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         var growth = _growth.Evaluate().ToDictionary(
             g => g.Key,
             g => Invariant($"+{MetricFormatter.FormatBytes(g.GrowthBytes)} in {(g.ToUtc - g.FromUtc).TotalMinutes:0} min: sustained growth, to verify (not a proven leak)"));
-        return new Snapshot(read, cpu, ProcessTree.Build(read.Processes), growth);
+        return new Snapshot(read, cpu, ProcessTree.Build(read.Processes), growth, _consumers.Update(read.Processes, cpu, now));
     }
 
     /// <summary>UI thread. Rows are matched by key and moved, inserted or removed, never all recreated.</summary>
@@ -329,13 +408,53 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         Summary = Invariant($"{s.Read.Processes.Count} processes, {s.Read.Inaccessible} not openable (their memory, CPU and I/O read n/a), ") +
             Invariant($"read in {s.Read.Duration.TotalMilliseconds:F0} ms, {s.Tree.UnverifiedLinks.Count} parent links unverified, {s.Growth.Count} growth suspicions. ") +
             "CPU % is of the whole machine; private bytes = commit charge.";
+        ApplyConsumers(s.Consumers);
+    }
+
+    /// <summary>UI thread. Same in-place update as the process rows, keyed by image name.</summary>
+    internal void ApplyConsumers(ConsumerReport report)
+    {
+        var names = new HashSet<string>(report.Consumers.Select(c => c.Name), StringComparer.OrdinalIgnoreCase);
+        for (int i = Consumers.Count - 1; i >= 0; i--)
+        {
+            if (!names.Contains(Consumers[i].Name))
+            {
+                _consumerRows.Remove(Consumers[i].Name);
+                Consumers.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < report.Consumers.Count; i++)
+        {
+            ApplicationConsumer c = report.Consumers[i];
+            string advice = ApplicationConsumerTracker.Advise(c, _consumers.Window);
+            if (!_consumerRows.TryGetValue(c.Name, out ConsumerRowViewModel? row))
+            {
+                _consumerRows[c.Name] = row = new ConsumerRowViewModel(c, advice);
+                Consumers.Insert(i, row);
+                continue;
+            }
+
+            int at = Consumers.IndexOf(row, i);
+            if (at != i)
+            {
+                Consumers.Move(at, i);
+            }
+
+            row.Update(c, advice);
+        }
+
+        ConsumerSummary = Invariant($"{report.ApplicationCount} user applications. Closing all of them would return about {MetricFormatter.Format(report.FreeableRamBytes, MetricUnit.Bytes)} of RAM (private working set) and {MetricFormatter.FormatBytes(report.FreeableCommitBytes)} of commit. ") +
+            Invariant($"Windows components, processes that cannot be inspected and DiskScope hold {MetricFormatter.FormatBytes(report.OtherCommitBytes)} of commit and are never counted. ") +
+            Invariant($"Memory shared between processes and the file cache are not included. History: last {_consumers.Window.TotalMinutes:0} min.");
     }
 
     internal sealed record Snapshot(
         ProcessReadResult Read,
         IReadOnlyDictionary<ProcessKey, double?> Cpu,
         ProcessTree Tree,
-        IReadOnlyDictionary<ProcessKey, string> Growth);
+        IReadOnlyDictionary<ProcessKey, string> Growth,
+        ConsumerReport Consumers);
 }
 
 internal static class CollectionExtensions

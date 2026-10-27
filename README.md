@@ -22,7 +22,7 @@ DiskScope measures; it does not "optimize" behind your back. It never deletes, m
 
 - **Dashboard**: CPU, memory in use, commit charge, GPU, free space per volume, active alerts, memory growth suspicions, DiskScope's own CPU. Each card opens its module and shows the average, maximum and trend over its window (least-squares change, shown only once half the window is covered).
 - **CPU & memory**: global and per-logical-processor usage, user/kernel split, physical memory, commit charge and limit, cache, kernel pools, process/thread/handle counts. Every counter lists its definition and Windows source.
-- **Processes**: parent/child tree (PID reuse detected with creation times), CPU % of the machine, private bytes, working set, private working set, threads, handles, I/O, start time, path. Sustained private memory growth is flagged as a suspicion to verify, not as a leak.
+- **Processes**: parent/child tree (PID reuse detected with creation times), CPU % of the machine, private bytes, working set, private working set, threads, handles, I/O, start time, path. Sustained private memory growth is flagged as a suspicion to verify, not as a leak. A "By application" view groups processes by program with 5 minutes of history (CPU average and maximum, memory trend) and states what closing each application would return (private RAM and commit); Windows components and processes it cannot inspect get no estimate. DiskScope never ends a process itself.
 - **GPU**: per adapter, usage per engine type (3D, copy, video decode/encode/processing, compute), dedicated and shared memory, processes using the GPU. Engines are not added together; shared memory is not presented as VRAM.
 - **Disk activity**: active time, read/write throughput, latency and queue for all physical disks.
 - **History & alerts**: in-memory history (1 s for 10 min, 5 s for 1 h, 1 min for 24 h), explainable alerts with evidence (CPU, available memory, commit charge, disk latency), editable thresholds, acknowledgement.
@@ -89,6 +89,7 @@ Roadmap: `ROADMAP.md`.
 ## Documentation
 
 - `docs/STORAGE-REPORT.md`: final report of the storage module (what works, evidence, open items).
+- `docs/MONITORING-REPORT.md`: report of the CPU, memory and GPU modules (what works, evidence, open items).
 - `docs/PUBLISHING.md`: open-source publication checklist and history privacy audit.
 - `docs/ARCHITECTURE.md`: modules, storage index, counting rules, engine contract.
 - `docs/MONITORING.md`: every metric, its formula, source and limits; history; alert rules.
