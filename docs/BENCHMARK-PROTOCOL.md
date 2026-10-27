@@ -40,10 +40,10 @@ Check the printed header of `scan` for which of these it already emits. Anything
 - Cold: needs a reboot, or a standby-list purge (RAMMap "Empty Standby List", or `NtSetSystemInformation` with `SystemMemoryListInformation`, both administrator). Label rows `cold` and name the method used.
 - Never mix warm and cold runs in the same median.
 
-## Defender
+## Real-time antivirus scanning
 
-Real-time scanning slows the first touch of newly created files. D1 is generated right before timing, so its first runs are skewed. Record whether Defender real-time protection was on, and whether D1 was touched between generation and the first measured run. Do not drop those runs silently; note them.
+Real-time scanning slows the first touch of newly created files. D1 is generated right before timing, so its first runs are skewed. Record whether real-time antivirus protection was on, and whether D1 was touched between generation and the first measured run. Do not drop those runs silently; note them.
 
 ## Recording
 
-Each RESULTS row carries: date, short commit hash, dataset (D1/D2/D3 with path), engine, cache state, median, min, nodes/s, peak working set, allocation per 1M nodes, and notes (power state, Defender, denied directories, warmup or cold method).
+Each RESULTS row carries: date, short commit hash, dataset (D1/D2/D3 with path), engine, cache state, median, min, nodes/s, peak working set, allocation per 1M nodes, and notes (power state, real-time scanning, denied directories, warmup or cold method).
