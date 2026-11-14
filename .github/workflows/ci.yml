@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  # Weekly run so a newly published NuGet advisory fails the build even without new commits.
+  schedule:
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read
