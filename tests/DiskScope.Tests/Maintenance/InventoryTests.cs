@@ -44,6 +44,24 @@ public sealed class InventoryTests
         Assert.Equal("a,b,c\r\n\"x,y\",\"say \"\"hi\"\"\",\r\n\"line\nbreak\",plain,0\r\n", w.ToString());
     }
 
+    [Theory]
+    [InlineData("=HYPERLINK(\"http://x\")", "\"'=HYPERLINK(\"\"http://x\"\")\"")]
+    [InlineData("+cmd|' /C calc'!A0", "\"'+cmd|' /C calc'!A0\"")]
+    [InlineData("-2+3", "\"'-2+3\"")]
+    [InlineData("@SUM(A1)", "\"'@SUM(A1)\"")]
+    [InlineData("\tx", "\"'\tx\"")]
+    [InlineData("-12.5", "-12.5")]
+    [InlineData("+3", "+3")]
+    [InlineData("a=b", "a=b")]
+    public void Csv_NeutralizesFormulaLikeText_ButNotNumbers(string field, string expected)
+    {
+        var w = new StringWriter();
+
+        CsvTable.Write(w, ["a"], [[field]]);
+
+        Assert.Equal("a\r\n" + expected + "\r\n", w.ToString());
+    }
+
     [Fact]
     public void Csv_RowWidthMismatch_Throws()
     {
