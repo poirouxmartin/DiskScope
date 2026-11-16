@@ -15,14 +15,17 @@ public enum MetricUnit
 
 public enum MetricQuality
 {
+    /// <summary>
+    /// No value: source missing, access denied, first sample of a delta, or collector failure. Never shown as zero.
+    /// First member (0) so that <c>default(MetricValue)</c> is unavailable, not a measured value without a number.
+    /// </summary>
+    Unavailable = 0,
+
     /// <summary>Read from the source as is (for example a byte count).</summary>
     Measured,
 
     /// <summary>Computed from measured values (for example a percentage from two counter samples).</summary>
     Derived,
-
-    /// <summary>No value: source missing, access denied, first sample of a delta, or collector failure. Never shown as zero.</summary>
-    Unavailable,
 }
 
 /// <summary>Static description of a metric: what it is, in which unit, and where it comes from.</summary>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using DiskScope.App.Formatting;
+using DiskScope.Core;
 using DiskScope.Storage;
 
 namespace DiskScope.App.ViewModels;
@@ -24,15 +25,18 @@ public sealed class NodeViewModel : ObservableObject
         Id = id;
         Name = index.GetNameString(id);
         Kind = index.GetKind(id);
+        NodeStatus status = index.GetStatus(id);
         TotalSize = index.GetTotalSize(id, sizeKind);
-        TotalSizeText = ByteFormatter.Format(TotalSize);
-        LogicalText = ByteFormatter.Format(index.GetTotalLogicalSize(id));
-        AllocatedText = ByteFormatter.Format(index.GetTotalAllocatedSize(id));
+        TotalSizeText = ByteFormatter.FormatNodeSize(TotalSize, status);
+        LogicalText = ByteFormatter.FormatNodeSize(index.GetTotalLogicalSize(id), status);
+        AllocatedText = ByteFormatter.FormatNodeSize(index.GetTotalAllocatedSize(id), status);
         PercentOfParent = ComputePercentOfParent(id, TotalSize, parentTotal);
-        PercentText = PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %";
+        // 0 of 0 is undefined: the bar stays at 0, the text says n/a.
+        PercentText = id != NodeIndex.RootId && parentTotal <= 0
+            ? MetricFormatter.Unknown
+            : PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %";
         FileCount = index.GetRecursiveFileCount(id);
 
-        NodeStatus status = index.GetStatus(id);
         IsIncomplete = status != NodeStatus.None;
         StatusText = IsIncomplete ? status.ToString() : string.Empty;
 

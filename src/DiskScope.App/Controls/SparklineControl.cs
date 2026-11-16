@@ -64,6 +64,23 @@ public sealed class SparklineControl : FrameworkElement
         set => SetValue(StrokeProperty, value);
     }
 
+    /// <summary>An unknown average (NaN) is dropped, so it becomes a gap instead of a NaN coordinate.</summary>
+    internal static IReadOnlyList<MetricPoint> FinitePoints(IReadOnlyList<MetricPoint> points) =>
+        points.Where(p => double.IsFinite(p.Average)).ToList();
+
+    /// <summary>False when the window starts before the epoch (End is default before the first refresh).</summary>
+    internal static bool TryGetStart(DateTime end, TimeSpan window, out DateTime start)
+    {
+        if (end.Ticks < window.Ticks)
+        {
+            start = default;
+            return false;
+        }
+
+        start = end - window;
+        return true;
+    }
+
     /// <summary>
     /// Splits points into runs separated by gaps: a gap is a spacing larger than 2.5x the median spacing.
     /// Pure, so the gap rule is tested without WPF rendering.
@@ -118,19 +135,24 @@ public sealed class SparklineControl : FrameworkElement
             return;
         }
 
-        double max = double.IsNaN(Maximum) ? points.Max(p => p.Average) : Maximum;
+        IReadOnlyList<MetricPoint> finite = FinitePoints(points);
+        if (finite.Count == 0 || !TryGetStart(End, Window, out DateTime start))
+        {
+            return;
+        }
+
+        double max = double.IsNaN(Maximum) ? finite.Max(p => p.Average) : Maximum;
         if (max <= 0)
         {
             max = 1;
         }
 
-        DateTime start = End - Window;
         double X(DateTime t) => (t - start).Ticks / (double)Window.Ticks * w;
         double Y(double v) => h - 1 - (Math.Clamp(v / max, 0, 1) * (h - 2));
 
         var pen = new Pen(Stroke, 1.5);
         pen.Freeze();
-        foreach (List<MetricPoint> run in SplitRuns(points))
+        foreach (List<MetricPoint> run in SplitRuns(finite))
         {
             if (run.Count == 1)
             {

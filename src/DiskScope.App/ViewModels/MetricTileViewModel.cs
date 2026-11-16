@@ -71,6 +71,7 @@ public sealed class MetricTileViewModel : ObservableObject
 public sealed class CoreViewModel(int index) : ObservableObject
 {
     private double _percent;
+    private bool _hasValue;
     private string _text = MetricFormatter.Unknown;
 
     public int Index { get; } = index;
@@ -79,11 +80,15 @@ public sealed class CoreViewModel(int index) : ObservableObject
 
     public double Percent { get => _percent; private set => SetProperty(ref _percent, value); }
 
+    /// <summary>False when the value is unknown: the bar is hidden, the text says n/a.</summary>
+    public bool HasValue { get => _hasValue; private set => SetProperty(ref _hasValue, value); }
+
     public string Text { get => _text; private set => SetProperty(ref _text, value); }
 
     public void Update(MetricValue? value)
     {
-        Percent = value?.Value ?? 0; // the bar needs a length; the text says n/a when unknown
+        HasValue = value?.Value is not null;
+        Percent = value?.Value ?? 0; // the bar needs a length; see HasValue
         Text = MetricFormatter.Format(value?.Value, MetricUnit.Percent);
     }
 }

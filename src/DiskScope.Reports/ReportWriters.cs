@@ -21,7 +21,8 @@ public static class MetricHistoryCsv
                 Num(p.Average), Num(p.Min), Num(p.Max), p.Samples.ToString(CultureInfo.InvariantCulture),
             ])));
 
-    private static string Num(double v) => v.ToString("R", CultureInfo.InvariantCulture);
+    // A non-finite value is unknown: empty cell, never "NaN" or 0.
+    private static string? Num(double v) => double.IsFinite(v) ? v.ToString("R", CultureInfo.InvariantCulture) : null;
 }
 
 /// <summary>Structured JSON for automation: same facts as the HTML report, camelCase, enums as strings, UTC ISO 8601.</summary>
@@ -124,7 +125,7 @@ public static class HtmlReportWriter
     {
         const double W = 720, H = 120;
         var c = CultureInfo.InvariantCulture;
-        double max = s.Metric.Unit == MetricUnit.Percent ? 100 : Math.Max(1e-9, s.Points.Max(p => p.Max));
+        double max = s.Metric.Unit == MetricUnit.Percent ? 100 : Math.Max(1e-9, s.Points.Select(p => p.Max).Where(double.IsFinite).DefaultIfEmpty(1).Max());
         double span = Math.Max(1, (to - from).Ticks);
         long median = Median(s.Points);
         var sb = new StringBuilder();
@@ -133,6 +134,14 @@ public static class HtmlReportWriter
         MetricPoint? previous = null;
         foreach (MetricPoint p in s.Points)
         {
+            if (!double.IsFinite(p.Average))
+            {
+                // An unknown average is a gap in the line, never a point at 0 or a NaN coordinate.
+                Flush(sb, run);
+                previous = null;
+                continue;
+            }
+
             if (previous is { } prev && median > 0 && (p.TimestampUtc - prev.TimestampUtc).Ticks > median * 5 / 2)
             {
                 Flush(sb, run);
