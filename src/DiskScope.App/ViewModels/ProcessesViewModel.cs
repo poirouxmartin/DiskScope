@@ -156,15 +156,10 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
             using var timer = new PeriodicTimer(RefreshInterval);
             do
             {
-                Snapshot s;
-                try
+                Snapshot? s = TryRead(Read, out string? error);
+                if (s is null)
                 {
-                    s = Read();
-                }
-                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-                {
-                    string message = ex.Message;
-                    _ = Application.Current?.Dispatcher.InvokeAsync(() => Summary = "Process enumeration failed: " + message);
+                    _ = Application.Current?.Dispatcher.InvokeAsync(() => Summary = error!);
                     continue;
                 }
 
@@ -212,6 +207,25 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
             ]));
     }
 
+    /// <summary>Runs one read; any failure except cancellation becomes a message, so the refresh loop never dies silently.</summary>
+    internal static Snapshot? TryRead(Func<Snapshot> read, out string? error)
+    {
+        try
+        {
+            error = null;
+            return read();
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            error = $"Process enumeration failed ({ex.GetType().Name}): {ex.Message}";
+            return null;
+        }
+    }
+
     private void Export()
     {
         if (_shell.AskSavePath("DiskScope-processes.csv") is not { } path)
@@ -225,7 +239,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
             int n = WriteCsv(writer, Rows);
             Summary = Invariant($"Exported {n} processes to ") + path;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             Summary = "Export failed: " + ex.Message;
         }

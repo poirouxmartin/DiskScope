@@ -87,6 +87,10 @@ public sealed class StartupViewModel : ObservableObject
                 (errors > 0 ? Invariant($"; {errors} sources could not be read (list below): the inventory is partial") : "; every source was read") +
                 ". Read-only: nothing can be disabled from here.";
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Status = "Reading start-up entries failed: " + ex.Message;
+        }
         finally
         {
             _isLoading = false;
@@ -137,7 +141,7 @@ public sealed class StartupViewModel : ObservableObject
             write(writer);
             Status = $"Exported to {path}";
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             Status = "Export failed: " + ex.Message;
         }

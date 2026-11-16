@@ -109,6 +109,45 @@ public sealed class MonitoringSchedulerTests
         Assert.Equal(anchor + TimeSpan.FromSeconds(1), clock.At(1000 + System.Diagnostics.Stopwatch.Frequency));
     }
 
+    [Fact]
+    public void ThrowingSubscriber_IsIsolated_OtherSubscribersAndLoopContinue()
+    {
+        var scheduler = new MonitoringScheduler([new FakeCollector("c", "c.v", () => 1)]);
+        var received = new List<MetricBatch>();
+        scheduler.BatchPublished += _ => throw new InvalidOperationException("subscriber");
+        scheduler.BatchPublished += received.Add;
+
+        scheduler.CollectOnce();
+        scheduler.CollectOnce();
+
+        Assert.Equal(2, received.Count);
+        Assert.Equal(2, scheduler.SubscriberFailures);
+    }
+
+    [Fact]
+    public async Task ThrowingSubscriber_WhileStarted_LoopKeepsRunning()
+    {
+        var scheduler = new MonitoringScheduler(
+            [new FakeCollector("c", "c.v", () => 1)],
+            intervals: new Dictionary<string, TimeSpan> { ["c"] = TimeSpan.FromMilliseconds(20) });
+        int count = 0;
+        var enough = new TaskCompletionSource();
+        scheduler.BatchPublished += _ => throw new InvalidOperationException("subscriber");
+        scheduler.BatchPublished += _ =>
+        {
+            if (Interlocked.Increment(ref count) >= 3)
+            {
+                enough.TrySetResult();
+            }
+        };
+
+        scheduler.Start();
+        await enough.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await scheduler.StopAsync();
+
+        Assert.True(scheduler.SubscriberFailures >= 3);
+    }
+
     internal sealed class FakeCollector(string name, string metricId, Func<double> read, bool available = true) : IMetricCollector
     {
         public string Name => name;

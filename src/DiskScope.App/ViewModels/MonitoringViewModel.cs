@@ -428,7 +428,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
             write(writer);
             ExportStatus = "Exported to " + path;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             ExportStatus = "Export failed: " + ex.Message;
         }
