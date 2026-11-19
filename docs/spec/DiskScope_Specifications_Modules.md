@@ -2,455 +2,455 @@
 
 # DiskScope
 
-Spécifications des modules de monitoring, diagnostic et maintenance Windows
+Specifications for the Windows monitoring, diagnostics and maintenance modules
 
-## Base technique : C# · .NET 10 · WPF · MVVM
+## Technical base: C# · .NET 10 · WPF · MVVM
 
-Ce document regroupe les spécifications proposées pour les modules à développer après le module Stockage, déjà confié à l’agent de développement. Il définit une architecture commune, les fonctionnalités, les sources de données, les risques et une feuille de route progressive.
+This document gathers the proposed specifications for the modules to be developed after the Storage module, which has already been assigned to the development agent. It defines a common architecture, the features, the data sources, the risks and a progressive roadmap.
 
-# 1. Vision du produit
+# 1. Product vision
 
-DiskScope doit devenir un centre de contrôle Windows permettant de comprendre ce qui consomme les ressources, d'identifier les ralentissements et d'effectuer une maintenance prudente et réversible. L'objectif n'est pas d'afficher artificiellement une utilisation minimale, mais de fournir des mesures fiables et des diagnostics vérifiables.
+DiskScope should become a Windows control center that explains what consumes resources, identifies slowdowns and performs careful, reversible maintenance. The goal is not to artificially display minimal usage, but to provide reliable measurements and verifiable diagnostics.
 
-- Application Windows native en lecture seule pour les fonctions de mesure.
+- Native Windows application, read-only for measurement functions.
 
-- Actions de maintenance séparées, explicitement confirmées et réversibles lorsque c'est possible.
+- Maintenance actions kept separate, explicitly confirmed and reversible whenever possible.
 
-- Historique local, alertes explicables et corrélation entre ressources.
+- Local history, explainable alerts and correlation between resources.
 
-- Aucune suppression automatique, désactivation de service ou modification système sans confirmation explicite.
+- No automatic deletion, service disabling or system modification without explicit confirmation.
 
-- Le module Stockage est déjà en développement ; les autres modules doivent s'intégrer sans le coupler fortement au cœur.
+- The Storage module is already under development; the other modules must integrate without being tightly coupled to the core.
 
-# 2. Périmètre et priorités
+# 2. Scope and priorities
 
-| Module | Priorité | Complexité indicative | Objectif principal |
+| Module | Priority | Indicative complexity | Main goal |
 |---|---|---|---|
-| Monitoring CPU/RAM | Très haute | Moyenne | Mesures globales et par processus, tendances |
-| Process Explorer | Très haute | Moyenne | Arbre de processus et ressources consommées |
-| Historique & alertes | Haute | Moyenne | Retrouver les causes possibles d'un ralentissement |
-| GPU Monitor | Haute | Élevée | Moteurs GPU, VRAM et capteurs disponibles |
-| Dashboard | Haute | Faible à moyenne | Vue synthétique en temps réel |
-| Santé matérielle | Moyenne | Élevée | Températures, fréquences, ventilateurs si exposés |
-| Démarrage & services | Moyenne | Moyenne | Inventaire et actions réversibles |
-| Rapports & export | Moyenne | Faible | Rapports lisibles et exportables |
-| Diagnostic ETW | Basse au départ | Très élevée | Analyse approfondie des blocages et latences |
+| Monitoring CPU/RAM | Very high | Medium | Global and per-process measurements, trends |
+| Process Explorer | Very high | Medium | Process tree and resources consumed |
+| History & alerts | High | Medium | Find the possible causes of a slowdown |
+| GPU Monitor | High | High | GPU engines, VRAM and available sensors |
+| Dashboard | High | Low to medium | Real-time summary view |
+| Hardware health | Medium | High | Temperatures, frequencies, fans if exposed |
+| Startup & services | Medium | Medium | Inventory and reversible actions |
+| Reports & export | Medium | Low | Readable, exportable reports |
+| ETW diagnostics | Low at first | Very high | In-depth analysis of stalls and latencies |
 
-# 3. Architecture commune
+# 3. Common architecture
 
-Conserver une architecture en couches, avec des collecteurs indépendants et des contrats stables.
+Keep a layered architecture, with independent collectors and stable contracts.
 
 ```
-DiskScope.App                 WPF / MVVM / navigation / vues
-DiskScope.Core                modèles, contrats, règles de diagnostic
-DiskScope.Monitoring          orchestration des collecteurs et calendrier
-DiskScope.Monitoring.CpuRam   métriques CPU et mémoire
-DiskScope.Monitoring.Gpu      compteurs GPU et adaptateurs matériels
-DiskScope.Processes           inventaire et arbre des processus
-DiskScope.History             persistance locale et rétention
-DiskScope.Diagnostics         alertes, corrélations et règles explicables
-DiskScope.Hardware            capteurs et santé matérielle
-DiskScope.Maintenance         démarrage, tâches et services
-DiskScope.Reports             exports et rapports
-DiskScope.Tests               tests unitaires et d'intégration
-DiskScope.Benchmarks          mesures reproductibles
+DiskScope.App                 WPF / MVVM / navigation / views
+DiskScope.Core                models, contracts, diagnostic rules
+DiskScope.Monitoring          collector orchestration and scheduling
+DiskScope.Monitoring.CpuRam   CPU and memory metrics
+DiskScope.Monitoring.Gpu      GPU counters and hardware adapters
+DiskScope.Processes           process inventory and tree
+DiskScope.History             local persistence and retention
+DiskScope.Diagnostics         alerts, correlations and explainable rules
+DiskScope.Hardware            sensors and hardware health
+DiskScope.Maintenance         startup, tasks and services
+DiskScope.Reports             exports and reports
+DiskScope.Tests               unit and integration tests
+DiskScope.Benchmarks          reproducible measurements
 ```
 
-Les noms sont proposés : si la solution existante a déjà une convention de nommage ou un projet Core, la réutiliser plutôt que créer des doublons.
+The names are proposals: if the existing solution already has a naming convention or a Core project, reuse it rather than creating duplicates.
 
-## Contrats communs
+## Common contracts
 
-- IMetricCollector : collecte des métriques d'une catégorie, avec intervalle configurable, annulation et état de disponibilité.
+- IMetricCollector: collects the metrics of one category, with a configurable interval, cancellation and availability state.
 
-- IMetricStore : persistance et interrogation de mesures horodatées.
+- IMetricStore: persistence and querying of timestamped measurements.
 
-- IAlertEngine : évaluation de règles, durée de dépassement, sévérité, preuves et acquittement.
+- IAlertEngine: rule evaluation, duration of threshold breach, severity, evidence and acknowledgment.
 
-- IDiagnosticRule : règle déterministe qui fournit un constat, les données observées, le niveau de confiance et les limites.
+- IDiagnosticRule: deterministic rule that provides a finding, the observed data, the confidence level and the limits.
 
-- IHardwareTelemetryProvider : adaptateur optionnel pour les capteurs spécifiques au matériel.
+- IHardwareTelemetryProvider: optional adapter for hardware-specific sensors.
 
-- Les collecteurs publient par lots ; ils ne manipulent pas directement les contrôles WPF.
+- Collectors publish in batches; they do not manipulate WPF controls directly.
 
-## Principes non négociables
+## Non-negotiable principles
 
-- Pas d'affirmation de réussite sans exécution effective des tests ou benchmarks.
+- No claim of success without actually running the tests or benchmarks.
 
-- Pas de dépendance forte entre l'interface, les collecteurs et le stockage.
+- No strong dependency between the UI, the collectors and the storage.
 
-- Gérer les métriques indisponibles : ne pas afficher zéro lorsqu'une valeur est inconnue.
+- Handle unavailable metrics: do not display zero when a value is unknown.
 
-- Chaque métrique doit préciser son unité, sa source, son horodatage et, si nécessaire, son statut de qualité.
+- Each metric must specify its unit, its source, its timestamp and, where needed, its quality status.
 
-- La collecte doit avoir un coût mesuré et une fréquence configurable.
+- Collection must have a measured cost and a configurable frequency.
 
-# 4. Module Monitoring CPU & RAM
+# 4. CPU & RAM Monitoring module
 
-## Objectif
+## Goal
 
-Mesurer la charge et l'évolution de la mémoire, avec un historique suffisant pour repérer une pression mémoire ou une consommation anormale.
+Measure load and memory evolution, with enough history to spot memory pressure or abnormal consumption.
 
 ## CPU
 
-- Utilisation globale et par processeur logique, calculée à partir de différences de compteurs dans le temps.
+- Global and per-logical-processor utilization, computed from counter differences over time.
 
-- Temps CPU user/kernel lorsque disponible.
+- User/kernel CPU time when available.
 
-- Consommation CPU par processus, à partir des deltas de temps processeur et du temps écoulé.
+- Per-process CPU consumption, from processor time deltas and elapsed time.
 
-- Fréquence CPU uniquement si une source fiable l'expose ; distinguer fréquence nominale, rapportée et effective.
+- CPU frequency only if a reliable source exposes it; distinguish nominal, reported and effective frequency.
 
 ## RAM
 
-- Mémoire physique totale, disponible et utilisée.
+- Total, available and used physical memory.
 
-- Mémoire engagée (commit) et limite d'engagement.
+- Committed memory (commit) and commit limit.
 
-- Cache, pool paginé et non paginé lorsque les compteurs correspondants sont disponibles.
+- Cache, paged and non-paged pool when the corresponding counters are available.
 
-- Mémoire par processus : working set, working set privé et mémoire privée/engagée selon les API utilisées.
+- Per-process memory: working set, private working set and private/committed memory depending on the APIs used.
 
-- Tendance temporelle d'un processus ; ne qualifier une fuite que comme hypothèse tant qu'elle n'est pas confirmée.
+- Time trend of a process; qualify a leak only as a hypothesis until it is confirmed.
 
-## Sources techniques
+## Technical sources
 
-| Besoin | API / source | Notes |
+| Need | API / source | Notes |
 |---|---|---|
-| CPU global | GetSystemTimes | Calcul par différence entre deux échantillons |
-| CPU processus | GetProcessTimes | Normaliser par le nombre de processeurs logiques si un pourcentage système est affiché |
-| RAM globale | GlobalMemoryStatusEx | État global physique et mémoire virtuelle |
-| RAM processus | GetProcessMemoryInfo | Working set ; compléter avec les compteurs adaptés pour la mémoire privée |
-| Compteurs additionnels | PDH / Performance Counters | Utiliser avec une fréquence raisonnable et tester les noms localisés des compteurs |
+| Global CPU | GetSystemTimes | Computed as the difference between two samples |
+| Process CPU | GetProcessTimes | Normalize by the number of logical processors if a system-wide percentage is displayed |
+| Global RAM | GlobalMemoryStatusEx | Global physical and virtual memory state |
+| Process RAM | GetProcessMemoryInfo | Working set; complete with suitable counters for private memory |
+| Additional counters | PDH / Performance Counters | Use at a reasonable frequency and test the localized counter names |
 
-## Rafraîchissement et rétention
+## Refresh and retention
 
-- Point de départ : collecte légère toutes les 1 seconde, configurable.
+- Starting point: lightweight collection every 1 second, configurable.
 
-- Rétention indicative : 1 seconde pendant 10 minutes, 5 secondes pendant 1 heure, 1 minute pendant 24 heures.
+- Indicative retention: 1 second for 10 minutes, 5 seconds for 1 hour, 1 minute for 24 hours.
 
-- Les règles de rétention doivent être configurables ; agréger les anciens points plutôt que conserver tous les échantillons bruts indéfiniment.
+- Retention rules must be configurable; aggregate old points rather than keeping every raw sample indefinitely.
 
-## Alertes initiales
+## Initial alerts
 
-- CPU supérieur à 90 % pendant 30 secondes, avec seuil configurable et délai anti-rebond.
+- CPU above 90% for 30 seconds, with a configurable threshold and a debounce delay.
 
-- Mémoire disponible très faible ou engagement proche de sa limite ; ne pas se baser uniquement sur le pourcentage de RAM occupée.
+- Very low available memory or commit close to its limit; do not rely only on the percentage of RAM in use.
 
-- Croissance soutenue de la mémoire d'un processus sur une fenêtre temporelle, présentée comme suspicion à vérifier.
+- Sustained growth of a process's memory over a time window, presented as a suspicion to verify.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- Les compteurs sont calculés avec les unités documentées et des horodatages monotones/cohérents.
+- Counters are computed with the documented units and monotonic/consistent timestamps.
 
-- Un processus terminé ou inaccessible ne fait pas planter la collecte.
+- A terminated or inaccessible process does not crash the collection.
 
-- La charge ajoutée par le monitoring est mesurée et reste faible sur la machine de référence.
+- The load added by monitoring is measured and stays low on the reference machine.
 
-# 5. Module GPU Monitor
+# 5. GPU Monitor module
 
-Fournir une vue fidèle des moteurs GPU et de la mémoire vidéo, en signalant explicitement les mesures indisponibles selon le pilote.
+Provide an accurate view of GPU engines and video memory, explicitly flagging measurements that are unavailable depending on the driver.
 
-## Métriques visées
+## Target metrics
 
-- Utilisation par moteur : 3D, Compute, Copy, Encode, Decode et autres moteurs exposés.
+- Utilization per engine: 3D, Compute, Copy, Encode, Decode and other exposed engines.
 
-- Mémoire GPU dédiée et partagée ; distinguer budget, utilisation et capacité physique lorsque les API fournissent ces champs.
+- Dedicated and shared GPU memory; distinguish budget, usage and physical capacity when the APIs provide these fields.
 
-- Température, fréquence, puissance et vitesse de ventilateur uniquement si une source fiable les expose.
+- Temperature, frequency, power and fan speed only if a reliable source exposes them.
 
-- Données par adaptateur afin de gérer les systèmes multi-GPU.
+- Per-adapter data to handle multi-GPU systems.
 
-## Sources et conception
+## Sources and design
 
-- Explorer les compteurs GPU Windows et les interfaces DXGI/D3DKMT appropriées.
+- Explore the Windows GPU counters and the appropriate DXGI/D3DKMT interfaces.
 
-- IDXGIAdapter3::QueryVideoMemoryInfo peut fournir des informations de mémoire vidéo liées au processus et au segment ; ne pas le présenter comme une mesure universelle de toute la VRAM.
+- IDXGIAdapter3::QueryVideoMemoryInfo can provide video memory information tied to the process and the segment; do not present it as a universal measurement of all VRAM.
 
-- Créer une abstraction de fournisseur pour ajouter, si nécessaire, des intégrations constructeur distinctes.
+- Create a provider abstraction to add separate vendor integrations if needed.
 
-- Ne pas dépendre d'un seul constructeur et ne pas supposer que températures ou puissances sont toujours disponibles.
+- Do not depend on a single vendor and do not assume that temperatures or power readings are always available.
 
-## Risques
+## Risks
 
-- Les compteurs disponibles varient selon Windows, pilote et matériel.
+- The available counters vary by Windows version, driver and hardware.
 
-- Une utilisation GPU globale peut masquer un moteur saturé ; montrer les moteurs séparément.
+- A global GPU utilization figure can hide a saturated engine; show the engines separately.
 
-- La mémoire partagée n'est pas équivalente à la VRAM dédiée.
+- Shared memory is not equivalent to dedicated VRAM.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- Un adaptateur indisponible n'empêche pas le reste du monitoring de fonctionner.
+- An unavailable adapter does not prevent the rest of the monitoring from working.
 
-- Les métriques ont une source, une unité et un statut d'indisponibilité explicite.
+- Metrics have a source, a unit and an explicit unavailability status.
 
-- Les données sont comparées au Gestionnaire des tâches ou à un outil de référence, en documentant les différences de définition.
+- The data is compared with Task Manager or a reference tool, documenting the differences in definition.
 
-# 6. Module Process Explorer
+# 6. Process Explorer module
 
-Fournir une vue hiérarchique des processus, leurs ressources et les informations utiles au diagnostic.
+Provide a hierarchical view of processes, their resources and the information useful for diagnostics.
 
-## Fonctionnalités
+## Features
 
-- Arbre parent/enfant construit avec PID, PPID et heure de création ; gérer la réutilisation des PID.
+- Parent/child tree built with PID, PPID and creation time; handle PID reuse.
 
-- CPU, working set, mémoire privée, E/S lorsque disponibles, et rattachement aux métriques GPU si la source permet une attribution fiable.
+- CPU, working set, private memory, I/O when available, and linkage to GPU metrics if the source allows reliable attribution.
 
-- Nom d'image, chemin exécutable, ligne de commande selon les permissions, utilisateur et heure de démarrage.
+- Image name, executable path, command line depending on permissions, user and start time.
 
-- Nombre de threads et handles si la collecte est fiable et si son coût est acceptable.
+- Thread and handle counts if collection is reliable and its cost is acceptable.
 
-- Signature numérique et éditeur comme informations complémentaires, avec chargement à la demande.
+- Digital signature and publisher as complementary information, loaded on demand.
 
-- Recherche, filtres, tri et affichage des processus terminés dans l'historique si activé.
+- Search, filters, sorting and display of terminated processes in the history if enabled.
 
-## Sécurité et exactitude
+## Security and accuracy
 
-- Ne pas tuer de processus ni modifier leur priorité dans la première version.
+- Do not kill processes or change their priority in the first version.
 
-- Ne pas supposer que les informations de ligne de commande ou de modules sont accessibles pour tous les processus.
+- Do not assume that command line or module information is accessible for all processes.
 
-- Identifier un processus par PID et heure de création, pas uniquement par PID.
+- Identify a process by PID and creation time, not by PID alone.
 
-- Ne pas promettre une attribution GPU par processus si la source ne la fournit pas.
+- Do not promise per-process GPU attribution if the source does not provide it.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- Les processus qui apparaissent ou disparaissent pendant l'actualisation sont gérés sans erreur fatale.
+- Processes that appear or disappear during a refresh are handled without a fatal error.
 
-- Les colonnes indiquent clairement leurs unités et leur méthode de calcul.
+- Columns clearly indicate their units and calculation method.
 
-- Les opérations coûteuses (signature, modules, détails) sont différées ou déclenchées à la demande.
+- Costly operations (signature, modules, details) are deferred or triggered on demand.
 
-# 7. Module Dashboard
+# 7. Dashboard module
 
-Présenter l'état du PC en un coup d'œil et permettre d'accéder aux modules détaillés.
+Present the PC's state at a glance and provide access to the detailed modules.
 
-- Cartes CPU, RAM, GPU/VRAM, stockage, réseau et capteurs disponibles.
+- Cards for CPU, RAM, GPU/VRAM, storage, network and available sensors.
 
-- Valeur actuelle, tendance courte, maximum récent et état de disponibilité.
+- Current value, short trend, recent maximum and availability state.
 
-- Chaque carte ouvre le module détaillé correspondant.
+- Each card opens the corresponding detailed module.
 
-- Métriques légères : intervalle indicatif de 1 seconde ; capteurs plus coûteux : 2 à 5 secondes selon le fournisseur.
+- Lightweight metrics: indicative interval of 1 second; costlier sensors: 2 to 5 seconds depending on the provider.
 
-- Éviter de recopier les données : le dashboard consomme le modèle commun et les dernières mesures publiées.
+- Avoid copying data: the dashboard consumes the common model and the latest published measurements.
 
-- Afficher les lacunes de données ; ne pas inventer de température ou de métrique absente.
+- Show data gaps; do not invent a temperature or a missing metric.
 
-# 8. Module Historique & Alertes
+# 8. History & Alerts module
 
-## Objectif
+## Goal
 
-Conserver localement des séries temporelles et permettre de retrouver ce qui s'est produit avant ou pendant un ralentissement.
+Keep time series locally and make it possible to find out what happened before or during a slowdown.
 
-## Fonctionnalités
+## Features
 
-- Historique consultable par plage temporelle, ressource et processus.
+- History browsable by time range, resource and process.
 
-- Règles configurables avec seuil, durée minimale, période de récupération et délai anti-rebond.
+- Configurable rules with threshold, minimum duration, recovery period and debounce delay.
 
-- Événement d'alerte avec horodatage, mesures sources, sévérité, explication et statut d'acquittement.
+- Alert event with timestamp, source measurements, severity, explanation and acknowledgment status.
 
-- Agrégation des anciennes mesures et rétention configurable.
+- Aggregation of old measurements and configurable retention.
 
-- SQLite est une option adaptée au stockage local ; définir une stratégie d'écriture groupée et de migration du schéma.
+- SQLite is a suitable option for local storage; define a batched write strategy and a schema migration strategy.
 
-## Exigences
+## Requirements
 
-- Distinguer une alerte factuelle (seuil mesuré) d'une hypothèse de diagnostic.
+- Distinguish a factual alert (measured threshold) from a diagnostic hypothesis.
 
-- Éviter les alertes répétées pour le même épisode.
+- Avoid repeated alerts for the same episode.
 
-- L'utilisateur peut désactiver une règle ou modifier son seuil.
+- The user can disable a rule or change its threshold.
 
-- L'application continue de fonctionner si la base d'historique est temporairement indisponible ; signaler la perte éventuelle de mesures.
+- The application keeps working if the history database is temporarily unavailable; report the possible loss of measurements.
 
-# 9. Module Santé matérielle
+# 9. Hardware health module
 
-Regrouper les capteurs disponibles sans prétendre que tous les matériels exposent les mêmes informations.
+Group the available sensors without claiming that all hardware exposes the same information.
 
-- Températures CPU/GPU/SSD, fréquences, puissance, tensions et ventilateurs uniquement lorsqu'ils sont fournis par une source identifiable.
+- CPU/GPU/SSD temperatures, frequencies, power, voltages and fans only when provided by an identifiable source.
 
-- WMI peut compléter certaines données ; privilégier une interface fournisseur pour les capteurs spécifiques.
+- WMI can complement some data; prefer a provider interface for hardware-specific sensors.
 
-- Évaluer l'utilisation d'une bibliothèque compatible, par exemple LibreHardwareMonitor, après vérification de sa licence, de sa maintenance et de sa compatibilité.
+- Evaluate the use of a compatible library, for example LibreHardwareMonitor, after checking its license, its maintenance and its compatibility.
 
-- Distinguer seuil constructeur, seuil configurable et simple avertissement générique.
+- Distinguish manufacturer threshold, configurable threshold and simple generic warning.
 
-- Ne pas déclencher d'action matérielle automatique ; ne pas modifier courbes de ventilateurs ou tensions dans le périmètre initial.
+- Do not trigger any automatic hardware action; do not modify fan curves or voltages in the initial scope.
 
-## Critères d'acceptation
+## Acceptance criteria
 
-- Chaque capteur indique son nom, unité, source et état de validité.
+- Each sensor indicates its name, unit, source and validity state.
 
-- Les valeurs impossibles ou figées sont signalées plutôt que présentées comme fiables.
+- Impossible or frozen values are flagged rather than presented as reliable.
 
-- Les seuils sont adaptés au composant lorsqu'ils sont documentés ; sinon l'interface précise qu'il s'agit d'un seuil générique.
+- Thresholds are adapted to the component when documented; otherwise the UI states that it is a generic threshold.
 
-# 10. Module Démarrage & Services
+# 10. Startup & Services module
 
-Aider à examiner les éléments lancés automatiquement, sans désactiver des composants au hasard.
+Help examine the items launched automatically, without disabling components at random.
 
-## Sources à inventorier
+## Sources to inventory
 
-- Applications de démarrage et clés Run/RunOnce du registre.
+- Startup applications and the Run/RunOnce registry keys.
 
-- Dossiers de démarrage utilisateur et système.
+- User and system startup folders.
 
-- Tâches planifiées.
+- Scheduled tasks.
 
-- Services Windows : type de démarrage, état, compte et dépendances.
+- Windows services: startup type, state, account and dependencies.
 
-## Fonctionnalités et garde-fous
+## Features and safeguards
 
-- Afficher l'éditeur, le chemin, la signature lorsqu'elle est disponible et la source de l'entrée.
+- Show the publisher, the path, the signature when available and the source of the entry.
 
-- Ne pas afficher un score d'impact inventé ; utiliser des mesures observées ou préciser que l'impact est inconnu.
+- Do not display an invented impact score; use observed measurements or state that the impact is unknown.
 
-- Toute modification demande une confirmation et doit être réversible lorsque possible.
+- Any change requires confirmation and must be reversible when possible.
 
-- Avant de modifier un service ou une tâche, montrer les dépendances et le risque connu.
+- Before modifying a service or a task, show the dependencies and the known risk.
 
-- La première version peut être en lecture seule, avec export d'inventaire.
+- The first version can be read-only, with inventory export.
 
-# 11. Module Diagnostic ETW
+# 11. ETW Diagnostics module
 
-Module expert à développer après stabilisation des collecteurs et de l'historique.
+Expert module to be developed after the collectors and the history have stabilized.
 
-- Lancer des sessions de trace explicites et bornées dans le temps.
+- Start explicit, time-bounded trace sessions.
 
-- Explorer les événements CPU, E/S disque, ordonnancement, DPC/ISR et événements graphiques selon les fournisseurs activés.
+- Explore CPU, disk I/O, scheduling, DPC/ISR and graphics events depending on the providers enabled.
 
-- Fournir une chronologie corrélée avec les métriques de base.
+- Provide a timeline correlated with the base metrics.
 
-- Gérer les permissions, le coût de collecte, la taille des traces et leur suppression/archivage.
+- Handle permissions, collection cost, trace size and their deletion/archiving.
 
-- Éviter d'implémenter prématurément un clone complet de Windows Performance Analyzer ; commencer par un scénario de diagnostic précis.
+- Avoid prematurely implementing a full clone of Windows Performance Analyzer; start with a specific diagnostic scenario.
 
-- Ne pas déclarer une cause racine si les événements ne suffisent qu'à suggérer une corrélation.
+- Do not declare a root cause if the events only suffice to suggest a correlation.
 
-# 12. Module Rapports & Export
+# 12. Reports & Export module
 
-- Export CSV des mesures, processus et inventaires.
+- CSV export of measurements, processes and inventories.
 
-- Export JSON structuré pour les diagnostics et l'automatisation.
+- Structured JSON export for diagnostics and automation.
 
-- Rapport HTML local avec résumé, plage temporelle, graphiques, alertes et limites de collecte.
+- Local HTML report with summary, time range, charts, alerts and collection limits.
 
-- PDF en phase ultérieure si le besoin est confirmé.
+- PDF in a later phase if the need is confirmed.
 
-- Les rapports doivent indiquer la date, la version de l'application, les sources de données et les métriques indisponibles.
+- Reports must state the date, the application version, the data sources and the unavailable metrics.
 
-- Ne pas inclure par défaut les lignes de commande complètes ou autres données potentiellement sensibles dans un rapport partagé.
+- Do not include full command lines or other potentially sensitive data by default in a shared report.
 
-# 13. Moteur de diagnostic et corrélation
+# 13. Diagnostic and correlation engine
 
-Le moteur de diagnostic transforme les métriques en constats explicables. Chaque constat doit conserver les preuves et les limites.
+The diagnostic engine turns metrics into explainable findings. Each finding must keep its evidence and its limits.
 
-| Niveau | Signification | Exemple |
+| Level | Meaning | Example |
 |---|---|---|
-| Information | État observé sans problème établi | Un processus utilise actuellement 35 % du CPU |
-| À surveiller | Tendance inhabituelle ou seuil soutenu | Mémoire privée croissante pendant plusieurs minutes |
-| Alerte | Condition mesurée et persistante | Mémoire disponible sous un seuil configuré |
-| Hypothèse | Explication possible, à confirmer | Le ralentissement coïncide avec une activité disque élevée |
+| Information | Observed state with no established problem | A process is currently using 35% of the CPU |
+| To watch | Unusual trend or sustained threshold | Private memory growing for several minutes |
+| Alert | Measured, persistent condition | Available memory below a configured threshold |
+| Hypothesis | Possible explanation, to be confirmed | The slowdown coincides with high disk activity |
 
-- Chaque règle doit documenter la formule, la fenêtre temporelle, les seuils et les faux positifs connus.
+- Each rule must document the formula, the time window, the thresholds and the known false positives.
 
-- Une corrélation temporelle n'est pas une preuve de causalité.
+- A temporal correlation is not proof of causality.
 
-- Afficher les données qui ont déclenché le diagnostic et proposer des vérifications concrètes.
+- Show the data that triggered the diagnosis and suggest concrete checks.
 
-- Toute action corrective doit rester distincte du diagnostic et nécessiter une confirmation.
+- Any corrective action must remain separate from the diagnosis and require confirmation.
 
-# 14. Benchmark et qualité
+# 14. Benchmark and quality
 
-## Scénarios de test
+## Test scenarios
 
-- PC au repos pendant 10 minutes.
+- PC idle for 10 minutes.
 
-- Charge CPU soutenue et charge sur un seul cœur.
+- Sustained CPU load and single-core load.
 
-- Allocation mémoire progressive et processus terminés pendant la collecte.
+- Progressive memory allocation and processes terminated during collection.
 
-- GPU utilisé en 3D, compute et mémoire vidéo, lorsque le matériel de test le permet.
+- GPU used for 3D, compute and video memory, when the test hardware allows it.
 
-- Forte activité disque avec débit faible ou latence élevée.
+- Heavy disk activity with low throughput or high latency.
 
-- Nombre élevé de processus, accès refusés et compteurs indisponibles.
+- High process count, access denied errors and unavailable counters.
 
-## Mesures à publier
+## Measurements to publish
 
-- Consommation CPU et mémoire propre de DiskScope.
+- DiskScope's own CPU and memory consumption.
 
-- Latence et durée de chaque collecte.
+- Latency and duration of each collection.
 
-- Taux d'échantillons manquants et erreurs par fournisseur.
+- Rate of missed samples and errors per provider.
 
-- Coût de l'historique en espace disque et effet de la rétention.
+- Cost of the history in disk space and effect of retention.
 
-- Comparaison avec les outils Windows de référence, en documentant les différences de définition.
+- Comparison with the reference Windows tools, documenting the differences in definition.
 
-Les objectifs chiffrés de performance doivent être établis après mesure d'une version de base, et non annoncés comme acquis.
+Numeric performance targets must be set after measuring a baseline version, and not announced as achieved.
 
-# 15. Roadmap recommandée
+# 15. Recommended roadmap
 
-- Étape A : inspecter la solution existante et son architecture ; ne pas créer de projets doublons.
+- Step A: inspect the existing solution and its architecture; do not create duplicate projects.
 
-- Étape B : définir les contrats partagés de métriques, états, erreurs et annulation.
+- Step B: define the shared contracts for metrics, states, errors and cancellation.
 
-- Étape C : développer CPU/RAM et Process Explorer avec tests.
+- Step C: develop CPU/RAM and Process Explorer with tests.
 
-- Étape D : ajouter le dashboard et l'historique local.
+- Step D: add the dashboard and the local history.
 
-- Étape E : développer GPU avec une matrice de compatibilité matérielle.
+- Step E: develop GPU with a hardware compatibility matrix.
 
-- Étape F : ajouter capteurs matériels et inventaire de démarrage/services.
+- Step F: add hardware sensors and the startup/services inventory.
 
-- Étape G : développer le moteur de corrélation puis un premier scénario ETW.
+- Step G: develop the correlation engine, then a first ETW scenario.
 
-- Étape H : finaliser les exports, la documentation et les tests de régression.
+- Step H: finalize the exports, the documentation and the regression tests.
 
-# 16. Instructions communes à Claude Code
+# 16. Common instructions for Claude Code
 
-À utiliser comme consignes persistantes dans le dépôt, ou à rappeler au début de chaque module. Adapter les noms de projets à la solution existante avant toute modification.
+To be used as persistent instructions in the repository, or to be repeated at the start of each module. Adapt the project names to the existing solution before any modification.
 
 ```
-Agis comme un ingénieur senior C#/.NET/WPF spécialisé dans les API Windows et le diagnostic de performances.
-Avant de coder :
-1. Inspecte la solution et lis les conventions existantes.
-2. Identifie les projets déjà créés, en particulier le module Stockage en cours.
-3. Propose un plan limité au module demandé.
-4. Vérifie les API dans la documentation Microsoft officielle.
-Pendant le développement :
-- Respecte l'architecture existante et évite les duplications.
-- Sépare les collecteurs, le modèle de données et l'interface MVVM.
-- Gère annulation, erreurs, permissions et métriques indisponibles.
-- Ne présente pas une valeur inconnue comme zéro.
-- Ne lance aucune action destructive ou modification système sans demande explicite.
-- Ajoute des tests pour les calculs et les cas limites.
-- Compile et exécute les tests après chaque étape.
-- N'affirme pas qu'un test ou benchmark a réussi s'il n'a pas été exécuté.
-- Mesure les performances au lieu de les supposer.
-- Termine chaque étape par un résumé des changements, résultats de test et limites restantes.
-Commence par inspecter le dépôt et propose les prochaines étapes sans réécrire les modules déjà en cours.
+Act as a senior C#/.NET/WPF engineer specialized in Windows APIs and performance diagnostics.
+Before coding:
+1. Inspect the solution and read the existing conventions.
+2. Identify the projects already created, in particular the Storage module in progress.
+3. Propose a plan limited to the requested module.
+4. Verify the APIs in the official Microsoft documentation.
+During development:
+- Respect the existing architecture and avoid duplication.
+- Separate the collectors, the data model and the MVVM interface.
+- Handle cancellation, errors, permissions and unavailable metrics.
+- Do not present an unknown value as zero.
+- Do not run any destructive action or system modification without an explicit request.
+- Add tests for the calculations and the edge cases.
+- Build and run the tests after each step.
+- Do not claim that a test or benchmark passed if it was not run.
+- Measure performance instead of assuming it.
+- End each step with a summary of the changes, test results and remaining limits.
+Start by inspecting the repository and propose the next steps without rewriting the modules already in progress.
 ```
 
-# 17. Références techniques de départ
+# 17. Starting technical references
 
-- Microsoft Learn — GetSystemTimes — https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes
+- Microsoft Learn - GetSystemTimes - https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getsystemtimes
 
-- Microsoft Learn — GlobalMemoryStatusEx — https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
+- Microsoft Learn - GlobalMemoryStatusEx - https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex
 
-- Microsoft Learn — GetProcessMemoryInfo — https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getprocessmemoryinfo
+- Microsoft Learn - GetProcessMemoryInfo - https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getprocessmemoryinfo
 
-- Microsoft Learn — Performance Counters — https://learn.microsoft.com/en-us/windows/win32/perfctrs/about-performance-counters
+- Microsoft Learn - Performance Counters - https://learn.microsoft.com/en-us/windows/win32/perfctrs/about-performance-counters
 
-- Microsoft Learn — DXGI_QUERY_VIDEO_MEMORY_INFO — https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/ns-dxgi1_4-dxgi_query_video_memory_info
+- Microsoft Learn - DXGI_QUERY_VIDEO_MEMORY_INFO - https://learn.microsoft.com/en-us/windows/win32/api/dxgi1_4/ns-dxgi1_4-dxgi_query_video_memory_info
 
-- Microsoft Learn — WPF — https://learn.microsoft.com/en-us/dotnet/desktop/wpf/
+- Microsoft Learn - WPF - https://learn.microsoft.com/en-us/dotnet/desktop/wpf/
 
-- Microsoft Learn — Event Tracing for Windows — https://learn.microsoft.com/en-us/windows/win32/etw/event-tracing-portal
+- Microsoft Learn - Event Tracing for Windows - https://learn.microsoft.com/en-us/windows/win32/etw/event-tracing-portal
 
-Note : Ce document est une spécification initiale de conception, pas une certification des API ou des performances. Les API précises, permissions, limites de compatibilité et dépendances doivent être vérifiées lors de l'implémentation.
+Note: This document is an initial design specification, not a certification of the APIs or of performance. The precise APIs, permissions, compatibility limits and dependencies must be verified during implementation.
 
