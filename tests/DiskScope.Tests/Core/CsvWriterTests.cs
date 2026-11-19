@@ -13,6 +13,7 @@ public sealed class CsvWriterTests
     [InlineData("=A1&\"x\"", "\"'=A1&\"\"x\"\"\"")]
     [InlineData("-12.5", "-12.5")]
     [InlineData("a,b", "\"a,b\"")]
+    [InlineData("a;=cmd", "\"a;=cmd\"")]
     [InlineData("plain", "plain")]
     [InlineData("", "")]
     public void WriteField_NeutralizesFormulasAndQuotesPerRfc4180(string value, string expected)

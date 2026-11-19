@@ -9,11 +9,15 @@ namespace DiskScope.Core;
 /// </summary>
 public static class CsvWriter
 {
+    /// <summary>
+    /// True for a comma, quote, CR or LF, and also for a semicolon: a spreadsheet in a locale whose list separator is
+    /// ';' (French Excel) would split an unquoted field there, and a "=..." after it would start a formula cell.
+    /// </summary>
     public static bool NeedsQuoting(ReadOnlySpan<char> value)
     {
         foreach (char c in value)
         {
-            if (c is ',' or '"' or '\r' or '\n')
+            if (c is ',' or ';' or '"' or '\r' or '\n')
             {
                 return true;
             }
