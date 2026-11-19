@@ -217,7 +217,7 @@ public sealed class GpuCollector : IMetricCollector, IDisposable
     {
         try
         {
-            return Dxgi.EnumerateAdapters();
+            return NativeMethods.EnumerateAdapters();
         }
         catch (DllNotFoundException)
         {
