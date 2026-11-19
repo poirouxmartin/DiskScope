@@ -17,8 +17,157 @@ public sealed class InventoryTests
     [InlineData("noextension arg", "noextension")]
     [InlineData("   ", null)]
     [InlineData("\"\"", null)]
+    [InlineData("\"\"C:\\a b\\x.exe\"\" -s", @"C:\a b\x.exe")]
+    [InlineData(@"cmd /c C:\s\x.bat", @"C:\s\x.bat")]
+    [InlineData("cmd.exe /q /c \"C:\\a b\\y.cmd\" arg", @"C:\a b\y.cmd")]
+    [InlineData("cmd /k", "cmd")]
+    [InlineData(@"C:\Windows\System32\control.exe C:\x\desk.cpl", @"C:\Windows\System32\control.exe")]
+    [InlineData(@"C:\Program Files\Snap In\tool.msc /a", @"C:\Program Files\Snap In\tool.msc")]
+    [InlineData("rundll32 shell32.dll,Control_RunDLL", "rundll32")]
     public void ExtractExecutable(string command, string? expected) =>
         Assert.Equal(expected, CommandLine.ExtractExecutable(command, NoExpand));
+
+    [Theory]
+    [InlineData(@"C:\a b\x.exe", "-s", "\"C:\\a b\\x.exe\" -s")]
+    [InlineData("\"C:\\a b\\x.exe\"", "-s", "\"C:\\a b\\x.exe\" -s")]
+    [InlineData(@"C:\x.exe", null, "\"C:\\x.exe\"")]
+    [InlineData(null, null, "")]
+    public void CommandLine_Join(string? path, string? arguments, string expected) =>
+        Assert.Equal(expected, CommandLine.Join(path, arguments));
+
+    [Fact]
+    public void CommandText_OnlyStringValuesAreCommands()
+    {
+        Assert.Equal(@"C:\x.exe -s", StartupInventory.CommandText(@"C:\x.exe -s"));
+        Assert.Null(StartupInventory.CommandText(new byte[] { 1 }));
+        Assert.Null(StartupInventory.CommandText(5));
+        Assert.Null(StartupInventory.CommandText(new[] { "a" }));
+        Assert.Null(StartupInventory.CommandText(null));
+    }
+
+    [Fact]
+    public void Locate_ChecksQualifiedPathsDirectly()
+    {
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\a\x.exe" };
+
+        Assert.Equal((true, @"C:\a\x.exe"), StartupInventory.Locate(@"C:\a\x.exe", [], files.Contains));
+        Assert.Equal((false, (string?)null), StartupInventory.Locate(@"C:\a\y.exe", [], files.Contains));
+    }
+
+    [Fact]
+    public void Locate_BareNames_AreSearchedInTheGivenDirectories()
+    {
+        string[] dirs = [@"C:\fake\sys", @"C:\fake\win"];
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\fake\win\rundll32.exe", @"C:\fake\sys\cmd.exe" };
+
+        Assert.Equal((true, @"C:\fake\win\rundll32.exe"), StartupInventory.Locate("rundll32.exe", dirs, files.Contains));
+        Assert.Equal((true, @"C:\fake\sys\cmd.exe"), StartupInventory.Locate("cmd", dirs, files.Contains));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate("nothere", dirs, files.Contains));
+    }
+
+    [Fact]
+    public void Locate_RelativePathOrNothing_IsUnknown()
+    {
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { @"C:\fake\sys\tools\x.exe" };
+
+        Assert.Equal((null, (string?)null), StartupInventory.Locate(@"tools\x.exe", [@"C:\fake\sys"], files.Contains));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate(null, [@"C:\fake\sys"], files.Contains));
+    }
+
+    public sealed class FakeTrigger
+    {
+        public int Type { get; init; }
+    }
+
+    public sealed class FakeExecAction
+    {
+        public int Type { get; init; }
+        public string? Path { get; init; }
+        public string? Arguments { get; init; }
+    }
+
+    public sealed class FakeDefinition
+    {
+        public IEnumerable<object> Triggers { get; init; } = [];
+        public IEnumerable<object> Actions { get; init; } = [];
+    }
+
+    public sealed class FakeTask
+    {
+        private readonly FakeDefinition? _definition;
+
+        public FakeTask(FakeDefinition? definition) => _definition = definition;
+
+        public string Name { get; init; } = "task";
+        public string Path { get; init; } = @"\task";
+        public bool Enabled { get; init; } = true;
+        public object Definition => _definition ?? throw new UnauthorizedAccessException("access denied");
+    }
+
+    public sealed class FakeFolder
+    {
+        public string Path { get; init; } = @"\";
+        public List<object> Tasks { get; } = [];
+        public List<object> Folders { get; } = [];
+        public bool TasksThrow { get; init; }
+
+        public IEnumerable<object> GetTasks(int flags) => TasksThrow ? throw new UnauthorizedAccessException("tasks denied") : Tasks;
+
+        public IEnumerable<object> GetFolders(int flags) => Folders;
+    }
+
+    private static FakeTask StartupTask(int triggerType, string path, string? args) => new(new FakeDefinition
+    {
+        Triggers = [new FakeTrigger { Type = triggerType }],
+        Actions = [new FakeExecAction { Type = 0, Path = path, Arguments = args }],
+    });
+
+    [Fact]
+    public void WalkFolder_UnreadableTask_IsReported_AndTheOthersStayListed()
+    {
+        var folder = new FakeFolder();
+        folder.Tasks.Add(new FakeTask(null));
+        folder.Tasks.Add(StartupTask(9, "\"C:\\a b\\x.exe\"", "-s"));
+        var items = new List<StartupEntry>();
+        var errors = new List<string>();
+
+        StartupInventory.WalkFolder(folder, items, errors);
+
+        StartupEntry entry = Assert.Single(items);
+        Assert.Equal("\"C:\\a b\\x.exe\" -s", entry.Command);
+        Assert.Equal(@"C:\a b\x.exe", entry.ExecutablePath);
+        Assert.Single(errors);
+    }
+
+    [Fact]
+    public void WalkFolder_FailedTaskListing_DoesNotSkipSubfolders()
+    {
+        var folder = new FakeFolder { TasksThrow = true };
+        var sub = new FakeFolder { Path = @"\sub" };
+        sub.Tasks.Add(StartupTask(8, @"C:\boot.exe", null));
+        folder.Folders.Add(sub);
+        var items = new List<StartupEntry>();
+        var errors = new List<string>();
+
+        StartupInventory.WalkFolder(folder, items, errors);
+
+        Assert.Equal("\"C:\\boot.exe\"", Assert.Single(items).Command);
+        Assert.Single(errors);
+    }
+
+    [Fact]
+    public void WalkFolder_TimeTriggerOnly_IsNotAStartupEntry()
+    {
+        var folder = new FakeFolder();
+        folder.Tasks.Add(StartupTask(1, @"C:\later.exe", null));
+        var items = new List<StartupEntry>();
+        var errors = new List<string>();
+
+        StartupInventory.WalkFolder(folder, items, errors);
+
+        Assert.Empty(items);
+        Assert.Empty(errors);
+    }
 
     [Theory]
     [InlineData(new byte[] { 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, true)]
@@ -60,6 +209,7 @@ public sealed class InventoryTests
     }
 
     [Fact]
+    [Trait("Category", "Machine")]
     public void Services_OnThisMachine_ListsTheEventLogService()
     {
         InventoryResult<ServiceEntry> r = ServiceInventory.Read();
@@ -72,6 +222,7 @@ public sealed class InventoryTests
     }
 
     [Fact]
+    [Trait("Category", "Machine")]
     public void Startup_OnThisMachine_ReadsWithoutThrowing_AndReportsErrorsExplicitly()
     {
         InventoryResult<StartupEntry> r = StartupInventory.Read();
