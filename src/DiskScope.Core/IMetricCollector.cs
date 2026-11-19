@@ -31,4 +31,16 @@ public interface IMetricCollector
 public sealed record CollectorResult(IReadOnlyList<MetricValue> Values, IReadOnlyList<CollectorError> Errors)
 {
     public static CollectorResult Of(IReadOnlyList<MetricValue> values) => new(values, Array.Empty<CollectorError>());
+
+    /// <summary>Every metric published Unavailable (never zero), with the errors that explain why.</summary>
+    public static CollectorResult AllUnavailable(IReadOnlyList<MetricDescriptor> metrics, IReadOnlyList<CollectorError> errors)
+    {
+        var values = new MetricValue[metrics.Count];
+        for (int i = 0; i < values.Length; i++)
+        {
+            values[i] = MetricValue.Unavailable(metrics[i].Id);
+        }
+
+        return new CollectorResult(values, errors);
+    }
 }

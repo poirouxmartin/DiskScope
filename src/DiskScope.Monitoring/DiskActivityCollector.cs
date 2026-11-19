@@ -61,7 +61,7 @@ public sealed class DiskActivityCollector : IMetricCollector, IDisposable
     {
         if (_query is null || _counters.Length == 0)
         {
-            return CollectorResult.Of(Metrics.Select(m => MetricValue.Unavailable(m.Id)).ToArray());
+            return CollectorResult.AllUnavailable(Metrics, Array.Empty<CollectorError>());
         }
 
         int status = _query.Collect();

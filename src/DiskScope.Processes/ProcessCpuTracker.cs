@@ -1,3 +1,5 @@
+using DiskScope.Core;
+
 namespace DiskScope.Processes;
 
 /// <summary>
@@ -25,7 +27,7 @@ public sealed class ProcessCpuTracker
     public IReadOnlyDictionary<ProcessKey, double?> Update(IReadOnlyList<ProcessSnapshot> processes, long stopwatchTimestamp)
     {
         ArgumentNullException.ThrowIfNull(processes);
-        double elapsedTicks = _previousTimestamp == 0
+        long elapsedTicks = _previousTimestamp == 0
             ? 0
             : System.Diagnostics.Stopwatch.GetElapsedTime(_previousTimestamp, stopwatchTimestamp).Ticks;
 
@@ -37,9 +39,9 @@ public sealed class ProcessCpuTracker
             if (p.CpuTimeTicks is { } cpu && p.Key.IsCreationTimeKnown)
             {
                 next[p.Key] = cpu;
-                if (elapsedTicks > 0 && _previous.TryGetValue(p.Key, out long before) && cpu >= before)
+                if (_previous.TryGetValue(p.Key, out long before))
                 {
-                    percent = Math.Min(100.0, 100.0 * (cpu - before) / (elapsedTicks * _processorCount));
+                    percent = CpuDelta.Percent(cpu - before, elapsedTicks, _processorCount);
                 }
             }
 

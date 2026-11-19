@@ -44,10 +44,10 @@ public sealed class SelfCollector : IMetricCollector
             long total = kernel + user;
             if (_previousCpu >= 0 && total >= _previousCpu)
             {
-                double elapsed = Stopwatch.GetElapsedTime(_previousTimestamp, now).Ticks;
-                if (elapsed > 0)
+                long elapsed = Stopwatch.GetElapsedTime(_previousTimestamp, now).Ticks;
+                if (CpuDelta.Percent(total - _previousCpu, elapsed, _processors) is { } percent)
                 {
-                    cpu = MetricValue.Derived(Cpu, Math.Min(100, 100.0 * (total - _previousCpu) / (elapsed * _processors)));
+                    cpu = MetricValue.Derived(Cpu, percent);
                 }
             }
 

@@ -113,14 +113,14 @@ public sealed class GpuCollector : IMetricCollector, IDisposable
         var errors = new List<CollectorError>();
         if (_query is null || _engineCounter == 0)
         {
-            return new CollectorResult(Metrics.Select(m => MetricValue.Unavailable(m.Id)).ToArray(), errors);
+            return CollectorResult.AllUnavailable(Metrics, errors);
         }
 
         int status = _query.Collect();
         if (status != 0)
         {
             errors.Add(new CollectorError(Name, $"PdhCollectQueryData failed, 0x{status:X8}"));
-            return new CollectorResult(Metrics.Select(m => MetricValue.Unavailable(m.Id)).ToArray(), errors);
+            return CollectorResult.AllUnavailable(Metrics, errors);
         }
 
         var samples = new List<(GpuEngineInstance, double)>();

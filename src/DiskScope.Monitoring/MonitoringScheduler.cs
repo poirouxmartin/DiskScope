@@ -152,8 +152,8 @@ public sealed class MonitoringScheduler : IAsyncDisposable
         catch (Exception ex)
         {
             failed = true;
-            result = new CollectorResult(
-                entry.Collector.Metrics.Select(m => MetricValue.Unavailable(m.Id)).ToArray(),
+            result = CollectorResult.AllUnavailable(
+                entry.Collector.Metrics,
                 new[] { new CollectorError(entry.Collector.Name, $"{ex.GetType().Name}: {ex.Message}") });
         }
 
