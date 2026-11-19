@@ -130,7 +130,7 @@ public sealed class StartupViewModel : ObservableObject
 
     private void Export(string suggested, Action<TextWriter> write)
     {
-        if (_shell.AskSaveCsvPath(suggested) is not { } path)
+        if (_shell.AskSavePath(suggested) is not { } path)
         {
             return;
         }

@@ -129,6 +129,6 @@ public sealed class SearchViewModelTests
         {
         }
 
-        public string? AskSaveCsvPath(string suggestedFileName) => null;
+        public string? AskSavePath(string suggestedFileName) => null;
     }
 }

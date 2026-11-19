@@ -8,7 +8,6 @@ public sealed record GpuAdapterInfo(
     string Luid,
     uint VendorId,
     long DedicatedVideoMemory,
-    long DedicatedSystemMemory,
     long SharedSystemMemory,
     bool IsSoftware);
 
@@ -74,7 +73,6 @@ internal static unsafe partial class Dxgi
                             GpuCounterMath.FormatLuid(d.LuidLowPart, d.LuidHighPart),
                             d.VendorId,
                             (long)d.DedicatedVideoMemory,
-                            (long)d.DedicatedSystemMemory,
                             (long)d.SharedSystemMemory,
                             (d.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0));
                     }

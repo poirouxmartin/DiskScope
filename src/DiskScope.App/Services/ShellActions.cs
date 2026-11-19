@@ -15,8 +15,6 @@ public sealed class ShellActions : IShellActions
         Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = false });
     }
 
-    public string? AskSaveCsvPath(string suggestedFileName) => AskSavePath(suggestedFileName);
-
     public string? AskSavePath(string suggestedFileName)
     {
         string ext = System.IO.Path.GetExtension(suggestedFileName).ToLowerInvariant();

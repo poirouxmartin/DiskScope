@@ -1,7 +1,7 @@
 namespace DiskScope.Diagnostics;
 
 /// <summary>A process whose private memory kept growing over the observation window. A suspicion, not a proven leak.</summary>
-public sealed record GrowthSuspicion<TKey>(TKey Key, DateTime FromUtc, DateTime ToUtc, long FromBytes, long ToBytes, double RisingStepShare)
+public sealed record GrowthSuspicion<TKey>(TKey Key, DateTime FromUtc, DateTime ToUtc, long FromBytes, long ToBytes)
 {
     public long GrowthBytes => ToBytes - FromBytes;
 
@@ -97,7 +97,7 @@ public sealed class MemoryGrowthDetector<TKey>
             double share = (double)rising / steps;
             if (share >= MinRisingShare && spread)
             {
-                result.Add(new GrowthSuspicion<TKey>(key, t0, t1, b0, b1, share));
+                result.Add(new GrowthSuspicion<TKey>(key, t0, t1, b0, b1));
             }
         }
 

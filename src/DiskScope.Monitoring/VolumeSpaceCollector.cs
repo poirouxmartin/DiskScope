@@ -36,8 +36,6 @@ public sealed class VolumeSpaceCollector : IMetricCollector
 
     public TimeSpan DefaultInterval => TimeSpan.FromSeconds(5);
 
-    public IReadOnlyList<string> Letters => _roots.Select(Letter).ToArray();
-
     public static string FreeId(string letter) => $"disk.{letter}.free";
 
     public static string TotalId(string letter) => $"disk.{letter}.total";

@@ -14,9 +14,9 @@ namespace DiskScope.Monitoring.CpuRam;
 /// </summary>
 public sealed unsafe class CpuCollector : IMetricCollector
 {
-    public const string Total = "cpu.total";
-    public const string User = "cpu.user";
-    public const string Kernel = "cpu.kernel";
+    public const string Total = MetricIds.CpuTotal;
+    public const string User = MetricIds.CpuUser;
+    public const string Kernel = MetricIds.CpuKernel;
 
     private const string SystemSource = "GetSystemTimes (delta)";
     private const string CoreSource = "NtQuerySystemInformation SystemProcessorPerformanceInformation (delta)";
@@ -51,7 +51,7 @@ public sealed unsafe class CpuCollector : IMetricCollector
 
     public int LogicalProcessorCount => _coreCount;
 
-    public static string CoreId(int index) => "cpu.core." + index.ToString(CultureInfo.InvariantCulture);
+    public static string CoreId(int index) => MetricIds.CpuCorePrefix + index.ToString(CultureInfo.InvariantCulture);
 
     public CollectorAvailability CheckAvailability() =>
         NativeMethods.GetSystemTimes(out _, out _, out _)

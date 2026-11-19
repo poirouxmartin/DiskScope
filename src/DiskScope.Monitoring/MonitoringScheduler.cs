@@ -58,14 +58,11 @@ public sealed class MonitoringScheduler : IAsyncDisposable
     /// <summary>Raised on a scheduler thread after each collection, after the store and the latest values are updated.</summary>
     public event Action<MetricBatch>? BatchPublished;
 
-    /// <summary>Raised when the store throws; collection goes on and the batch is still published.</summary>
-    public event Action<Exception>? StoreFailed;
-
     public long StoreFailures => Interlocked.Read(ref _storeFailures);
 
     private long _storeFailures;
 
-    /// <summary>Exceptions thrown by BatchPublished or StoreFailed subscribers. They are isolated so one faulty subscriber never stops a collector loop.</summary>
+    /// <summary>Exceptions thrown by BatchPublished subscribers. They are isolated so one faulty subscriber never stops a collector loop.</summary>
     public long SubscriberFailures => Interlocked.Read(ref _subscriberFailures);
 
     private long _subscriberFailures;
@@ -176,11 +173,10 @@ public sealed class MonitoringScheduler : IAsyncDisposable
             {
                 _store.Append(batch);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // History may be unavailable (disk full, locked file): monitoring goes on, the loss is counted and reported.
                 Interlocked.Increment(ref _storeFailures);
-                Raise(StoreFailed, ex);
             }
         }
 

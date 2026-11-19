@@ -366,7 +366,7 @@ public sealed class StorageViewModel : ObservableObject
             return;
         }
 
-        if (_shell.AskSaveCsvPath("DiskScope-export.csv") is not { } path)
+        if (_shell.AskSavePath("DiskScope-export.csv") is not { } path)
         {
             return;
         }

@@ -9,11 +9,11 @@ namespace DiskScope.Monitoring;
 /// </summary>
 public sealed class DiskActivityCollector : IMetricCollector, IDisposable
 {
-    public const string Active = "disk.active";
-    public const string ReadRate = "disk.read";
-    public const string WriteRate = "disk.write";
-    public const string Latency = "disk.latency";
-    public const string Queue = "disk.queue";
+    public const string Active = MetricIds.DiskActive;
+    public const string ReadRate = MetricIds.DiskRead;
+    public const string WriteRate = MetricIds.DiskWrite;
+    public const string Latency = MetricIds.DiskLatency;
+    public const string Queue = MetricIds.DiskQueue;
 
     private const string Source = @"PDH \PhysicalDisk(_Total)";
 

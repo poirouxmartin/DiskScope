@@ -12,7 +12,6 @@
     <ProjectReference Include="..\DiskScope.Storage\DiskScope.Storage.csproj" />
     <ProjectReference Include="..\DiskScope.Scanner\DiskScope.Scanner.csproj" />
     <ProjectReference Include="..\DiskScope.Scanner.Standard\DiskScope.Scanner.Standard.csproj" />
-    <ProjectReference Include="..\DiskScope.Scanner.Ntfs\DiskScope.Scanner.Ntfs.csproj" />
     <ProjectReference Include="..\DiskScope.Core\DiskScope.Core.csproj" />
     <ProjectReference Include="..\DiskScope.Monitoring\DiskScope.Monitoring.csproj" />
     <ProjectReference Include="..\DiskScope.Monitoring.CpuRam\DiskScope.Monitoring.CpuRam.csproj" />

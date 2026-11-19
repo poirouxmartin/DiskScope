@@ -337,7 +337,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
             }));
         }
 
-        OnPropertyChanged(nameof(ActiveAlertCount));
+        RaisePropertyChanged(nameof(ActiveAlertCount));
     }
 
     internal void RefreshFindings(DateTime now)
@@ -470,5 +470,4 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private MetricTileViewModel? Tile(string id, TimeSpan window, int? navigateTo) =>
         _descriptors.TryGetValue(id, out MetricDescriptor? d) ? new MetricTileViewModel(d, window, navigateTo) : null;
 
-    private void OnPropertyChanged(string name) => RaisePropertyChanged(name);
 }
