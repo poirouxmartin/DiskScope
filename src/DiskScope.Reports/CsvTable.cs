@@ -1,9 +1,12 @@
+using DiskScope.Core;
+
 namespace DiskScope.Reports;
 
 /// <summary>
 /// RFC 4180 CSV: comma separator, CRLF line ends, fields quoted when they contain a comma, quote, CR or LF, quotes
-/// doubled. A null field is written empty (unknown), never "0". Formatting of numbers and dates is the caller's job
-/// (invariant culture expected).
+/// doubled. A null field is written empty (unknown), never "0". Formula-like fields (leading = + - @ tab or CR) are
+/// neutralized with a leading apostrophe (see <see cref="CsvWriter"/>). Formatting of numbers and dates is the
+/// caller's job (invariant culture expected).
 /// </summary>
 public static class CsvTable
 {
@@ -28,33 +31,5 @@ public static class CsvTable
         return count;
     }
 
-    internal static void WriteRow(TextWriter writer, IReadOnlyList<string?> fields)
-    {
-        for (int i = 0; i < fields.Count; i++)
-        {
-            if (i > 0)
-            {
-                writer.Write(',');
-            }
-
-            string? f = fields[i];
-            if (f is null)
-            {
-                continue;
-            }
-
-            if (f.AsSpan().IndexOfAny(",\"\r\n") >= 0)
-            {
-                writer.Write('"');
-                writer.Write(f.Replace("\"", "\"\"", StringComparison.Ordinal));
-                writer.Write('"');
-            }
-            else
-            {
-                writer.Write(f);
-            }
-        }
-
-        writer.Write("\r\n");
-    }
+    internal static void WriteRow(TextWriter writer, IReadOnlyList<string?> fields) => CsvWriter.WriteRow(writer, fields);
 }

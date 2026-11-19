@@ -194,6 +194,16 @@ public sealed class InventoryTests
     }
 
     [Fact]
+    public void Csv_FormulaField_IsNeutralized()
+    {
+        var w = new StringWriter();
+
+        CsvTable.Write(w, ["a", "b"], [["=HYPERLINK(\"http://x\",\"y\")", "-3"]]);
+
+        Assert.Equal("a,b\r\n\"'=HYPERLINK(\"\"http://x\"\",\"\"y\"\")\",-3\r\n", w.ToString());
+    }
+
+    [Fact]
     public void Csv_RowWidthMismatch_Throws()
     {
         Assert.Throws<ArgumentException>(() => CsvTable.Write(new StringWriter(), ["a", "b"], [["only one"]]));

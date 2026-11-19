@@ -107,6 +107,42 @@ public sealed class CsvExporterTests
     }
 
     [Fact]
+    public void Write_MixedTree_MatchesGoldenOutput()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\data");
+        long knownTicks = new DateTime(2024, 3, 5, 7, 8, 9, DateTimeKind.Utc).Ticks;
+        builder.Add(root, "a,b.txt", NodeKind.File, FileAttributes.Normal, 10, 4096, knownTicks, 0);
+        builder.Add(root, "q\"x.txt", NodeKind.File, FileAttributes.Normal, 1, 0, 0, 0);
+        int locked = builder.Add(root, "locked", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.AddStatus(locked, NodeStatus.AccessDenied);
+        builder.Add(locked, "in.txt", NodeKind.File, FileAttributes.Normal, 5, 4096, 0, 0);
+
+        string csv = Export(builder.Build());
+
+        Assert.Equal(
+            "Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,Status\r\n"
+            + "C:\\data,Directory,0,0,16,8192,3,1,,SubtreeIncomplete\r\n"
+            + "\"C:\\data\\a,b.txt\",File,10,4096,10,4096,1,0,2024-03-05T07:08:09Z,\r\n"
+            + "\"C:\\data\\q\"\"x.txt\",File,1,0,1,0,1,0,,\r\n"
+            + "C:\\data\\locked,Directory,0,0,5,4096,1,0,,\"AccessDenied, SubtreeIncomplete\"\r\n"
+            + "C:\\data\\locked\\in.txt,File,5,4096,5,4096,1,0,,\r\n",
+            csv);
+    }
+
+    [Fact]
+    public void Path_StartingLikeAFormula_IsNeutralized()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("=cmd|' /C calc'!A0");
+        builder.Add(root, "x.txt", NodeKind.File, FileAttributes.Normal, 1, 0, 0, 0);
+        string[] lines = Lines(Export(builder.Build()));
+
+        Assert.StartsWith("\"'=cmd|' /C calc'!A0\",Directory,", lines[1]);
+        Assert.StartsWith("\"'=cmd|' /C calc'!A0\\x.txt\",File,", lines[2]);
+    }
+
+    [Fact]
     public void Write_ReturnsRowCountExcludingHeader()
     {
         NodeIndex index = BuildSimple();
