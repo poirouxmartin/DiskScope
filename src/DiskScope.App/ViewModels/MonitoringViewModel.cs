@@ -282,8 +282,8 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         foreach (GpuAdapterViewModel adapter in GpuAdapters)
         {
             UpdateTile(adapter.UsageTile, now, 100);
-            UpdateTile(adapter.DedicatedTile, now, adapter.Info.DedicatedVideoMemory > 0 ? adapter.Info.DedicatedVideoMemory : double.NaN, adapter.Info.DedicatedVideoMemory);
-            UpdateTile(adapter.SharedTile, now, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, adapter.Info.SharedSystemMemory, "limit");
+            UpdateTile(adapter.DedicatedTile, now, adapter.Info.DedicatedVideoMemory > 0 ? adapter.Info.DedicatedVideoMemory : double.NaN, adapter.Info.DedicatedVideoMemory > 0 ? adapter.Info.DedicatedVideoMemory : double.NaN);
+            UpdateTile(adapter.SharedTile, now, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, "limit");
             foreach (MetricRowViewModel row in adapter.EngineRows)
             {
                 row.Update(_scheduler.GetLatest(row.Descriptor.Id));
@@ -428,7 +428,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
             write(writer);
             ExportStatus = "Exported to " + path;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             ExportStatus = "Export failed: " + ex.Message;
         }

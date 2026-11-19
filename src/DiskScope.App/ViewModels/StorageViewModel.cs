@@ -40,36 +40,21 @@ public sealed class StorageViewModel : ObservableObject
     {
         _shell = shell ?? new ShellActions();
 
-        ScanCommand = new RelayCommand(
-            async () =>
-            {
-                try
-                {
-                    await ScanAsync();
-                }
-                catch (Exception ex)
-                {
-                    StatusText = $"Scan failed: {ex.Message}";
-                }
-            },
+        ScanCommand = new AsyncRelayCommand(
+            ScanAsync,
+            ex => StatusText = $"Scan failed: {ex.Message}",
             () => !IsScanning);
 
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsScanning);
 
-        ExportCsvCommand = new RelayCommand(
-            async () =>
+        ExportCsvCommand = new AsyncRelayCommand(
+            () =>
             {
-                try
-                {
-                    Task export = ExportCsvAsync();
-                    PendingExport = export;
-                    await export;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    StatusText = $"Export failed: {ex.Message}";
-                }
+                Task export = ExportCsvAsync();
+                PendingExport = export;
+                return export;
             },
+            ex => StatusText = $"Export failed: {ex.Message}",
             () => _index is not null && !IsScanning);
 
         CopyPathCommand = new ParameterCommand(CopyPath);
@@ -167,11 +152,11 @@ public sealed class StorageViewModel : ObservableObject
         private set => SetProperty(ref _extensions, value);
     }
 
-    public RelayCommand ScanCommand { get; }
+    public AsyncRelayCommand ScanCommand { get; }
 
     public RelayCommand CancelCommand { get; }
 
-    public RelayCommand ExportCsvCommand { get; }
+    public AsyncRelayCommand ExportCsvCommand { get; }
 
     /// <summary>Set by <see cref="ExportCsvCommand"/> so tests can await the export.</summary>
     public Task? PendingExport { get; private set; }
@@ -377,7 +362,15 @@ public sealed class StorageViewModel : ObservableObject
     {
         if (TryGetFullPath(parameter, out string path))
         {
-            _shell.CopyText(path);
+            try
+            {
+                _shell.CopyText(path);
+            }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                // Clipboard.SetText throws COMException when another process holds the clipboard.
+                StatusText = $"Copy failed: {ex.Message}";
+            }
         }
     }
 
@@ -385,7 +378,14 @@ public sealed class StorageViewModel : ObservableObject
     {
         if (TryGetFullPath(parameter, out string path))
         {
-            _shell.ShowInExplorer(path);
+            try
+            {
+                _shell.ShowInExplorer(path);
+            }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                StatusText = $"Could not open Explorer: {ex.Message}";
+            }
         }
     }
 
@@ -509,7 +509,7 @@ public sealed class StorageViewModel : ObservableObject
     private sealed class ProgressObserver(StorageViewModel owner, CancellationTokenSource scan) : IScanObserver
     {
         public void OnPartialResult(NodeIndex partial) =>
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
             {
                 // A late partial must never overwrite the final result or a newer scan.
                 if (ReferenceEquals(owner._cts, scan))
@@ -525,7 +525,7 @@ public sealed class StorageViewModel : ObservableObject
             string text =
                 $"Scanning: {snapshot.Nodes:N0} items, {ByteFormatter.Format(snapshot.LogicalBytes)}, {snapshot.Errors} errors";
 
-            Application.Current.Dispatcher.BeginInvoke(new Action(() => owner.StatusText = text));
+            Application.Current?.Dispatcher.BeginInvoke(new Action(() => owner.StatusText = text));
         }
     }
 }

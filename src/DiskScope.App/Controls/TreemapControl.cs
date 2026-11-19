@@ -206,7 +206,9 @@ public sealed class TreemapControl : FrameworkElement
             return;
         }
 
-        ToolTip = $"{index.GetFullPath(hit)}\n{ByteFormatter.Format(index.GetTotalSize(hit, SizeKind))}";
+        NodeStatus status = index.GetStatus(hit);
+        string incomplete = status != NodeStatus.None ? $"\n(incomplete: {status})" : string.Empty;
+        ToolTip = $"{index.GetFullPath(hit)}\n{ByteFormatter.FormatNodeSize(index.GetTotalSize(hit, SizeKind), status)}{incomplete}";
     }
 
     private void Relayout()

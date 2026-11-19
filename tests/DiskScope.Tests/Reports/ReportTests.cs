@@ -103,4 +103,37 @@ public sealed class ReportTests
         Assert.Equal(1, report.Collectors.Single(c => c.Name == "Broken").Failures);
         Assert.NotEmpty(report.Limits);
     }
+
+    [Fact]
+    public void HistoryCsv_NaNAverage_WritesEmptyCell_NotNaN()
+    {
+        var w = new StringWriter();
+
+        MetricHistoryCsv.Write(w, [new ReportSeries(Cpu, [new MetricPoint(T0, double.NaN, double.NaN, double.NaN, 0)])]);
+
+        Assert.DoesNotContain("NaN", w.ToString());
+    }
+
+    [Fact]
+    public void HtmlReport_ZeroSamples_ShowsUnknownNotNaN()
+    {
+        var w = new StringWriter();
+        var empty = new ReportSeries(Cpu, [new MetricPoint(T0, double.NaN, double.NaN, double.NaN, 0), new MetricPoint(T0.AddSeconds(1), double.NaN, double.NaN, double.NaN, 0)]);
+
+        HtmlReportWriter.Write(w, Report() with { Series = [empty] });
+        string html = w.ToString();
+
+        Assert.DoesNotContain("NaN", html);
+        Assert.Contains("n/a", html);
+    }
+
+    [Fact]
+    public void Svg_NaNPoint_IsGap_NoNaNCoordinate()
+    {
+        var series = new ReportSeries(Cpu, [P(0, 10), new MetricPoint(T0.AddSeconds(1), double.NaN, double.NaN, double.NaN, 1), P(2, 30)]);
+
+        string svg = HtmlReportWriter.Svg(series, T0, T0.AddMinutes(1));
+
+        Assert.DoesNotContain("NaN", svg);
+    }
 }

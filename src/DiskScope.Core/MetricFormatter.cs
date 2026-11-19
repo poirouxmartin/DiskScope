@@ -11,7 +11,8 @@ public static class MetricFormatter
 
     public static string Format(double? value, MetricUnit unit) => value is { } v ? Format(v, unit) : Unknown;
 
-    public static string Format(double value, MetricUnit unit) => unit switch
+    /// <summary>NaN or infinity (for example an average over zero samples) is unknown, never printed as "NaN".</summary>
+    public static string Format(double value, MetricUnit unit) => !double.IsFinite(value) ? Unknown : unit switch
     {
         MetricUnit.Percent => value.ToString("F1", CultureInfo.InvariantCulture) + " %",
         MetricUnit.Bytes => FormatBytes(value),
@@ -28,6 +29,11 @@ public static class MetricFormatter
     /// <summary>Binary multiples (1 KB = 1024 B), as Windows displays them.</summary>
     public static string FormatBytes(double bytes)
     {
+        if (!double.IsFinite(bytes))
+        {
+            return Unknown;
+        }
+
         double v = Math.Abs(bytes);
         int i = 0;
         while (v >= 1024 && i < ByteUnits.Length - 1)

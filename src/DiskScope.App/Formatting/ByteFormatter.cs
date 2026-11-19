@@ -1,4 +1,6 @@
 using System.Globalization;
+using DiskScope.Core;
+using DiskScope.Storage;
 
 namespace DiskScope.App.Formatting;
 
@@ -22,5 +24,24 @@ public static class ByteFormatter
         }
 
         return value.ToString("F1", CultureInfo.InvariantCulture) + " " + Units[unit];
+    }
+
+    /// <summary>
+    /// Size of a node. A directory with an incomplete subtree is a lower bound, shown with a "≥" prefix.
+    /// When nothing of the node itself could be read, its size is unknown, not zero.
+    /// </summary>
+    public static string FormatNodeSize(long bytes, NodeStatus status)
+    {
+        if (status == NodeStatus.None)
+        {
+            return Format(bytes);
+        }
+
+        if ((status & NodeStatusExtensions.OwnErrorMask) != 0 && bytes == 0)
+        {
+            return MetricFormatter.Unknown;
+        }
+
+        return "≥ " + Format(bytes);
     }
 }

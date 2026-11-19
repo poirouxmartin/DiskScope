@@ -31,7 +31,8 @@ public sealed record CollectorStats(
 
 /// <summary>
 /// Runs each available collector on its own background loop at its interval, isolates failures, measures the cost
-/// of every collection, and publishes batches. Never touches WPF: subscribers marshal to their own thread.
+/// of every collection, and publishes batches. Subscribers are isolated too: a throwing subscriber is counted and never
+/// stops a loop. Never touches WPF: subscribers marshal to their own thread.
 /// A collector that throws publishes a batch where all its metrics are Unavailable, plus the error; the other
 /// collectors keep running. Ticks missed because a collection ran long are counted, not replayed.
 /// </summary>
@@ -76,6 +77,11 @@ public sealed class MonitoringScheduler : IAsyncDisposable
     public long StoreFailures => Interlocked.Read(ref _storeFailures);
 
     private long _storeFailures;
+
+    /// <summary>Exceptions thrown by BatchPublished or StoreFailed subscribers. They are isolated so one faulty subscriber never stops a collector loop.</summary>
+    public long SubscriberFailures => Interlocked.Read(ref _subscriberFailures);
+
+    private long _subscriberFailures;
 
     public IReadOnlyList<MetricDescriptor> Metrics =>
         _entries.SelectMany(e => e.Collector.Metrics).ToArray();
@@ -190,12 +196,32 @@ public sealed class MonitoringScheduler : IAsyncDisposable
             {
                 // History may be unavailable (disk full, locked file): monitoring goes on, the loss is counted and reported.
                 Interlocked.Increment(ref _storeFailures);
-                StoreFailed?.Invoke(ex);
+                Raise(StoreFailed, ex);
             }
         }
 
-        BatchPublished?.Invoke(batch);
+        Raise(BatchPublished, batch);
         return batch;
+    }
+
+    private void Raise<T>(Action<T>? handler, T arg)
+    {
+        if (handler is null)
+        {
+            return;
+        }
+
+        foreach (Delegate d in handler.GetInvocationList())
+        {
+            try
+            {
+                ((Action<T>)d)(arg);
+            }
+            catch (Exception)
+            {
+                Interlocked.Increment(ref _subscriberFailures);
+            }
+        }
     }
 
     private static CollectorAvailability SafeAvailability(IMetricCollector collector)

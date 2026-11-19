@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using DiskScope.App.Formatting;
+using DiskScope.Core;
 using DiskScope.Storage;
 
 namespace DiskScope.App.ViewModels;
@@ -10,7 +11,7 @@ public sealed class NodeViewModel : ObservableObject
     /// <summary>Stand-in child shown under a directory until its children are materialized.</summary>
     public static readonly NodeViewModel Placeholder = new();
 
-    private const string Unknown = "n/a";
+    private const string Unknown = MetricFormatter.Unknown;
 
     private readonly NodeIndex? _index;
     private readonly SizeKind _sizeKind;
@@ -26,15 +27,17 @@ public sealed class NodeViewModel : ObservableObject
         Id = id;
         Name = index.GetNameString(id);
         Kind = index.GetKind(id);
+        NodeStatus status = index.GetStatus(id);
         TotalSize = index.GetTotalSize(id, sizeKind);
         PercentOfParent = ComputePercentOfParent(id, TotalSize, parentTotal);
 
-        // A directory whose own listing failed has a total of 0 in the index: show n/a, never "0 B".
-        bool sizeKnown = index.GetKnownTotalSize(id, sizeKind) is not null;
-        TotalSizeText = sizeKnown ? ByteFormatter.Format(TotalSize) : Unknown;
-        PercentText = sizeKnown ? PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %" : Unknown;
-        LogicalText = FormatKnown(index.GetKnownTotalSize(id, SizeKind.Logical));
-        AllocatedText = FormatKnown(index.GetKnownTotalSize(id, SizeKind.Allocated));
+        // A failed listing with nothing counted shows n/a, never "0 B"; a partial count shows a lower bound.
+        TotalSizeText = ByteFormatter.FormatNodeSize(TotalSize, status);
+        LogicalText = ByteFormatter.FormatNodeSize(index.GetTotalLogicalSize(id), status);
+        AllocatedText = ByteFormatter.FormatNodeSize(index.GetTotalAllocatedSize(id), status);
+        // 0 of 0 is undefined: the bar stays at 0, the text says n/a.
+        bool percentKnown = TotalSizeText != MetricFormatter.Unknown && (id == NodeIndex.RootId || parentTotal > 0);
+        PercentText = percentKnown ? PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %" : Unknown;
         FileCount = index.GetRecursiveFileCount(id);
 
         DateTime lastChange = index.GetSubtreeLastWriteUtc(id);
@@ -42,7 +45,6 @@ public sealed class NodeViewModel : ObservableObject
             ? Unknown
             : lastChange.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
-        NodeStatus status = index.GetStatus(id);
         IsIncomplete = status != NodeStatus.None;
         StatusText = IsIncomplete ? status.ToString() : string.Empty;
 
@@ -129,8 +131,6 @@ public sealed class NodeViewModel : ObservableObject
         ChildrenLoaded = true;
         Children = new ObservableCollection<NodeViewModel>(loaded);
     }
-
-    private static string FormatKnown(long? bytes) => bytes is { } known ? ByteFormatter.Format(known) : Unknown;
 
     private static double ComputePercentOfParent(int id, long totalSize, long parentTotal)
     {

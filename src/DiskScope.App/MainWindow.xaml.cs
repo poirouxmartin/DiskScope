@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using DiskScope.App.Services;
 using DiskScope.App.ViewModels;
 
 namespace DiskScope.App;
@@ -27,7 +28,16 @@ public partial class MainWindow : Window
         // Stop collectors and the process loop before the window goes away, so no callback hits a closed dispatcher.
         e.Cancel = true;
         _disposed = true;
-        await _shell.DisposeAsync();
+        try
+        {
+            await _shell.DisposeAsync();
+        }
+        catch (Exception ex)
+        {
+            // A failing collector must not keep the window open or crash on exit.
+            ErrorLog.Default.Write("Shutdown", ex);
+        }
+
         Close();
     }
 }
