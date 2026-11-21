@@ -10,9 +10,15 @@
                 <ComboBox ItemsSource="{Binding HistoryMetrics}" SelectedItem="{Binding HistoryMetric}" DisplayMemberPath="DisplayName" Width="340" />
                 <TextBlock Text="Range:" VerticalAlignment="Center" Margin="12,0,6,0" />
                 <ComboBox ItemsSource="{Binding HistoryRanges}" SelectedItem="{Binding HistoryRange}" Width="110" />
-                <Button Content="Export history CSV" Command="{Binding ExportHistoryCsvCommand}" Padding="8,1" Margin="12,0,0,0" />
-                <Button Content="Export JSON report" Command="{Binding ExportJsonCommand}" Padding="8,1" Margin="6,0,0,0" />
-                <Button Content="Export HTML report" Command="{Binding ExportHtmlCommand}" Padding="8,1" Margin="6,0,0,0" />
+                <Button Style="{StaticResource MenuButton}" Content="Export ▾" Margin="12,0,0,0">
+                    <Button.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="History (CSV)" Command="{Binding ExportHistoryCsvCommand}" />
+                            <MenuItem Header="Report (JSON)" Command="{Binding ExportJsonCommand}" />
+                            <MenuItem Header="Report (HTML)" Command="{Binding ExportHtmlCommand}" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
             </StackPanel>
             <TextBlock Text="{Binding ExportStatus}" Margin="8,2" Foreground="#4A5560"
                        ToolTip="Reports cover the selected range and never include machine names, user names or command lines." />

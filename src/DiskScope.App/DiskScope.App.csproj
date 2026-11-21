@@ -6,7 +6,13 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>DiskScope.App</RootNamespace>
     <Version>0.1.0</Version>
+    <ApplicationIcon>Assets\DiskScope.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Regenerate with tools/make-icon.ps1. -->
+    <Resource Include="Assets\DiskScope.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DiskScope.Storage\DiskScope.Storage.csproj" />

@@ -46,6 +46,18 @@ public partial class App : System.Windows.Application
         }
     }
 
+    /// <summary>MenuButton style: opens the button's ContextMenu below it. A menu opened by code does not inherit the DataContext, so it is copied.</summary>
+    private void OnMenuButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { ContextMenu: { } menu } button)
+        {
+            menu.DataContext = button.DataContext;
+            menu.PlacementTarget = button;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
+
     private static void OnUnobservedTaskException(object? sender, System.Threading.Tasks.UnobservedTaskExceptionEventArgs e)
     {
         ErrorLog.Default.Write("Unobserved task", e.Exception);

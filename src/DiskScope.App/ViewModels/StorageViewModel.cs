@@ -20,6 +20,7 @@ public sealed class StorageViewModel : ObservableObject
     private static readonly TimeSpan PartialResultDelay = TimeSpan.FromSeconds(2);
 
     private readonly IShellActions _shell;
+    private readonly Func<IReadOnlyList<DriveSnapshot>> _readDrives;
     private string _rootPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     private bool _isScanning;
     private string _statusText = "Ready";
@@ -36,9 +37,10 @@ public sealed class StorageViewModel : ObservableObject
     private int _selectedNodeId = -1;
     private NodeViewModel? _revealedNode;
 
-    public StorageViewModel(IShellActions? shell = null)
+    public StorageViewModel(IShellActions? shell = null, Func<IReadOnlyList<DriveSnapshot>>? readDrives = null)
     {
         _shell = shell ?? new ShellActions();
+        _readDrives = readDrives ?? DriveCardViewModel.ReadSystemDrives;
 
         ScanCommand = new AsyncRelayCommand(
             ScanAsync,
@@ -60,6 +62,56 @@ public sealed class StorageViewModel : ObservableObject
         CopyPathCommand = new ParameterCommand(CopyPath);
         OpenInExplorerCommand = new ParameterCommand(OpenInExplorer);
         Search = new SearchViewModel(() => _index, () => SizeKind);
+
+        AnalyzeDriveCommand = new ParameterCommand(p =>
+        {
+            if (p is DriveCardViewModel drive && !IsScanning)
+            {
+                StartScan(drive.RootPath);
+            }
+        });
+        ChooseFolderCommand = new ParameterCommand(_ =>
+        {
+            if (IsScanning)
+            {
+                return;
+            }
+
+            string? folder = _shell.AskFolder(RootPath);
+            if (!string.IsNullOrEmpty(folder))
+            {
+                StartScan(folder);
+            }
+        });
+        RefreshDrives();
+    }
+
+    /// <summary>Drives offered on the start screen, before any scan.</summary>
+    public ObservableCollection<DriveCardViewModel> Drives { get; } = new();
+
+    public ICommand AnalyzeDriveCommand { get; }
+
+    public ICommand ChooseFolderCommand { get; }
+
+    /// <summary>True until a first scan starts: the view shows the drive cards instead of empty panels.</summary>
+    public bool ShowStartScreen => _index is null && !IsScanning;
+
+    public void RefreshDrives()
+    {
+        Drives.Clear();
+        foreach (DriveSnapshot drive in _readDrives())
+        {
+            Drives.Add(new DriveCardViewModel(drive));
+        }
+    }
+
+    private void StartScan(string path)
+    {
+        RootPath = path;
+        if (ScanCommand.CanExecute(null))
+        {
+            ScanCommand.Execute(null);
+        }
     }
 
     public string RootPath
@@ -78,6 +130,7 @@ public sealed class StorageViewModel : ObservableObject
                 ScanCommand.RaiseCanExecuteChanged();
                 CancelCommand.RaiseCanExecuteChanged();
                 ExportCsvCommand.RaiseCanExecuteChanged();
+                RaisePropertyChanged(nameof(ShowStartScreen));
             }
         }
     }
@@ -190,6 +243,7 @@ public sealed class StorageViewModel : ObservableObject
     public void LoadIndex(NodeIndex index)
     {
         SetProperty(ref _index, index, nameof(Index));
+        RaisePropertyChanged(nameof(ShowStartScreen));
         TreemapRootId = 0;
         Rebuild();
         ExportCsvCommand.RaiseCanExecuteChanged();

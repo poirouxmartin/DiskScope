@@ -46,6 +46,8 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private string _alertSignature = string.Empty;
     private string _statusText = "Starting";
     private string _selfCostText = MetricFormatter.Unknown;
+    private string _healthText = "Monitoring starting";
+    private bool _isHealthy;
     private MetricDescriptor? _historyMetric;
     private TimeSpan _historyRange = TimeSpan.FromMinutes(10);
     private IReadOnlyList<MetricPoint> _historyPoints = Array.Empty<MetricPoint>();
@@ -206,6 +208,37 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
 
     public string SelfCostText { get => _selfCostText; private set => SetProperty(ref _selfCostText, value); }
 
+    /// <summary>Plain-language status for the status bar; the full detail stays in <see cref="StatusText"/> (tooltip).</summary>
+    public string HealthText { get => _healthText; private set => SetProperty(ref _healthText, value); }
+
+    public bool IsHealthy { get => _isHealthy; private set => SetProperty(ref _isHealthy, value); }
+
+    /// <summary>
+    /// Healthy when every collector runs and history writes succeed. Isolated failed collections are mentioned
+    /// but do not turn the status amber: they are counted since start and would otherwise stay amber forever.
+    /// </summary>
+    public static (bool Healthy, string Text) DescribeHealth(int running, int total, long failedCollections, long storeFailures)
+    {
+        if (total == 0)
+        {
+            return (false, "Monitoring starting");
+        }
+
+        if (running < total)
+        {
+            return (false, Invariant($"{total - running} of {total} monitors unavailable"));
+        }
+
+        if (storeFailures > 0)
+        {
+            return (false, Invariant($"History not saved ({storeFailures} write failures)"));
+        }
+
+        return failedCollections > 0
+            ? (true, Invariant($"Monitoring OK ({failedCollections} missed readings)"))
+            : (true, "Monitoring OK");
+    }
+
     public int ActiveAlertCount => Alerts.Count(a => a.Alert.EndedUtc is null && !a.Alert.Acknowledged);
 
     public void Start()
@@ -312,9 +345,13 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         }
 
         long failures = stats.Sum(s => s.Failures);
-        StatusText = Invariant($"{stats.Count(s => s.Availability.IsAvailable)}/{stats.Count} collectors running, {failures} failed collections, {_scheduler.StoreFailures} history write failures");
-        SelfCostText = Invariant($"DiskScope: CPU {MetricFormatter.Format(Latest(SelfCollector.Cpu), MetricUnit.Percent)}, working set {MetricFormatter.Format(Latest(SelfCollector.WorkingSet), MetricUnit.Bytes)}, ") +
+        int running = stats.Count(s => s.Availability.IsAvailable);
+        StatusText = Invariant($"{running}/{stats.Count} collectors running, {failures} failed collections, {_scheduler.StoreFailures} history write failures, ") +
             Invariant($"collection time {stats.Sum(s => s.LastDuration.TotalMilliseconds):F1} ms per round");
+        (bool healthy, string health) = DescribeHealth(running, stats.Count, failures, _scheduler.StoreFailures);
+        IsHealthy = healthy;
+        HealthText = health;
+        SelfCostText = Invariant($"DiskScope itself: {MetricFormatter.Format(Latest(SelfCollector.Cpu), MetricUnit.Percent)} CPU, {MetricFormatter.Format(Latest(SelfCollector.WorkingSet), MetricUnit.Bytes)}");
     }
 
     private void RefreshAlerts()

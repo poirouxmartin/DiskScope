@@ -32,4 +32,10 @@ public sealed class ShellActions : IShellActions
         };
         return dlg.ShowDialog() == true ? dlg.FileName : null;
     }
+
+    public string? AskFolder(string initialFolder)
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog { InitialDirectory = initialFolder };
+        return dlg.ShowDialog() == true ? dlg.FolderName : null;
+    }
 }
