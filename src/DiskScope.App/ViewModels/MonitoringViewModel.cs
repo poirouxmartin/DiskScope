@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 using DiskScope.Core;
 using DiskScope.Reports;
@@ -44,9 +45,9 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     private string _findingSignature = string.Empty;
     private DispatcherTimer? _timer;
     private string _alertSignature = string.Empty;
-    private string _statusText = "Starting";
+    private string _statusText = Loc.Get("Monitoring_Starting");
     private string _selfCostText = MetricFormatter.Unknown;
-    private string _healthText = "Monitoring starting";
+    private string _healthText = Loc.Get("Monitoring_HealthStarting");
     private bool _isHealthy;
     private MetricDescriptor? _historyMetric;
     private TimeSpan _historyRange = TimeSpan.FromMinutes(10);
@@ -100,8 +101,8 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         GpuTiles = new ObservableCollection<MetricTileViewModel>(
             GpuAdapters.Select(a => Tile(GpuCollector.UtilizationId(a.Index), TrendWindow, ShellViewModel.GpuTab)).OfType<MetricTileViewModel>());
         GpuStatus = _gpu is null
-            ? "GPU collector not configured."
-            : _gpu.CheckAvailability() is { IsAvailable: false } off ? "GPU monitoring unavailable: " + off.Reason : "GPU counters available.";
+            ? Loc.Get("Gpu_NotConfigured")
+            : _gpu.CheckAvailability() is { IsAvailable: false } off ? Loc.Format("Gpu_Unavailable", off.Reason) : Loc.Get("Gpu_Available");
 
         Rules = new ObservableCollection<RuleViewModel>(_alerts.Rules.Select(r => new RuleViewModel(r, _alerts)));
         HistoryMetrics = _scheduler.Metrics.OrderBy(m => m.Id, StringComparer.Ordinal).ToArray();
@@ -221,22 +222,22 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
     {
         if (total == 0)
         {
-            return (false, "Monitoring starting");
+            return (false, Loc.Get("Monitoring_HealthStarting"));
         }
 
         if (running < total)
         {
-            return (false, Invariant($"{total - running} of {total} monitors unavailable"));
+            return (false, Loc.Format("Monitoring_MonitorsUnavailable", total - running, total));
         }
 
         if (storeFailures > 0)
         {
-            return (false, Invariant($"History not saved ({storeFailures} write failures)"));
+            return (false, Loc.Format("Monitoring_HistoryNotSaved", storeFailures));
         }
 
         return failedCollections > 0
-            ? (true, Invariant($"Monitoring OK ({failedCollections} missed readings)"))
-            : (true, "Monitoring OK");
+            ? (true, Loc.Format("Monitoring_OkMissed", failedCollections))
+            : (true, Loc.Get("Monitoring_Ok"));
     }
 
     public int ActiveAlertCount => Alerts.Count(a => a.Alert.EndedUtc is null && !a.Alert.Acknowledged);
@@ -271,14 +272,14 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         double commitLimit = Latest(MemoryCollector.CommitLimit) ?? double.NaN;
         UpdateTile(MemoryTile, now, totalRam, totalRam);
         UpdateTile(MemoryDetailTile, now, totalRam, totalRam);
-        UpdateTile(CommitTile, now, commitLimit, commitLimit, "limit");
-        UpdateTile(CommitDetailTile, now, commitLimit, commitLimit, "limit");
+        UpdateTile(CommitTile, now, commitLimit, commitLimit, Loc.Get("Tile_Limit"));
+        UpdateTile(CommitDetailTile, now, commitLimit, commitLimit, Loc.Get("Tile_Limit"));
 
         foreach (MetricTileViewModel tile in VolumeTiles)
         {
             string letter = tile.Id.Split('.')[1];
             tile.Update(_scheduler.GetLatest(tile.Id), _store.Query(tile.Id, now - tile.Window, now), now, 100);
-            tile.Detail = $"{MetricFormatter.Format(Latest(VolumeSpaceCollector.FreeId(letter)), MetricUnit.Bytes)} free of {MetricFormatter.Format(Latest(VolumeSpaceCollector.TotalId(letter)), MetricUnit.Bytes)}";
+            tile.Detail = Loc.Format("Common_FreeOf", MetricFormatter.Format(Latest(VolumeSpaceCollector.FreeId(letter)), MetricUnit.Bytes), MetricFormatter.Format(Latest(VolumeSpaceCollector.TotalId(letter)), MetricUnit.Bytes));
         }
 
         foreach (CoreViewModel core in Cores)
@@ -316,7 +317,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         {
             UpdateTile(adapter.UsageTile, now, 100);
             UpdateTile(adapter.DedicatedTile, now, adapter.Info.DedicatedVideoMemory > 0 ? adapter.Info.DedicatedVideoMemory : double.NaN, adapter.Info.DedicatedVideoMemory > 0 ? adapter.Info.DedicatedVideoMemory : double.NaN);
-            UpdateTile(adapter.SharedTile, now, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, "limit");
+            UpdateTile(adapter.SharedTile, now, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, adapter.Info.SharedSystemMemory > 0 ? adapter.Info.SharedSystemMemory : double.NaN, Loc.Get("Tile_Limit"));
             foreach (MetricRowViewModel row in adapter.EngineRows)
             {
                 row.Update(_scheduler.GetLatest(row.Descriptor.Id));
@@ -331,7 +332,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         GpuProcesses.Clear();
         foreach (var (pid, percent) in _gpu.ProcessUsage.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Take(15))
         {
-            GpuProcesses.Add(new GpuProcessRow(pid, ProcessNameResolver?.Invoke(pid) ?? "(unknown)", percent));
+            GpuProcesses.Add(new GpuProcessRow(pid, ProcessNameResolver?.Invoke(pid) ?? Loc.Get("Monitoring_UnknownProcess"), percent));
         }
     }
 
@@ -346,12 +347,11 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
 
         long failures = stats.Sum(s => s.Failures);
         int running = stats.Count(s => s.Availability.IsAvailable);
-        StatusText = Invariant($"{running}/{stats.Count} collectors running, {failures} failed collections, {_scheduler.StoreFailures} history write failures, ") +
-            Invariant($"collection time {stats.Sum(s => s.LastDuration.TotalMilliseconds):F1} ms per round");
+        StatusText = Loc.Format("Monitoring_Status", running, stats.Count, failures, _scheduler.StoreFailures, Invariant($"{stats.Sum(s => s.LastDuration.TotalMilliseconds):F1}"));
         (bool healthy, string health) = DescribeHealth(running, stats.Count, failures, _scheduler.StoreFailures);
         IsHealthy = healthy;
         HealthText = health;
-        SelfCostText = Invariant($"DiskScope itself: {MetricFormatter.Format(Latest(SelfCollector.Cpu), MetricUnit.Percent)} CPU, {MetricFormatter.Format(Latest(SelfCollector.WorkingSet), MetricUnit.Bytes)}");
+        SelfCostText = Loc.Format("Monitoring_SelfCost", MetricFormatter.Format(Latest(SelfCollector.Cpu), MetricUnit.Percent), MetricFormatter.Format(Latest(SelfCollector.WorkingSet), MetricUnit.Bytes));
     }
 
     private void RefreshAlerts()
@@ -463,11 +463,11 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         {
             using var writer = new StreamWriter(path, false, new UTF8Encoding(path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)));
             write(writer);
-            ExportStatus = "Exported to " + path;
+            ExportStatus = Loc.Format("Common_ExportedTo", path);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            ExportStatus = "Export failed: " + ex.Message;
+            ExportStatus = Loc.Format("Common_ExportFailed", ex.Message);
         }
     }
 
@@ -482,15 +482,15 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         IReadOnlyList<MetricPoint> points = _store.Query(_historyMetric.Id, now - _historyRange, now);
         HistoryPoints = points;
         HistorySummary = points.Count == 0
-            ? "No data in this range (the history is kept in memory since DiskScope started)."
-            : Invariant($"{points.Count} points, min {MetricFormatter.Format(points.Min(p => p.Min), _historyMetric.Unit)}, ") +
-                Invariant($"avg {MetricFormatter.Format(points.Sum(p => p.Average * p.Samples) / points.Sum(p => p.Samples), _historyMetric.Unit)}, ") +
-                Invariant($"max {MetricFormatter.Format(points.Max(p => p.Max), _historyMetric.Unit)}. Source: {_historyMetric.Source}");
+            ? Loc.Get("Monitoring_NoHistory")
+            : Loc.Format("Monitoring_HistorySummary", points.Count, MetricFormatter.Format(points.Min(p => p.Min), _historyMetric.Unit),
+                MetricFormatter.Format(points.Sum(p => p.Average * p.Samples) / points.Sum(p => p.Samples), _historyMetric.Unit),
+                MetricFormatter.Format(points.Max(p => p.Max), _historyMetric.Unit), _historyMetric.Source);
     }
 
     private double? Latest(string id) => _scheduler.GetLatest(id)?.Value;
 
-    private void UpdateTile(MetricTileViewModel? tile, DateTime now, double maximum, double ofValue = double.NaN, string ofLabel = "of")
+    private void UpdateTile(MetricTileViewModel? tile, DateTime now, double maximum, double ofValue = double.NaN, string? ofLabel = null)
     {
         if (tile is null)
         {
@@ -500,7 +500,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         tile.Update(_scheduler.GetLatest(tile.Id), _store.Query(tile.Id, now - tile.Window, now), now, maximum);
         if (!double.IsNaN(ofValue))
         {
-            tile.Detail = $"{ofLabel} {MetricFormatter.Format(ofValue, tile.Descriptor.Unit)}";
+            tile.Detail = $"{ofLabel ?? Loc.Get("Tile_Of")} {MetricFormatter.Format(ofValue, tile.Descriptor.Unit)}";
         }
     }
 

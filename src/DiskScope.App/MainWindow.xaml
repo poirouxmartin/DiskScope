@@ -1,6 +1,7 @@
 <Window x:Class="DiskScope.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization"
         xmlns:views="clr-namespace:DiskScope.App.Views"
         Title="DiskScope"
         Icon="Assets/DiskScope.ico"
@@ -31,25 +32,25 @@
         </StatusBar>
         <TabControl Style="{StaticResource RailTabControl}" ItemContainerStyle="{StaticResource RailItem}"
                     SelectedIndex="{Binding SelectedTab}">
-            <TabItem Header="Home" Tag="{StaticResource GlyphHome}">
+            <TabItem Header="{loc:Loc Nav_Home}" Tag="{StaticResource GlyphHome}">
                 <views:DashboardView />
             </TabItem>
-            <TabItem Header="Storage" Tag="{StaticResource GlyphStorage}">
+            <TabItem Header="{loc:Loc Nav_Storage}" Tag="{StaticResource GlyphStorage}">
                 <views:StorageView DataContext="{Binding Storage}" />
             </TabItem>
-            <TabItem Header="CPU &amp; memory" Tag="{StaticResource GlyphCpu}">
+            <TabItem Header="{loc:Loc Nav_CpuMemory}" Tag="{StaticResource GlyphCpu}">
                 <views:CpuMemoryView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="Processes" Tag="{StaticResource GlyphProcesses}">
+            <TabItem Header="{loc:Loc Nav_Processes}" Tag="{StaticResource GlyphProcesses}">
                 <views:ProcessesView DataContext="{Binding Processes}" />
             </TabItem>
-            <TabItem Header="GPU" Tag="{StaticResource GlyphGpu}">
+            <TabItem Header="{loc:Loc Nav_Gpu}" Tag="{StaticResource GlyphGpu}">
                 <views:GpuView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="Alerts" Tag="{StaticResource GlyphAlerts}">
+            <TabItem Header="{loc:Loc Nav_Alerts}" Tag="{StaticResource GlyphAlerts}">
                 <views:HistoryView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="Startup" Tag="{StaticResource GlyphStartup}">
+            <TabItem Header="{loc:Loc Nav_Startup}" Tag="{StaticResource GlyphStartup}">
                 <views:StartupView DataContext="{Binding Startup}" />
             </TabItem>
         </TabControl>

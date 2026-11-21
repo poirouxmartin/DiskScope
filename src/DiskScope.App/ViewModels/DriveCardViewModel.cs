@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using DiskScope.App.Formatting;
+using DiskScope.App.Localization;
 using DiskScope.Core;
 
 namespace DiskScope.App.ViewModels;
@@ -26,13 +27,13 @@ public sealed class DriveCardViewModel
         if (drive.TotalBytes is > 0 and long total && drive.FreeBytes is >= 0 and long free && free <= total)
         {
             UsedPercent = (total - free) * 100.0 / total;
-            UsedText = UsedPercent.Value.ToString("F1", CultureInfo.InvariantCulture) + " % used";
-            FreeText = $"{ByteFormatter.Format(free)} free of {ByteFormatter.Format(total)}";
+            UsedText = Loc.Format("Storage_UsedPercent", UsedPercent.Value.ToString("F1", CultureInfo.InvariantCulture));
+            FreeText = Loc.Format("Common_FreeOf", ByteFormatter.Format(free), ByteFormatter.Format(total));
         }
         else
         {
             UsedText = MetricFormatter.Unknown;
-            FreeText = "Size unknown (" + MetricFormatter.Unknown + ")";
+            FreeText = Loc.Format("Storage_SizeUnknown", MetricFormatter.Unknown);
         }
     }
 
@@ -63,10 +64,10 @@ public sealed class DriveCardViewModel
 
     private static string DefaultLabel(DriveType type) => type switch
     {
-        DriveType.Removable => "Removable drive",
-        DriveType.Network => "Network drive",
-        DriveType.CDRom => "Optical drive",
-        _ => "Local disk",
+        DriveType.Removable => Loc.Get("Storage_Drive_Removable"),
+        DriveType.Network => Loc.Get("Storage_Drive_Network"),
+        DriveType.CDRom => Loc.Get("Storage_Drive_Optical"),
+        _ => Loc.Get("Storage_Drive_Local"),
     };
 
     /// <summary>Fixed, removable and network drives that are ready. Never throws: an unreadable drive keeps unknown sizes.</summary>

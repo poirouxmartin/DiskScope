@@ -1,15 +1,16 @@
 <UserControl x:Class="DiskScope.App.Views.ProcessesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization">
     <DockPanel Margin="6">
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
-            <TextBlock Text="Filter (name, PID or path):" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBlock Text="{loc:Loc Processes_Filter}" VerticalAlignment="Center" Margin="0,0,6,0" />
             <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" Width="260" VerticalContentAlignment="Center" />
-            <CheckBox Content="Show as tree" IsChecked="{Binding ShowTree}" VerticalAlignment="Center" Margin="14,0,0,0"
-                      ToolTip="Off: largest private bytes first. On: parents and their children, when no filter is set." />
-            <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphExport}" Content="Export CSV"
+            <CheckBox Content="{loc:Loc Processes_ShowTree}" IsChecked="{Binding ShowTree}" VerticalAlignment="Center" Margin="14,0,0,0"
+                      ToolTip="{loc:Loc Processes_ShowTreeTooltip}" />
+            <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphExport}" Content="{loc:Loc Processes_ExportCsv}"
                     Command="{Binding ExportCommand}" Margin="12,0,0,0" />
-            <TextBlock Text="Read-only: no process is stopped or modified." Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <TextBlock Text="{loc:Loc Processes_ReadOnly}" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
         </DockPanel>
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,4,0,0" />
         <!-- Largest memory first (or tree order) until a column header is clicked; then a flat sort by that column. -->
@@ -17,16 +18,16 @@
                   HeadersVisibility="Column" EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling">
             <DataGrid.Columns>
-                <DataGridTemplateColumn Header="Name" Width="230" SortMemberPath="Name">
+                <DataGridTemplateColumn Header="{loc:Loc Processes_Col_Name}" Width="230" SortMemberPath="Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" Margin="{Binding Indent}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="60" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Pid}" Binding="{Binding Pid}" Width="60" />
                 <!-- Private bytes with a bar relative to the largest process in the list (none when unknown). -->
-                <DataGridTemplateColumn Header="Private bytes" SortMemberPath="PrivateBytes" Width="170">
+                <DataGridTemplateColumn Header="{loc:Loc Processes_Col_PrivateBytes}" SortMemberPath="PrivateBytes" Width="170">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -51,16 +52,16 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="CPU (% machine)" Binding="{Binding CpuText}" SortMemberPath="Cpu" Width="110" />
-                <DataGridTextColumn Header="Working set" Binding="{Binding WorkingSetText}" SortMemberPath="WorkingSet" Width="100" />
-                <DataGridTextColumn Header="Private WS" Binding="{Binding PrivateWorkingSetText}" SortMemberPath="PrivateWorkingSet" Width="90" />
-                <DataGridTextColumn Header="Threads" Binding="{Binding Threads}" Width="65" />
-                <DataGridTextColumn Header="Handles" Binding="{Binding HandlesText}" SortMemberPath="Handles" Width="70" />
-                <DataGridTextColumn Header="I/O read" Binding="{Binding IoReadText}" SortMemberPath="IoRead" Width="85" />
-                <DataGridTextColumn Header="I/O write" Binding="{Binding IoWriteText}" SortMemberPath="IoWrite" Width="85" />
-                <DataGridTextColumn Header="Started" Binding="{Binding Started}" Width="140" />
-                <DataGridTextColumn Header="Memory growth" Binding="{Binding Growth}" Width="260" />
-                <DataGridTextColumn Header="Path" Binding="{Binding Path}" Width="500" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Cpu}" Binding="{Binding CpuText}" SortMemberPath="Cpu" Width="125" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_WorkingSet}" Binding="{Binding WorkingSetText}" SortMemberPath="WorkingSet" Width="120" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_PrivateWs}" Binding="{Binding PrivateWorkingSetText}" SortMemberPath="PrivateWorkingSet" Width="90" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Threads}" Binding="{Binding Threads}" Width="65" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Handles}" Binding="{Binding HandlesText}" SortMemberPath="Handles" Width="70" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_IoRead}" Binding="{Binding IoReadText}" SortMemberPath="IoRead" Width="85" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_IoWrite}" Binding="{Binding IoWriteText}" SortMemberPath="IoWrite" Width="85" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Started}" Binding="{Binding Started}" Width="140" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Growth}" Binding="{Binding Growth}" Width="260" />
+                <DataGridTextColumn Header="{loc:Loc Processes_Col_Path}" Binding="{Binding Path}" Width="500" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

@@ -1,4 +1,5 @@
 using System.Globalization;
+using DiskScope.App.Localization;
 using DiskScope.Core;
 
 namespace DiskScope.App.ViewModels;
@@ -9,9 +10,9 @@ public sealed class AlertRowViewModel(AlertEvent alert, Action<Guid> acknowledge
 
     public string Started => Alert.StartedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 
-    public string Ended => Alert.EndedUtc is { } e ? e.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture) : "ongoing";
+    public string Ended => Alert.EndedUtc is { } e ? e.ToLocalTime().ToString("HH:mm:ss", CultureInfo.InvariantCulture) : Loc.Get("Alerts_Ongoing");
 
-    public string Level => Alert.Level.ToString();
+    public string Level => Loc.Get($"Level_{Alert.Level}");
 
     public string Title => Alert.Title;
 
@@ -19,7 +20,7 @@ public sealed class AlertRowViewModel(AlertEvent alert, Action<Guid> acknowledge
 
     public string Evidence => string.Join(
         "; ",
-        Alert.Evidence.Select(e => $"{e.Label}: {MetricFormatter.Format(e.Value, e.Unit)} at {e.TimestampUtc.ToLocalTime():HH:mm:ss}"));
+        Alert.Evidence.Select(e => Loc.Format("Alerts_EvidenceAt", e.Label, MetricFormatter.Format(e.Value, e.Unit), e.TimestampUtc.ToLocalTime().ToString("HH:mm:ss"))));
 
     public bool Acknowledged => Alert.Acknowledged;
 
@@ -33,7 +34,7 @@ public sealed class FindingRowViewModel(Finding finding)
 
     public string Period => $"{Finding.FromUtc.ToLocalTime():HH:mm:ss} - {Finding.ToUtc.ToLocalTime():HH:mm:ss}";
 
-    public string Level => $"{Finding.Level} ({Finding.Confidence} confidence)";
+    public string Level => Loc.Format("Alerts_FindingLevel", Loc.Get($"Level_{Finding.Level}"), Loc.Get($"Confidence_{Finding.Confidence}"));
 
     public string Title => Finding.Title;
 
@@ -46,7 +47,7 @@ public sealed class FindingRowViewModel(Finding finding)
     public string Limits => Finding.Limits;
 
     public static FindingRowViewModel ForError(string error, DateTime now) => new(new Finding(
-        "error", FindingLevel.Information, Confidence.Low, "Diagnostic rule failed", error, [], [], "This rule produced no result.", now, now));
+        "error", FindingLevel.Information, Confidence.Low, Loc.Get("Alerts_RuleFailed"), error, [], [], Loc.Get("Alerts_RuleNoResult"), now, now));
 }
 
 /// <summary>
@@ -71,17 +72,25 @@ public sealed class RuleViewModel : ObservableObject
         ApplyCommand = new RelayCommand(Apply);
     }
 
-    public string Name => _rule.Name;
+    // Built-in rules have translated texts keyed by rule id; other rules show their own text.
+    public string Name => Loc.TryGet($"Rule.{_rule.Id}.Name") ?? _rule.Name;
 
     public string Condition =>
-        $"{_rule.MetricId} {(_rule.Comparison == ThresholdComparison.Above ? ">" : "<")} threshold for {_rule.MinDuration.TotalSeconds:0} s " +
-        $"(recovery {_rule.Recovery.TotalSeconds:0} s, cooldown {_rule.Cooldown.TotalSeconds:0} s)";
+        Loc.Format("Alerts_Condition", _rule.MetricId, _rule.Comparison == ThresholdComparison.Above ? ">" : "<",
+            _rule.MinDuration.TotalSeconds.ToString("0", CultureInfo.InvariantCulture), _rule.Recovery.TotalSeconds.ToString("0", CultureInfo.InvariantCulture),
+            _rule.Cooldown.TotalSeconds.ToString("0", CultureInfo.InvariantCulture));
 
-    public string ThresholdUnit => _rule.Unit == MetricUnit.Bytes ? "MB" : _rule.Unit == MetricUnit.Percent ? "%" : _rule.Unit.ToString();
+    public string ThresholdUnit => _rule.Unit switch
+    {
+        MetricUnit.Bytes => Loc.Get("Alerts_UnitMb"),
+        MetricUnit.Percent => "%",
+        MetricUnit.Milliseconds => "ms",
+        _ => _rule.Unit.ToString(),
+    };
 
-    public string Rationale => _rule.Rationale;
+    public string Rationale => Loc.TryGet($"Rule.{_rule.Id}.Rationale") ?? _rule.Rationale;
 
-    public string KnownFalsePositives => _rule.KnownFalsePositives;
+    public string KnownFalsePositives => Loc.TryGet($"Rule.{_rule.Id}.FalsePositives") ?? _rule.KnownFalsePositives;
 
     public bool Enabled { get => _enabled; set => SetProperty(ref _enabled, value); }
 
@@ -95,13 +104,13 @@ public sealed class RuleViewModel : ObservableObject
     {
         if (!double.TryParse(ThresholdText, NumberStyles.Float, CultureInfo.InvariantCulture, out double display) || !double.IsFinite(display) || display < 0)
         {
-            Error = "Threshold: enter a non-negative number (use '.' as decimal separator)";
+            Error = Loc.Get("Alerts_ThresholdInvalid");
             return;
         }
 
         if (_rule.Unit == MetricUnit.Percent && display > 100)
         {
-            Error = "Threshold: a percentage cannot exceed 100";
+            Error = Loc.Get("Alerts_ThresholdPercent");
             return;
         }
 

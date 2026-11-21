@@ -1,6 +1,7 @@
 <UserControl x:Class="DiskScope.App.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization">
     <UserControl.Resources>
         <!-- A clickable card: opens the module given by the tile's NavigateTo. -->
         <Style x:Key="CardButton" TargetType="Button">
@@ -51,7 +52,7 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="6">
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Now" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Now}" />
             <WrapPanel>
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.CpuTile}" Content="{Binding}" />
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.MemoryTile}" Content="{Binding}" />
@@ -71,7 +72,7 @@
                 </ItemsControl>
             </WrapPanel>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Volumes" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Volumes}" />
             <ItemsControl ItemsSource="{Binding Monitoring.VolumeTiles}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -85,30 +86,30 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Findings" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Findings}" />
             <WrapPanel>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Active alerts (not acknowledged)" Foreground="{DynamicResource MutedTextBrush}" />
+                        <TextBlock Text="{loc:Loc Dashboard_ActiveAlerts}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Monitoring.ActiveAlertCount}" FontSize="22" FontWeight="SemiBold" />
-                        <Button Content="Open alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <Button Content="{loc:Loc Dashboard_OpenAlerts}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="5" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Hypotheses (correlations, to verify)" Foreground="{DynamicResource MutedTextBrush}" />
+                        <TextBlock Text="{loc:Loc Dashboard_Hypotheses}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Monitoring.FindingCount}" FontSize="22" FontWeight="SemiBold" />
-                        <Button Content="Open alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <Button Content="{loc:Loc Dashboard_OpenAlerts}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="5" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Memory growth suspicions" Foreground="{DynamicResource MutedTextBrush}" />
+                        <TextBlock Text="{loc:Loc Dashboard_MemoryGrowth}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Processes.SuspicionCount}" FontSize="22" FontWeight="SemiBold" />
-                        <TextBlock Text="Sustained growth over 10 min, to verify" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
-                        <Button Content="Open processes" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <TextBlock Text="{loc:Loc Dashboard_MemoryGrowthHint}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
+                        <Button Content="{loc:Loc Dashboard_OpenProcesses}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="3" />
                     </StackPanel>
                 </Border>
@@ -117,7 +118,7 @@
                 </Border>
             </WrapPanel>
             <TextBlock Margin="8,4" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
-                       Text="Network and hardware sensors are not monitored yet. Values read n/a when the source does not provide them; they are never shown as 0." />
+                       Text="{loc:Loc Dashboard_Footnote}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

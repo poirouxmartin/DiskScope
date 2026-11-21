@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <!-- French UI strings. Same keys as Strings.resx. -->
+  <data name="Nav_Home" xml:space="preserve"><value>Accueil</value></data>
+  <data name="Nav_Storage" xml:space="preserve"><value>Stockage</value></data>
+  <data name="Nav_CpuMemory" xml:space="preserve"><value>CPU et mémoire</value></data>
+  <data name="Nav_Processes" xml:space="preserve"><value>Processus</value></data>
+  <data name="Nav_Gpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="Nav_Alerts" xml:space="preserve"><value>Alertes</value></data>
+  <data name="Nav_Startup" xml:space="preserve"><value>Démarrage</value></data>
+  <data name="Dashboard_Now" xml:space="preserve"><value>Maintenant</value></data>
+  <data name="Dashboard_Volumes" xml:space="preserve"><value>Volumes</value></data>
+  <data name="Dashboard_Findings" xml:space="preserve"><value>Constats</value></data>
+  <data name="Dashboard_ActiveAlerts" xml:space="preserve"><value>Alertes actives (non acquittées)</value></data>
+  <data name="Dashboard_OpenAlerts" xml:space="preserve"><value>Ouvrir les alertes</value></data>
+  <data name="Dashboard_Hypotheses" xml:space="preserve"><value>Hypothèses (corrélations, à vérifier)</value></data>
+  <data name="Dashboard_MemoryGrowth" xml:space="preserve"><value>Soupçons de croissance mémoire</value></data>
+  <data name="Dashboard_MemoryGrowthHint" xml:space="preserve"><value>Croissance soutenue sur 10 min, à vérifier</value></data>
+  <data name="Dashboard_OpenProcesses" xml:space="preserve"><value>Ouvrir les processus</value></data>
+  <data name="Dashboard_Footnote" xml:space="preserve"><value>Le réseau et les capteurs matériels ne sont pas encore surveillés. Les valeurs affichent n/a quand la source ne les fournit pas ; elles ne sont jamais affichées comme 0.</value></data>
+  <data name="CpuMemory_Last10" xml:space="preserve"><value>10 dernières minutes</value></data>
+  <data name="CpuMemory_Cores" xml:space="preserve"><value>Processeurs logiques</value></data>
+  <data name="CpuMemory_Counters" xml:space="preserve"><value>Compteurs CPU, mémoire et disque</value></data>
+  <data name="CpuMemory_Col_Metric" xml:space="preserve"><value>Métrique</value></data>
+  <data name="CpuMemory_Col_Value" xml:space="preserve"><value>Valeur</value></data>
+  <data name="CpuMemory_Col_Definition" xml:space="preserve"><value>Définition</value></data>
+  <data name="CpuMemory_Col_Source" xml:space="preserve"><value>Source</value></data>
+  <data name="CpuMemory_Collectors" xml:space="preserve"><value>Collecteurs (coût de la surveillance)</value></data>
+  <data name="CpuMemory_Col_Collector" xml:space="preserve"><value>Collecteur</value></data>
+  <data name="CpuMemory_Col_Available" xml:space="preserve"><value>Disponible</value></data>
+  <data name="CpuMemory_Col_Interval" xml:space="preserve"><value>Intervalle</value></data>
+  <data name="CpuMemory_Col_Collections" xml:space="preserve"><value>Collectes</value></data>
+  <data name="CpuMemory_Col_Failures" xml:space="preserve"><value>Échecs</value></data>
+  <data name="CpuMemory_Col_MissedTicks" xml:space="preserve"><value>Cycles manqués</value></data>
+  <data name="CpuMemory_Col_LastMs" xml:space="preserve"><value>Dernier (ms)</value></data>
+  <data name="CpuMemory_Col_MaxMs" xml:space="preserve"><value>Max (ms)</value></data>
+  <data name="CpuMemory_Col_Availability" xml:space="preserve"><value>Disponibilité</value></data>
+  <data name="CpuMemory_Footnote" xml:space="preserve"><value>La fréquence du processeur n'est pas affichée : Windows n'expose aucune fréquence effective fiable sans pilote. Sur les machines de plus de 64 processeurs logiques, seul le premier groupe de processeurs est mesuré.</value></data>
+  <data name="Gpu_Col_Engine" xml:space="preserve"><value>Moteur</value></data>
+  <data name="Gpu_Col_Usage" xml:space="preserve"><value>Utilisation</value></data>
+  <data name="Gpu_Col_Definition" xml:space="preserve"><value>Définition</value></data>
+  <data name="Gpu_ProcessesTitle" xml:space="preserve"><value>Processus utilisant un moteur GPU (moteur le plus sollicité, toutes cartes)</value></data>
+  <data name="Gpu_Col_Process" xml:space="preserve"><value>Processus</value></data>
+  <data name="Gpu_Col_Pid" xml:space="preserve"><value>PID</value></data>
+  <data name="Gpu_Col_Gpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="Gpu_Footnote" xml:space="preserve"><value>Les moteurs fonctionnent en parallèle et ne sont pas additionnés : l'utilisation affichée est celle du moteur le plus sollicité, comme dans le Gestionnaire des tâches. La mémoire GPU partagée est de la RAM système, pas de la mémoire vidéo. La température, les fréquences, la consommation et la vitesse du ventilateur ne sont pas affichées : aucune source indépendante du fabricant n'a encore été validée.</value></data>
+  <data name="Alerts_History" xml:space="preserve"><value>Historique</value></data>
+  <data name="Alerts_Metric" xml:space="preserve"><value>Métrique :</value></data>
+  <data name="Alerts_Range" xml:space="preserve"><value>Période :</value></data>
+  <data name="Alerts_Export" xml:space="preserve"><value>Exporter ▾</value></data>
+  <data name="Alerts_ExportHistoryCsv" xml:space="preserve"><value>Historique (CSV)</value></data>
+  <data name="Alerts_ExportJson" xml:space="preserve"><value>Rapport (JSON)</value></data>
+  <data name="Alerts_ExportHtml" xml:space="preserve"><value>Rapport (HTML)</value></data>
+  <data name="Alerts_ExportTooltip" xml:space="preserve"><value>Les rapports couvrent la période sélectionnée et n'incluent jamais de noms de machine, de noms d'utilisateur ni de lignes de commande.</value></data>
+  <data name="Alerts_HistoryNote" xml:space="preserve"><value>Conservé en mémoire depuis le démarrage de DiskScope : points de 1 s sur 10 min, 5 s sur 1 h, 1 min sur 24 h. Les trous sont des périodes sans données.</value></data>
+  <data name="Alerts_Title" xml:space="preserve"><value>Alertes</value></data>
+  <data name="Alerts_EmptyAlerts" xml:space="preserve"><value>Aucune alerte. Chaque règle ci-dessous est surveillée ; une alerte apparaît ici dès qu'elle se déclenche.</value></data>
+  <data name="Alerts_Col_Started" xml:space="preserve"><value>Début</value></data>
+  <data name="Alerts_Col_Ended" xml:space="preserve"><value>Fin</value></data>
+  <data name="Alerts_Col_Level" xml:space="preserve"><value>Niveau</value></data>
+  <data name="Alerts_Col_Alert" xml:space="preserve"><value>Alerte</value></data>
+  <data name="Alerts_Col_Explanation" xml:space="preserve"><value>Explication</value></data>
+  <data name="Alerts_Col_Evidence" xml:space="preserve"><value>Éléments</value></data>
+  <data name="Alerts_Acknowledge" xml:space="preserve"><value>Acquitter</value></data>
+  <data name="Alerts_HypothesesTitle" xml:space="preserve"><value>Hypothèses (corrélations dans le temps, pas des causes)</value></data>
+  <data name="Alerts_EmptyFindings" xml:space="preserve"><value>Aucune hypothèse. Elles apparaissent quand deux mesures évoluent ensemble dans le temps ; chacune est une piste à vérifier, pas une cause.</value></data>
+  <data name="Alerts_Col_Period" xml:space="preserve"><value>Période</value></data>
+  <data name="Alerts_Col_Hypothesis" xml:space="preserve"><value>Hypothèse</value></data>
+  <data name="Alerts_Col_Observed" xml:space="preserve"><value>Observé</value></data>
+  <data name="Alerts_Col_ToCheck" xml:space="preserve"><value>À vérifier</value></data>
+  <data name="Alerts_Col_Limits" xml:space="preserve"><value>Limites</value></data>
+  <data name="Alerts_Rules" xml:space="preserve"><value>Règles</value></data>
+  <data name="Alerts_Threshold" xml:space="preserve"><value>Seuil</value></data>
+  <data name="Alerts_Apply" xml:space="preserve"><value>Appliquer</value></data>
+  <data name="Alerts_Why" xml:space="preserve"><value>Pourquoi ?</value></data>
+  <data name="Alerts_Hide" xml:space="preserve"><value>Masquer</value></data>
+  <data name="Alerts_KnownFalsePositives" xml:space="preserve"><value>Faux positifs connus :</value></data>
+  <data name="Processes_Filter" xml:space="preserve"><value>Filtre (nom, PID ou chemin) :</value></data>
+  <data name="Processes_ShowTree" xml:space="preserve"><value>Afficher en arborescence</value></data>
+  <data name="Processes_ShowTreeTooltip" xml:space="preserve"><value>Désactivé : octets privés les plus élevés d'abord. Activé : parents et enfants, quand aucun filtre n'est défini.</value></data>
+  <data name="Processes_ExportCsv" xml:space="preserve"><value>Exporter en CSV</value></data>
+  <data name="Processes_ReadOnly" xml:space="preserve"><value>Lecture seule : aucun processus n'est arrêté ni modifié.</value></data>
+  <data name="Processes_Col_Name" xml:space="preserve"><value>Nom</value></data>
+  <data name="Processes_Col_Pid" xml:space="preserve"><value>PID</value></data>
+  <data name="Processes_Col_PrivateBytes" xml:space="preserve"><value>Octets privés</value></data>
+  <data name="Processes_Col_Cpu" xml:space="preserve"><value>CPU (% machine)</value></data>
+  <data name="Processes_Col_WorkingSet" xml:space="preserve"><value>Plage de travail</value></data>
+  <data name="Processes_Col_PrivateWs" xml:space="preserve"><value>PT privée</value></data>
+  <data name="Processes_Col_Threads" xml:space="preserve"><value>Threads</value></data>
+  <data name="Processes_Col_Handles" xml:space="preserve"><value>Handles</value></data>
+  <data name="Processes_Col_IoRead" xml:space="preserve"><value>E/S lecture</value></data>
+  <data name="Processes_Col_IoWrite" xml:space="preserve"><value>E/S écriture</value></data>
+  <data name="Processes_Col_Started" xml:space="preserve"><value>Démarré</value></data>
+  <data name="Processes_Col_Growth" xml:space="preserve"><value>Croissance mémoire</value></data>
+  <data name="Processes_Col_Path" xml:space="preserve"><value>Chemin</value></data>
+  <data name="Startup_Refresh" xml:space="preserve"><value>Actualiser</value></data>
+  <data name="Startup_Export" xml:space="preserve"><value>Exporter ▾</value></data>
+  <data name="Startup_ExportStartup" xml:space="preserve"><value>Entrées de démarrage (CSV)</value></data>
+  <data name="Startup_ExportServices" xml:space="preserve"><value>Services (CSV)</value></data>
+  <data name="Startup_Filter" xml:space="preserve"><value>Filtre :</value></data>
+  <data name="Startup_Col_Name" xml:space="preserve"><value>Nom</value></data>
+  <data name="Startup_Col_Source" xml:space="preserve"><value>Source</value></data>
+  <data name="Startup_Col_Scope" xml:space="preserve"><value>Portée</value></data>
+  <data name="Startup_Col_Status" xml:space="preserve"><value>Statut</value></data>
+  <data name="Startup_StatusUnknown" xml:space="preserve"><value>inconnu</value></data>
+  <data name="Startup_StatusEnabled" xml:space="preserve"><value>Activé</value></data>
+  <data name="Startup_StatusDisabled" xml:space="preserve"><value>Désactivé</value></data>
+  <data name="Startup_Col_Publisher" xml:space="preserve"><value>Éditeur (infos de version)</value></data>
+  <data name="Startup_Col_FileExists" xml:space="preserve"><value>Fichier existant</value></data>
+  <data name="Startup_Col_Trigger" xml:space="preserve"><value>Déclencheur</value></data>
+  <data name="Startup_Col_Command" xml:space="preserve"><value>Commande</value></data>
+  <data name="Startup_Col_Location" xml:space="preserve"><value>Emplacement</value></data>
+  <data name="Startup_Services" xml:space="preserve"><value>Services</value></data>
+  <data name="Startup_Col_DisplayName" xml:space="preserve"><value>Nom complet</value></data>
+  <data name="Startup_Col_State" xml:space="preserve"><value>État</value></data>
+  <data name="Startup_Col_StartType" xml:space="preserve"><value>Type de démarrage</value></data>
+  <data name="Startup_Col_Delayed" xml:space="preserve"><value>Différé</value></data>
+  <data name="Startup_Col_Pid" xml:space="preserve"><value>PID</value></data>
+  <data name="Startup_Col_Account" xml:space="preserve"><value>Compte</value></data>
+  <data name="Startup_Col_SharedProcess" xml:space="preserve"><value>Processus partagé</value></data>
+  <data name="Startup_Col_ImagePath" xml:space="preserve"><value>Chemin de l'image</value></data>
+  <data name="Storage_Title" xml:space="preserve"><value>Stockage</value></data>
+  <data name="Storage_StartPrompt" xml:space="preserve"><value>Que voulez-vous analyser ?</value></data>
+  <data name="Storage_Analyze" xml:space="preserve"><value>Analyser</value></data>
+  <data name="Storage_ChooseFolderEllipsis" xml:space="preserve"><value>Choisir un dossier…</value></data>
+  <data name="Storage_Cancel" xml:space="preserve"><value>Annuler</value></data>
+  <data name="Storage_ExportCsv" xml:space="preserve"><value>Exporter en CSV</value></data>
+  <data name="Storage_Logical" xml:space="preserve"><value>Logique</value></data>
+  <data name="Storage_LogicalTooltip" xml:space="preserve"><value>Taille logique : les octets contenus dans les fichiers (ce que l'Explorateur affiche comme Taille).</value></data>
+  <data name="Storage_Allocated" xml:space="preserve"><value>Allouée</value></data>
+  <data name="Storage_AllocatedTooltip" xml:space="preserve"><value>Taille allouée : l'espace disque réellement utilisé (clusters, compression, fichiers creux). Ce que l'Explorateur affiche comme Taille sur disque.</value></data>
+  <data name="Storage_ChooseFolder" xml:space="preserve"><value>Choisir un dossier</value></data>
+  <data name="Storage_CopyPath" xml:space="preserve"><value>Copier le chemin</value></data>
+  <data name="Storage_OpenInExplorer" xml:space="preserve"><value>Ouvrir dans l'Explorateur</value></data>
+  <data name="Storage_TabLargestFiles" xml:space="preserve"><value>Plus gros fichiers</value></data>
+  <data name="Storage_TabSearch" xml:space="preserve"><value>Recherche</value></data>
+  <data name="Storage_TabExtensions" xml:space="preserve"><value>Extensions</value></data>
+  <data name="Storage_Col_Size" xml:space="preserve"><value>Taille</value></data>
+  <data name="Storage_Col_File" xml:space="preserve"><value>Fichier</value></data>
+  <data name="Storage_Col_Path" xml:space="preserve"><value>Chemin</value></data>
+  <data name="Storage_NameContains" xml:space="preserve"><value>Le nom contient</value></data>
+  <data name="Storage_ExtensionsHint" xml:space="preserve"><value>jpg, png ; vide = toutes</value></data>
+  <data name="Storage_MinSize" xml:space="preserve"><value>Taille min. (Mo)</value></data>
+  <data name="Storage_MaxSize" xml:space="preserve"><value>Taille max. (Mo)</value></data>
+  <data name="Storage_ModifiedFrom" xml:space="preserve"><value>Modifié du</value></data>
+  <data name="Storage_ModifiedTo" xml:space="preserve"><value>Modifié jusqu'au</value></data>
+  <data name="Storage_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="Storage_Col_Extension" xml:space="preserve"><value>Extension</value></data>
+  <data name="Storage_Col_Files" xml:space="preserve"><value>Fichiers</value></data>
+  <data name="Storage_Col_Share" xml:space="preserve"><value>Part</value></data>
+  <data name="Storage_SummaryAndErrors" xml:space="preserve"><value>Résumé et erreurs</value></data>
+  <data name="Common_ExportFailed" xml:space="preserve"><value>Échec de l'exportation : {0}</value></data>
+  <data name="Common_ExportedTo" xml:space="preserve"><value>Exporté vers {0}</value></data>
+  <data name="Common_FreeOf" xml:space="preserve"><value>{0} libres sur {1}</value></data>
+  <data name="Processes_AccessDenied" xml:space="preserve"><value>accès refusé</value></data>
+  <data name="Processes_NotRefreshed" xml:space="preserve"><value>Pas encore actualisé</value></data>
+  <data name="Processes_EnumerationFailed" xml:space="preserve"><value>Échec de l'énumération des processus ({0}) : {1}</value></data>
+  <data name="Processes_Exported" xml:space="preserve"><value>{0} processus exportés vers {1}</value></data>
+  <data name="Processes_Growth" xml:space="preserve"><value>+{0} en {1} min : croissance soutenue, à vérifier (fuite non avérée)</value></data>
+  <data name="Processes_Summary" xml:space="preserve"><value>{0} processus, {1} non ouvrables (leur mémoire, CPU et E/S affichent n/a), lus en {2} ms, {3} liens parents non vérifiés, {4} soupçons de croissance. Le % CPU est celui de la machine entière ; octets privés = mémoire allouée.</value></data>
+  <data name="Startup_NotLoaded" xml:space="preserve"><value>Pas encore chargé</value></data>
+  <data name="Startup_Reading" xml:space="preserve"><value>Lecture des entrées de démarrage et des services...</value></data>
+  <data name="Startup_StatusLine" xml:space="preserve"><value>{0} entrées de démarrage, {1} services{2}. Lecture seule : rien ne peut être désactivé d'ici.</value></data>
+  <data name="Startup_SourcesPartial" xml:space="preserve"><value>; {0} sources n'ont pas pu être lues (liste ci-dessous) : l'inventaire est partiel</value></data>
+  <data name="Startup_SourcesAll" xml:space="preserve"><value>; toutes les sources ont été lues</value></data>
+  <data name="Startup_ReadFailed" xml:space="preserve"><value>Échec de la lecture des entrées de démarrage : {0}</value></data>
+  <data name="Storage_NoExtension" xml:space="preserve"><value>(aucune)</value></data>
+  <data name="Dialog_JsonFilter" xml:space="preserve"><value>Fichiers JSON (*.json)|*.json</value></data>
+  <data name="Dialog_HtmlFilter" xml:space="preserve"><value>Fichiers HTML (*.html)|*.html</value></data>
+  <data name="Dialog_CsvFilter" xml:space="preserve"><value>Fichiers CSV (*.csv)|*.csv</value></data>
+  <data name="App_UnexpectedError" xml:space="preserve"><value>Une erreur inattendue s'est produite : {0}</value></data>
+  <data name="App_ErrorLogged" xml:space="preserve"><value>Les détails ont été écrits dans {0}.</value></data>
+  <data name="App_ErrorLogFailed" xml:space="preserve"><value>Le journal d'erreurs n'a pas pu être écrit.</value></data>
+  <data name="App_KeepsRunning" xml:space="preserve"><value>DiskScope continue de fonctionner, mais la dernière action est peut-être incomplète.</value></data>
+  <data name="Storage_UsedPercent" xml:space="preserve"><value>{0} % utilisés</value></data>
+  <data name="Storage_SizeUnknown" xml:space="preserve"><value>Taille inconnue ({0})</value></data>
+  <data name="Storage_Drive_Removable" xml:space="preserve"><value>Disque amovible</value></data>
+  <data name="Storage_Drive_Network" xml:space="preserve"><value>Lecteur réseau</value></data>
+  <data name="Storage_Drive_Optical" xml:space="preserve"><value>Lecteur optique</value></data>
+  <data name="Storage_Drive_Local" xml:space="preserve"><value>Disque local</value></data>
+  <data name="Tile_Source" xml:space="preserve"><value>Source : {0}</value></data>
+  <data name="Tile_Peak" xml:space="preserve"><value>max {0} sur {1}</value></data>
+  <data name="Tile_NoData" xml:space="preserve"><value>pas encore de données</value></data>
+  <data name="Tile_Of" xml:space="preserve"><value>sur</value></data>
+  <data name="Tile_Limit" xml:space="preserve"><value>limite</value></data>
+  <data name="Gpu_Identity" xml:space="preserve"><value>Fabricant 0x{0}, LUID {1}, mémoire vidéo dédiée {2}, limite de mémoire système partagée {3} (DXGI)</value></data>
+  <data name="Gpu_NotConfigured" xml:space="preserve"><value>Collecteur GPU non configuré.</value></data>
+  <data name="Gpu_Unavailable" xml:space="preserve"><value>Surveillance GPU indisponible : {0}</value></data>
+  <data name="Gpu_Available" xml:space="preserve"><value>Compteurs GPU disponibles.</value></data>
+  <data name="Alerts_Ongoing" xml:space="preserve"><value>en cours</value></data>
+  <data name="Level_Information" xml:space="preserve"><value>Information</value></data>
+  <data name="Level_Watch" xml:space="preserve"><value>À surveiller</value></data>
+  <data name="Level_Alert" xml:space="preserve"><value>Alerte</value></data>
+  <data name="Level_Hypothesis" xml:space="preserve"><value>Hypothèse</value></data>
+  <data name="Confidence_Low" xml:space="preserve"><value>faible</value></data>
+  <data name="Confidence_Medium" xml:space="preserve"><value>moyenne</value></data>
+  <data name="Confidence_High" xml:space="preserve"><value>élevée</value></data>
+  <data name="Alerts_EvidenceAt" xml:space="preserve"><value>{0} : {1} à {2}</value></data>
+  <data name="Alerts_FindingLevel" xml:space="preserve"><value>{0} (confiance {1})</value></data>
+  <data name="Alerts_RuleFailed" xml:space="preserve"><value>Échec d'une règle de diagnostic</value></data>
+  <data name="Alerts_RuleNoResult" xml:space="preserve"><value>Cette règle n'a produit aucun résultat.</value></data>
+  <data name="Alerts_Condition" xml:space="preserve"><value>{0} {1} seuil pendant {2} s (récupération {3} s, délai de réactivation {4} s)</value></data>
+  <data name="Alerts_UnitMb" xml:space="preserve"><value>Mo</value></data>
+  <data name="Alerts_ThresholdInvalid" xml:space="preserve"><value>Seuil : saisissez un nombre positif ou nul (utilisez « . » comme séparateur décimal)</value></data>
+  <data name="Alerts_ThresholdPercent" xml:space="preserve"><value>Seuil : un pourcentage ne peut pas dépasser 100</value></data>
+  <data name="Search_MinSize" xml:space="preserve"><value>Taille min.</value></data>
+  <data name="Search_MaxSize" xml:space="preserve"><value>Taille max.</value></data>
+  <data name="Search_NoScan" xml:space="preserve"><value>Aucune analyse chargée</value></data>
+  <data name="Search_EnterCriteria" xml:space="preserve"><value>Saisissez des critères</value></data>
+  <data name="Search_NotNumber" xml:space="preserve"><value>{0} : ce n'est pas un nombre</value></data>
+  <data name="Search_Negative" xml:space="preserve"><value>{0} : ne doit pas être négatif</value></data>
+  <data name="Search_TooLarge" xml:space="preserve"><value>{0} : valeur trop grande</value></data>
+  <data name="Search_Matches" xml:space="preserve"><value>{0} correspondances</value></data>
+  <data name="Search_Showing" xml:space="preserve"><value>, {0} premières affichées</value></data>
+  <data name="Search_UnknownDate" xml:space="preserve"><value>; {0} sans date connue exclus</value></data>
+  <data name="Storage_Ready" xml:space="preserve"><value>Prêt</value></data>
+  <data name="Storage_ScanFailed" xml:space="preserve"><value>Échec de l'analyse : {0}</value></data>
+  <data name="Storage_CopyFailed" xml:space="preserve"><value>Échec de la copie : {0}</value></data>
+  <data name="Storage_ExplorerFailed" xml:space="preserve"><value>Impossible d'ouvrir l'Explorateur : {0}</value></data>
+  <data name="Storage_Scanning" xml:space="preserve"><value>Analyse en cours...</value></data>
+  <data name="Storage_ScanFinished" xml:space="preserve"><value>Analyse terminée : {0}</value></data>
+  <data name="Storage_ExportedRows" xml:space="preserve"><value>{0} lignes exportées vers {1}</value></data>
+  <data name="Storage_Sum_Engine" xml:space="preserve"><value>Moteur :     {0}</value></data>
+  <data name="Storage_Sum_Outcome" xml:space="preserve"><value>Résultat :   {0}</value></data>
+  <data name="Storage_Sum_Elapsed" xml:space="preserve"><value>Durée :      {0} s</value></data>
+  <data name="Storage_Sum_Logical" xml:space="preserve"><value>Logique :    {0} ({1} octets)</value></data>
+  <data name="Storage_Sum_Allocated" xml:space="preserve"><value>Alloué :     {0} ({1} octets)</value></data>
+  <data name="Storage_Sum_Files" xml:space="preserve"><value>Fichiers :   {0}</value></data>
+  <data name="Storage_Sum_Directories" xml:space="preserve"><value>Dossiers :   {0}</value></data>
+  <data name="Storage_Sum_Errors" xml:space="preserve"><value>Erreurs :    {0}</value></data>
+  <data name="Storage_Sum_Partial" xml:space="preserve"><value>RÉSULTAT PARTIEL : un ou plusieurs sous-arbres sont incomplets.</value></data>
+  <data name="Storage_PartialInProgress" xml:space="preserve"><value>RÉSULTAT PARTIEL : analyse en cours, les dossiers non visités sont marqués NotScanned.</value></data>
+  <data name="Storage_Progress" xml:space="preserve"><value>Analyse : {0} éléments, {1}, {2} erreurs</value></data>
+  <data name="Monitoring_Starting" xml:space="preserve"><value>Démarrage en cours</value></data>
+  <data name="Monitoring_HealthStarting" xml:space="preserve"><value>Démarrage de la surveillance</value></data>
+  <data name="Monitoring_MonitorsUnavailable" xml:space="preserve"><value>{0} moniteurs sur {1} indisponibles</value></data>
+  <data name="Monitoring_HistoryNotSaved" xml:space="preserve"><value>Historique non enregistré ({0} échecs d'écriture)</value></data>
+  <data name="Monitoring_OkMissed" xml:space="preserve"><value>Surveillance OK ({0} lectures manquées)</value></data>
+  <data name="Monitoring_Ok" xml:space="preserve"><value>Surveillance OK</value></data>
+  <data name="Monitoring_UnknownProcess" xml:space="preserve"><value>(inconnu)</value></data>
+  <data name="Monitoring_Status" xml:space="preserve"><value>{0}/{1} collecteurs actifs, {2} collectes en échec, {3} échecs d'écriture de l'historique, durée de collecte {4} ms par cycle</value></data>
+  <data name="Monitoring_SelfCost" xml:space="preserve"><value>DiskScope lui-même : {0} CPU, {1}</value></data>
+  <data name="Monitoring_NoHistory" xml:space="preserve"><value>Aucune donnée sur cette période (l'historique est conservé en mémoire depuis le démarrage de DiskScope).</value></data>
+  <data name="Monitoring_HistorySummary" xml:space="preserve"><value>{0} points, min {1}, moy. {2}, max {3}. Source : {4}</value></data>
+  <data name="Metric.cpu.total" xml:space="preserve"><value>Utilisation du CPU</value></data>
+  <data name="MetricDef.cpu.total" xml:space="preserve"><value>(noyau + utilisateur - inactif) / (noyau + utilisateur)</value></data>
+  <data name="Metric.cpu.user" xml:space="preserve"><value>Temps utilisateur du CPU</value></data>
+  <data name="MetricDef.cpu.user" xml:space="preserve"><value>utilisateur / (noyau + utilisateur)</value></data>
+  <data name="Metric.cpu.kernel" xml:space="preserve"><value>Temps noyau du CPU</value></data>
+  <data name="MetricDef.cpu.kernel" xml:space="preserve"><value>(noyau - inactif) / (noyau + utilisateur)</value></data>
+  <data name="Metric.mem.physical.total" xml:space="preserve"><value>Mémoire physique</value></data>
+  <data name="Metric.mem.physical.available" xml:space="preserve"><value>Disponible</value></data>
+  <data name="MetricDef.mem.physical.available" xml:space="preserve"><value>Pages en attente + libres + mises à zéro</value></data>
+  <data name="Metric.mem.physical.used" xml:space="preserve"><value>En cours d'utilisation</value></data>
+  <data name="MetricDef.mem.physical.used" xml:space="preserve"><value>Total - disponible</value></data>
+  <data name="Metric.mem.physical.load" xml:space="preserve"><value>Charge mémoire</value></data>
+  <data name="MetricDef.mem.physical.load" xml:space="preserve"><value>dwMemoryLoad, calculé par Windows</value></data>
+  <data name="Metric.mem.commit.used" xml:space="preserve"><value>Mémoire allouée</value></data>
+  <data name="MetricDef.mem.commit.used" xml:space="preserve"><value>CommitTotal x PageSize</value></data>
+  <data name="Metric.mem.commit.limit" xml:space="preserve"><value>Limite d'allocation</value></data>
+  <data name="MetricDef.mem.commit.limit" xml:space="preserve"><value>CommitLimit x PageSize ; limite souple si le fichier d'échange peut grandir</value></data>
+  <data name="Metric.mem.commit.peak" xml:space="preserve"><value>Pic d'allocation</value></data>
+  <data name="MetricDef.mem.commit.peak" xml:space="preserve"><value>Depuis le démarrage</value></data>
+  <data name="Metric.mem.commit.percent" xml:space="preserve"><value>Charge d'allocation</value></data>
+  <data name="MetricDef.mem.commit.percent" xml:space="preserve"><value>CommitTotal / CommitLimit</value></data>
+  <data name="Metric.mem.cache" xml:space="preserve"><value>Cache système</value></data>
+  <data name="MetricDef.mem.cache" xml:space="preserve"><value>Liste de secours + plage de travail système</value></data>
+  <data name="Metric.mem.pool.paged" xml:space="preserve"><value>Pool paginé</value></data>
+  <data name="Metric.mem.pool.nonpaged" xml:space="preserve"><value>Pool non paginé</value></data>
+  <data name="Metric.sys.processes" xml:space="preserve"><value>Processus</value></data>
+  <data name="Metric.sys.threads" xml:space="preserve"><value>Threads</value></data>
+  <data name="Metric.sys.handles" xml:space="preserve"><value>Handles</value></data>
+  <data name="Metric.disk.active" xml:space="preserve"><value>Temps d'activité du disque</value></data>
+  <data name="MetricDef.disk.active" xml:space="preserve"><value>100 - % de temps d'inactivité, tous les disques physiques</value></data>
+  <data name="Metric.disk.read" xml:space="preserve"><value>Lecture disque</value></data>
+  <data name="Metric.disk.write" xml:space="preserve"><value>Écriture disque</value></data>
+  <data name="Metric.disk.latency" xml:space="preserve"><value>Latence du disque</value></data>
+  <data name="MetricDef.disk.latency" xml:space="preserve"><value>Durée moyenne par transfert sur l'intervalle</value></data>
+  <data name="Metric.disk.queue" xml:space="preserve"><value>File d'attente du disque</value></data>
+  <data name="MetricDef.disk.queue" xml:space="preserve"><value>Instantanée, non moyennée</value></data>
+  <data name="Metric.self.cpu" xml:space="preserve"><value>CPU de DiskScope</value></data>
+  <data name="MetricDef.self.cpu" xml:space="preserve"><value>Variation du temps utilisateur + noyau propre / temps écoulé / processeurs logiques</value></data>
+  <data name="Metric.self.workingset" xml:space="preserve"><value>Plage de travail de DiskScope</value></data>
+  <data name="Metric.self.private" xml:space="preserve"><value>Octets privés de DiskScope</value></data>
+  <data name="Metric.self.gcheap" xml:space="preserve"><value>Tas managé de DiskScope</value></data>
+  <data name="MetricSuffix_GpuDedicated" xml:space="preserve"><value> : mémoire dédiée utilisée</value></data>
+  <data name="MetricSuffix_GpuShared" xml:space="preserve"><value> : mémoire partagée utilisée</value></data>
+  <data name="MetricSuffix_GpuUsage" xml:space="preserve"><value> : utilisation</value></data>
+  <data name="MetricSuffix_VolumeUsed" xml:space="preserve"><value>: utilisé</value></data>
+  <data name="MetricSuffix_VolumeFree" xml:space="preserve"><value>: libre</value></data>
+  <data name="MetricSuffix_VolumeSize" xml:space="preserve"><value>: taille</value></data>
+  <data name="Gpu_Tile_Usage" xml:space="preserve"><value>Utilisation</value></data>
+  <data name="Gpu_Tile_Dedicated" xml:space="preserve"><value>Mémoire dédiée utilisée</value></data>
+  <data name="Gpu_Tile_Shared" xml:space="preserve"><value>Mémoire partagée utilisée</value></data>
+  <data name="Gpu_EngineDefinition" xml:space="preserve"><value>Moteur le plus sollicité de ce type ; somme des processus par moteur</value></data>
+  <data name="Rule.cpu.high.Name" xml:space="preserve"><value>CPU élevé et prolongé</value></data>
+  <data name="Rule.cpu.high.Rationale" xml:space="preserve"><value>CPU global au-dessus de 90 % pendant 30 s : le travail au premier plan risque d'être ralenti.</value></data>
+  <data name="Rule.cpu.high.FalsePositives" xml:space="preserve"><value>Compilations, compressions, jeux et exports vidéo occupent légitimement le CPU.</value></data>
+  <data name="Rule.mem.available.low.Name" xml:space="preserve"><value>Mémoire disponible très basse</value></data>
+  <data name="Rule.mem.available.low.Rationale" xml:space="preserve"><value>Mémoire disponible (veille + libre + pages à zéro) sous 512 Mo : Windows doit paginer pour satisfaire les nouvelles allocations. Un montant absolu et non un pourcentage de la RAM, car un fort pourcentage de « mémoire utilisée » est normal avec un grand cache.</value></data>
+  <data name="Rule.mem.available.low.FalsePositives" xml:space="preserve"><value>Sur les machines avec peu de RAM, il faudra peut-être abaisser le seuil.</value></data>
+  <data name="Rule.mem.commit.high.Name" xml:space="preserve"><value>Mémoire validée proche de sa limite</value></data>
+  <data name="Rule.mem.commit.high.Rationale" xml:space="preserve"><value>Mémoire validée au-dessus de 90 % de la limite : les allocations peuvent échouer une fois la limite atteinte.</value></data>
+  <data name="Rule.mem.commit.high.FalsePositives" xml:space="preserve"><value>Avec un fichier d'échange extensible, la limite est souple et Windows peut l'augmenter.</value></data>
+  <data name="Rule.disk.latency.high.Name" xml:space="preserve"><value>Latence disque élevée</value></data>
+  <data name="Rule.disk.latency.high.Rationale" xml:space="preserve"><value>Temps moyen par transfert disque au-dessus de 50 ms pendant 30 s : les programmes qui attendent le disque semblent lents. Mesuré sur tous les disques physiques.</value></data>
+  <data name="Rule.disk.latency.high.FalsePositives" xml:space="preserve"><value>Les disques durs et lecteurs USB en charge séquentielle dépassent souvent 50 ms ; le seuil convient aux SSD.</value></data>
+</root>

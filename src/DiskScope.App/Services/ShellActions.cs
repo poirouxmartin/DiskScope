@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using DiskScope.App.Localization;
 
 namespace DiskScope.App.Services;
 
@@ -23,9 +24,9 @@ public sealed class ShellActions : IShellActions
             FileName = suggestedFileName,
             Filter = ext switch
             {
-                ".json" => "JSON files (*.json)|*.json",
-                ".html" => "HTML files (*.html)|*.html",
-                _ => "CSV files (*.csv)|*.csv",
+                ".json" => Loc.Get("Dialog_JsonFilter"),
+                ".html" => Loc.Get("Dialog_HtmlFilter"),
+                _ => Loc.Get("Dialog_CsvFilter"),
             },
             DefaultExt = ext.Length > 0 ? ext : ".csv",
             OverwritePrompt = true,

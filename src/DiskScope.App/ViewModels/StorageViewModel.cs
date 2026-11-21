@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using DiskScope.App.Formatting;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 using DiskScope.Storage;
 using DiskScope.Scanner;
@@ -23,7 +24,7 @@ public sealed class StorageViewModel : ObservableObject
     private readonly Func<IReadOnlyList<DriveSnapshot>> _readDrives;
     private string _rootPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     private bool _isScanning;
-    private string _statusText = "Ready";
+    private string _statusText = Loc.Get("Storage_Ready");
     private string _summary = string.Empty;
     private CancellationTokenSource? _cts;
     private NodeIndex? _index;
@@ -44,7 +45,7 @@ public sealed class StorageViewModel : ObservableObject
 
         ScanCommand = new AsyncRelayCommand(
             ScanAsync,
-            ex => StatusText = $"Scan failed: {ex.Message}",
+            ex => StatusText = Loc.Format("Storage_ScanFailed", ex.Message),
             () => !IsScanning);
 
         CancelCommand = new RelayCommand(() => _cts?.Cancel(), () => IsScanning);
@@ -56,7 +57,7 @@ public sealed class StorageViewModel : ObservableObject
                 PendingExport = export;
                 return export;
             },
-            ex => StatusText = $"Export failed: {ex.Message}",
+            ex => StatusText = Loc.Format("Common_ExportFailed", ex.Message),
             () => _index is not null && !IsScanning);
 
         CopyPathCommand = new ParameterCommand(CopyPath);
@@ -338,7 +339,7 @@ public sealed class StorageViewModel : ObservableObject
             catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or System.ComponentModel.Win32Exception or InvalidOperationException)
             {
                 // Clipboard.SetText throws COMException when another process holds the clipboard.
-                StatusText = $"Copy failed: {ex.Message}";
+                StatusText = Loc.Format("Storage_CopyFailed", ex.Message);
             }
         }
     }
@@ -353,7 +354,7 @@ public sealed class StorageViewModel : ObservableObject
             }
             catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or System.ComponentModel.Win32Exception or InvalidOperationException)
             {
-                StatusText = $"Could not open Explorer: {ex.Message}";
+                StatusText = Loc.Format("Storage_ExplorerFailed", ex.Message);
             }
         }
     }
@@ -399,11 +400,11 @@ public sealed class StorageViewModel : ObservableObject
                 return;
             }
 
-            StatusText = "Scanning...";
+            StatusText = Loc.Get("Storage_Scanning");
             ScanResult result = await engine.ScanAsync(request, new ProgressObserver(this, cts), cts.Token);
             Summary = BuildSummary(result);
             LoadIndex(result.Index);
-            StatusText = $"Scan finished: {result.Outcome}";
+            StatusText = Loc.Format("Storage_ScanFinished", result.Outcome);
         }
         finally
         {
@@ -430,7 +431,7 @@ public sealed class StorageViewModel : ObservableObject
             using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
             return CsvExporter.Write(index, writer);
         });
-        StatusText = $"Exported {rows:N0} rows to {path}";
+        StatusText = Loc.Format("Storage_ExportedRows", rows.ToString("N0"), path);
     }
 
     private static string BuildSummary(ScanResult result)
@@ -442,18 +443,18 @@ public sealed class StorageViewModel : ObservableObject
             || (index.GetStatus(NodeIndex.RootId) & NodeStatus.SubtreeIncomplete) != 0;
 
         var sb = new StringBuilder();
-        sb.AppendLine($"Engine:      {result.EngineName}");
-        sb.AppendLine($"Outcome:     {result.Outcome}");
-        sb.AppendLine($"Elapsed:     {result.Elapsed.TotalSeconds:N2} s");
-        sb.AppendLine($"Logical:     {ByteFormatter.Format(logical)} ({logical:N0} bytes)");
-        sb.AppendLine($"Allocated:   {ByteFormatter.Format(allocated)} ({allocated:N0} bytes)");
-        sb.AppendLine($"Files:       {index.GetRecursiveFileCount(NodeIndex.RootId):N0}");
-        sb.AppendLine($"Directories: {index.GetRecursiveDirectoryCount(NodeIndex.RootId):N0}");
-        sb.AppendLine($"Errors:      {index.Errors.Count:N0}");
+        sb.AppendLine(Loc.Format("Storage_Sum_Engine", result.EngineName));
+        sb.AppendLine(Loc.Format("Storage_Sum_Outcome", result.Outcome));
+        sb.AppendLine(Loc.Format("Storage_Sum_Elapsed", result.Elapsed.TotalSeconds.ToString("N2")));
+        sb.AppendLine(Loc.Format("Storage_Sum_Logical", ByteFormatter.Format(logical), logical.ToString("N0")));
+        sb.AppendLine(Loc.Format("Storage_Sum_Allocated", ByteFormatter.Format(allocated), allocated.ToString("N0")));
+        sb.AppendLine(Loc.Format("Storage_Sum_Files", index.GetRecursiveFileCount(NodeIndex.RootId).ToString("N0")));
+        sb.AppendLine(Loc.Format("Storage_Sum_Directories", index.GetRecursiveDirectoryCount(NodeIndex.RootId).ToString("N0")));
+        sb.AppendLine(Loc.Format("Storage_Sum_Errors", index.Errors.Count.ToString("N0")));
 
         if (partial)
         {
-            sb.AppendLine("PARTIAL RESULT: one or more subtrees are incomplete.");
+            sb.AppendLine(Loc.Get("Storage_Sum_Partial"));
         }
 
         if (index.Errors.Count > 0)
@@ -471,7 +472,7 @@ public sealed class StorageViewModel : ObservableObject
     /// <summary>Shows a provisional index while a scan runs. The tree is rebuilt, so expansion state is not kept.</summary>
     internal void LoadPartialIndex(NodeIndex partial)
     {
-        Summary = "PARTIAL RESULT: scan in progress, unvisited directories are flagged NotScanned.";
+        Summary = Loc.Get("Storage_PartialInProgress");
         LoadIndex(partial);
     }
 
@@ -491,8 +492,7 @@ public sealed class StorageViewModel : ObservableObject
         {
             // 'in' parameters cannot be captured by a lambda (CS1628), so copy to a local first.
             ScanProgress snapshot = progress;
-            string text =
-                $"Scanning: {snapshot.Nodes:N0} items, {ByteFormatter.Format(snapshot.LogicalBytes)}, {snapshot.Errors} errors";
+            string text = Loc.Format("Storage_Progress", snapshot.Nodes.ToString("N0"), ByteFormatter.Format(snapshot.LogicalBytes), snapshot.Errors);
 
             Application.Current?.Dispatcher.BeginInvoke(new Action(() => owner.StatusText = text));
         }

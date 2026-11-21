@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 
 namespace DiskScope.App;
@@ -33,9 +34,9 @@ public partial class App : System.Windows.Application
         {
             string msg = e.Exception.Message;
             MessageBox.Show(
-                $"An unexpected error occurred: {msg}\n\n"
-                + (log is not null ? $"Details were written to {log}." : "The error log could not be written.")
-                + "\n\nDiskScope keeps running, but the last action may not have completed.",
+                Loc.Format("App_UnexpectedError", msg) + "\n\n"
+                + (log is not null ? Loc.Format("App_ErrorLogged", log) : Loc.Get("App_ErrorLogFailed"))
+                + "\n\n" + Loc.Get("App_KeepsRunning"),
                 "DiskScope",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);

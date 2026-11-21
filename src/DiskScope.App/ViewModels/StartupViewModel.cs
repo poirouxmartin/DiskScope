@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 using DiskScope.Maintenance;
 using DiskScope.Reports;
@@ -19,7 +20,7 @@ public sealed class StartupViewModel : ObservableObject
     private readonly Func<InventoryResult<ServiceEntry>> _readServices;
     private IReadOnlyList<StartupEntry> _allStartup = Array.Empty<StartupEntry>();
     private IReadOnlyList<ServiceEntry> _allServices = Array.Empty<ServiceEntry>();
-    private string _status = "Not loaded yet";
+    private string _status = Loc.Get("Startup_NotLoaded");
     private string _filter = string.Empty;
     private bool _isLoading;
 
@@ -68,7 +69,7 @@ public sealed class StartupViewModel : ObservableObject
 
         _isLoading = true;
         RefreshCommand.RaiseCanExecuteChanged();
-        Status = "Reading start-up entries and services...";
+        Status = Loc.Get("Startup_Reading");
         try
         {
             (InventoryResult<StartupEntry> startup, InventoryResult<ServiceEntry> services) =
@@ -83,13 +84,12 @@ public sealed class StartupViewModel : ObservableObject
 
             ApplyFilter();
             int errors = Errors.Count;
-            Status = Invariant($"{_allStartup.Count} start-up entries, {_allServices.Count} services") +
-                (errors > 0 ? Invariant($"; {errors} sources could not be read (list below): the inventory is partial") : "; every source was read") +
-                ". Read-only: nothing can be disabled from here.";
+            Status = Loc.Format("Startup_StatusLine", _allStartup.Count, _allServices.Count,
+                errors > 0 ? Loc.Format("Startup_SourcesPartial", errors) : Loc.Get("Startup_SourcesAll"));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            Status = "Reading start-up entries failed: " + ex.Message;
+            Status = Loc.Format("Startup_ReadFailed", ex.Message);
         }
         finally
         {
@@ -139,11 +139,11 @@ public sealed class StartupViewModel : ObservableObject
         {
             using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
             write(writer);
-            Status = $"Exported to {path}";
+            Status = Loc.Format("Common_ExportedTo", path);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            Status = "Export failed: " + ex.Message;
+            Status = Loc.Format("Common_ExportFailed", ex.Message);
         }
     }
 }

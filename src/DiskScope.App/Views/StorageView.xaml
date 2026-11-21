@@ -1,13 +1,14 @@
 <UserControl x:Class="DiskScope.App.Views.StorageView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization"
         xmlns:controls="clr-namespace:DiskScope.App.Controls">
     <UserControl.Resources>
         <ContextMenu x:Key="FileRowMenu" x:Shared="False">
-            <MenuItem Header="Copy path"
+            <MenuItem Header="{loc:Loc Storage_CopyPath}"
                       Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding}" />
-            <MenuItem Header="Open in Explorer"
+            <MenuItem Header="{loc:Loc Storage_OpenInExplorer}"
                       Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                       CommandParameter="{Binding}" />
         </ContextMenu>
@@ -19,8 +20,8 @@
                   Visibility="{Binding ShowStartScreen, Converter={StaticResource BoolToVisibility}}">
         <StackPanel Margin="14,8">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                <TextBlock Text="Storage" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="What do you want to analyze?" Foreground="{DynamicResource MutedTextBrush}"
+                <TextBlock Text="{loc:Loc Storage_Title}" Style="{StaticResource PageTitle}" />
+                <TextBlock Text="{loc:Loc Storage_StartPrompt}" Foreground="{DynamicResource MutedTextBrush}"
                            VerticalAlignment="Bottom" Margin="12,0,0,4" />
             </StackPanel>
             <ItemsControl ItemsSource="{Binding Drives}">
@@ -36,7 +37,7 @@
                                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource Glyph}" Text="{StaticResource GlyphStorage}"
                                            FontSize="32" Foreground="{DynamicResource AccentBrush}" Margin="0,0,16,0" />
                                 <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Tag="{StaticResource GlyphSearch}"
-                                        Content="Analyze" VerticalAlignment="Center"
+                                        Content="{loc:Loc Storage_Analyze}" VerticalAlignment="Center"
                                         Command="{Binding DataContext.AnalyzeDriveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}" AutomationProperties.Name="{Binding Title, StringFormat=Analyze {0}}" />
                                 <StackPanel Margin="0,0,16,0">
@@ -68,7 +69,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphFolder}" Content="Choose a folder…"
+            <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphFolder}" Content="{loc:Loc Storage_ChooseFolderEllipsis}"
                     Command="{Binding ChooseFolderCommand}" HorizontalAlignment="Left" Margin="6,10,0,0" />
         </StackPanel>
     </ScrollViewer>
@@ -85,23 +86,23 @@
         <!-- Top bar -->
         <DockPanel Grid.Row="0" Margin="6">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button Style="{StaticResource PrimaryButton}" Tag="{StaticResource GlyphSearch}" Content="Analyze"
+                <Button Style="{StaticResource PrimaryButton}" Tag="{StaticResource GlyphSearch}" Content="{loc:Loc Storage_Analyze}"
                         Command="{Binding ScanCommand}" />
-                <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphCancel}" Content="Cancel"
+                <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphCancel}" Content="{loc:Loc Storage_Cancel}"
                         Command="{Binding CancelCommand}" />
-                <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphExport}" Content="Export CSV"
+                <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphExport}" Content="{loc:Loc Storage_ExportCsv}"
                         Command="{Binding ExportCsvCommand}" />
-                <RadioButton Content="Logical" GroupName="size"
+                <RadioButton Content="{loc:Loc Storage_Logical}" GroupName="size"
                              IsChecked="{Binding IsLogical, Mode=TwoWay}"
-                             ToolTip="Logical size: the bytes the files contain (what Explorer shows as Size)."
+                             ToolTip="{loc:Loc Storage_LogicalTooltip}"
                              VerticalAlignment="Center" Margin="12,0,8,0" />
-                <RadioButton Content="Allocated" GroupName="size"
+                <RadioButton Content="{loc:Loc Storage_Allocated}" GroupName="size"
                              IsChecked="{Binding IsAllocated, Mode=TwoWay}"
-                             ToolTip="Allocated size: the disk space actually used (clusters, compression, sparse files). What Explorer shows as Size on disk."
+                             ToolTip="{loc:Loc Storage_AllocatedTooltip}"
                              VerticalAlignment="Center" Margin="8,0" />
             </StackPanel>
             <Button DockPanel.Dock="Left" Style="{StaticResource IconButton}" Tag="{StaticResource GlyphFolder}"
-                    ToolTip="Choose a folder" Command="{Binding ChooseFolderCommand}" Margin="0,0,6,0" Padding="8,5" />
+                    ToolTip="{loc:Loc Storage_ChooseFolder}" Command="{Binding ChooseFolderCommand}" Margin="0,0,6,0" Padding="8,5" />
             <TextBox Text="{Binding RootPath, UpdateSourceTrigger=PropertyChanged}"
                      VerticalContentAlignment="Center" />
         </DockPanel>
@@ -146,17 +147,17 @@
                                     <!-- Fixed width: a star column sizes to content inside a TreeViewItem and misaligns the numbers. -->
                                     <ColumnDefinition Width="320" />
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Pct" />
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Size" />
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Files" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="{loc:Loc Storage_Col_Size}" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="{loc:Loc Storage_Col_Files}" />
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Status" />
                                 </Grid.ColumnDefinitions>
 
                                 <Grid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="Copy path"
+                                        <MenuItem Header="{loc:Loc Storage_CopyPath}"
                                                   Command="{Binding PlacementTarget.Tag.CopyPathCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                   CommandParameter="{Binding}" />
-                                        <MenuItem Header="Open in Explorer"
+                                        <MenuItem Header="{loc:Loc Storage_OpenInExplorer}"
                                                   Command="{Binding PlacementTarget.Tag.OpenInExplorerCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                   CommandParameter="{Binding}" />
                                     </ContextMenu>
@@ -190,7 +191,7 @@
             <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
 
             <TabControl Grid.Column="2">
-                <TabItem Header="Largest files">
+                <TabItem Header="{loc:Loc Storage_TabLargestFiles}">
                     <ListView ItemsSource="{Binding LargestFiles}"
                               VirtualizingPanel.IsVirtualizing="True"
                               VirtualizingPanel.VirtualizationMode="Recycling">
@@ -202,9 +203,9 @@
                         </ListView.ItemContainerStyle>
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Size" Width="90"
+                                <GridViewColumn Header="{loc:Loc Storage_Col_Size}" Width="90"
                                                 DisplayMemberBinding="{Binding SizeText}" />
-                                <GridViewColumn Header="File" Width="500">
+                                <GridViewColumn Header="{loc:Loc Storage_Col_File}" Width="500">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" ToolTip="{Binding Path}">
@@ -220,7 +221,7 @@
                     </ListView>
                 </TabItem>
 
-                <TabItem Header="Search" DataContext="{Binding Search}">
+                <TabItem Header="{loc:Loc Storage_TabSearch}" DataContext="{Binding Search}">
                     <DockPanel>
                         <Grid DockPanel.Dock="Top">
                             <Grid.ColumnDefinitions>
@@ -237,44 +238,44 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Name contains"
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc Storage_NameContains}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <TextBox Grid.Row="0" Grid.Column="1"
                                      Text="{Binding NameText, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="4,2" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Extensions"
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:Loc Storage_TabExtensions}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <TextBox Grid.Row="1" Grid.Column="1"
                                      Text="{Binding ExtensionsText, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="jpg, png; empty = any"
+                                     ToolTip="{loc:Loc Storage_ExtensionsHint}"
                                      Margin="4,2" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Min size (MB)"
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:Loc Storage_MinSize}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <TextBox Grid.Row="2" Grid.Column="1"
                                      Text="{Binding MinSizeMbText, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="4,2" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Max size (MB)"
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Loc Storage_MaxSize}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <TextBox Grid.Row="3" Grid.Column="1"
                                      Text="{Binding MaxSizeMbText, UpdateSourceTrigger=PropertyChanged}"
                                      Margin="4,2" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Modified from"
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc Storage_ModifiedFrom}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <DatePicker Grid.Row="4" Grid.Column="1"
                                         SelectedDate="{Binding ModifiedFrom}"
                                         Margin="4,2" />
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified to"
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="{loc:Loc Storage_ModifiedTo}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <DatePicker Grid.Row="5" Grid.Column="1"
                                         SelectedDate="{Binding ModifiedTo}"
                                         Margin="4,2" />
 
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Type"
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="{loc:Loc Storage_Type}"
                                        VerticalAlignment="Center" Margin="4,2" />
                             <ComboBox Grid.Row="6" Grid.Column="1"
                                       ItemsSource="{Binding KindOptions}"
@@ -308,9 +309,9 @@
                             </ListView.ItemContainerStyle>
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="Size" Width="90"
+                                    <GridViewColumn Header="{loc:Loc Storage_Col_Size}" Width="90"
                                                     DisplayMemberBinding="{Binding SizeText}" />
-                                    <GridViewColumn Header="Path" Width="500"
+                                    <GridViewColumn Header="{loc:Loc Storage_Col_Path}" Width="500"
                                                     DisplayMemberBinding="{Binding Path}" />
                                 </GridView>
                             </ListView.View>
@@ -318,19 +319,19 @@
                     </DockPanel>
                 </TabItem>
 
-                <TabItem Header="Extensions">
+                <TabItem Header="{loc:Loc Storage_TabExtensions}">
                     <ListView ItemsSource="{Binding Extensions}"
                               VirtualizingPanel.IsVirtualizing="True"
                               VirtualizingPanel.VirtualizationMode="Recycling">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Header="Extension" Width="120"
+                                <GridViewColumn Header="{loc:Loc Storage_Col_Extension}" Width="120"
                                                 DisplayMemberBinding="{Binding DisplayName}" />
-                                <GridViewColumn Header="Files" Width="80"
+                                <GridViewColumn Header="{loc:Loc Storage_Col_Files}" Width="80"
                                                 DisplayMemberBinding="{Binding FileCount, StringFormat=N0}" />
-                                <GridViewColumn Header="Size" Width="90"
+                                <GridViewColumn Header="{loc:Loc Storage_Col_Size}" Width="90"
                                                 DisplayMemberBinding="{Binding SizeText}" />
-                                <GridViewColumn Header="Share" Width="70"
+                                <GridViewColumn Header="{loc:Loc Storage_Col_Share}" Width="70"
                                                 DisplayMemberBinding="{Binding PercentText}" />
                             </GridView>
                         </ListView.View>
@@ -340,7 +341,7 @@
         </Grid>
 
         <!-- Summary and errors -->
-        <Expander Grid.Row="4" Header="Summary and errors">
+        <Expander Grid.Row="4" Header="{loc:Loc Storage_SummaryAndErrors}">
             <ScrollViewer MaxHeight="200">
                 <TextBlock Text="{Binding Summary}" FontFamily="Consolas" />
             </ScrollViewer>

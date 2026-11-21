@@ -5,6 +5,7 @@ using static System.FormattableString;
 using System.Windows;
 using System.IO;
 using System.Text;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 using DiskScope.Core;
 using DiskScope.Reports;
@@ -71,7 +72,7 @@ public sealed class ProcessRowViewModel : ObservableObject
 
     public string Started => _snapshot.StartTimeUtc?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? MetricFormatter.Unknown;
 
-    public string Path => _snapshot.ImagePath ?? (_snapshot.IsAccessible ? MetricFormatter.Unknown : "access denied");
+    public string Path => _snapshot.ImagePath ?? (_snapshot.IsAccessible ? MetricFormatter.Unknown : Loc.Get("Processes_AccessDenied"));
 
     public string Growth { get => _growth; private set => SetProperty(ref _growth, value); }
 
@@ -118,7 +119,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     private Task? _loop;
     private string _filterText = string.Empty;
     private bool _showTree;
-    private string _summary = "Not refreshed yet";
+    private string _summary = Loc.Get("Processes_NotRefreshed");
     private ProcessRowViewModel? _selected;
     private Snapshot? _last;
     private Dictionary<int, string> _names = new();
@@ -242,7 +243,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         }
         catch (Exception ex)
         {
-            error = $"Process enumeration failed ({ex.GetType().Name}): {ex.Message}";
+            error = Loc.Format("Processes_EnumerationFailed", ex.GetType().Name, ex.Message);
             return null;
         }
     }
@@ -258,11 +259,11 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         {
             using var writer = new StreamWriter(path, false, new UTF8Encoding(true));
             int n = WriteCsv(writer, Rows);
-            Summary = Invariant($"Exported {n} processes to ") + path;
+            Summary = Loc.Format("Processes_Exported", n, path);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            Summary = "Export failed: " + ex.Message;
+            Summary = Loc.Format("Common_ExportFailed", ex.Message);
         }
     }
 
@@ -291,7 +292,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         _growth.Forget(now - _growth.Window);
         var growth = _growth.Evaluate().ToDictionary(
             g => g.Key,
-            g => Invariant($"+{MetricFormatter.FormatBytes(g.GrowthBytes)} in {(g.ToUtc - g.FromUtc).TotalMinutes:0} min: sustained growth, to verify (not a proven leak)"));
+            g => Loc.Format("Processes_Growth", MetricFormatter.FormatBytes(g.GrowthBytes), ((g.ToUtc - g.FromUtc).TotalMinutes).ToString("0", CultureInfo.InvariantCulture)));
         return new Snapshot(read, cpu, ProcessTree.Build(read.Processes), growth);
     }
 
@@ -367,9 +368,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
 
         SuspicionCount = s.Growth.Count;
         RaisePropertyChanged(nameof(SuspicionCount));
-        Summary = Invariant($"{s.Read.Processes.Count} processes, {s.Read.Inaccessible} not openable (their memory, CPU and I/O read n/a), ") +
-            Invariant($"read in {s.Read.Duration.TotalMilliseconds:F0} ms, {s.Tree.UnverifiedLinks.Count} parent links unverified, {s.Growth.Count} growth suspicions. ") +
-            "CPU % is of the whole machine; private bytes = commit charge.";
+        Summary = Loc.Format("Processes_Summary", s.Read.Processes.Count, s.Read.Inaccessible, Invariant($"{s.Read.Duration.TotalMilliseconds:F0}"), s.Tree.UnverifiedLinks.Count, s.Growth.Count);
     }
 
     internal sealed record Snapshot(

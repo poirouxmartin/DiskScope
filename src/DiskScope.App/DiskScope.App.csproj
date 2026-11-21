@@ -7,6 +7,9 @@
     <RootNamespace>DiskScope.App</RootNamespace>
     <Version>0.1.0</Version>
     <ApplicationIcon>Assets\DiskScope.ico</ApplicationIcon>
+    <!-- UI strings: Resources/Strings.resx is English; Strings.fr.resx builds the fr satellite assembly. -->
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en;fr</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
