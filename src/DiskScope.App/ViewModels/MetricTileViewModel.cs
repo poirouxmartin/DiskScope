@@ -13,10 +13,12 @@ public sealed class MetricTileViewModel : ObservableObject
     private double _maximum = double.NaN;
     private string _detail = string.Empty;
     private double? _gaugePercent;
+    private string _title;
 
     public MetricTileViewModel(MetricDescriptor descriptor, TimeSpan window, int? navigateTo = null)
     {
         Descriptor = descriptor;
+        _title = descriptor.DisplayName;
         Window = window;
         NavigateTo = navigateTo;
         ToolTip = descriptor.Definition is null
@@ -28,7 +30,8 @@ public sealed class MetricTileViewModel : ObservableObject
 
     public string Id => Descriptor.Id;
 
-    public string Title => Descriptor.DisplayName;
+    /// <summary>Card title; the GPU view shortens it because the adapter name is already in the section title.</summary>
+    public string Title { get => _title; set => SetProperty(ref _title, value); }
 
     public string ToolTip { get; }
 
@@ -110,13 +113,13 @@ public sealed class CoreViewModel(int index) : ObservableObject
 }
 
 /// <summary>Label, value and source of one metric, for detail tables.</summary>
-public sealed class MetricRowViewModel(MetricDescriptor descriptor) : ObservableObject
+public sealed class MetricRowViewModel(MetricDescriptor descriptor, string? name = null) : ObservableObject
 {
     private string _value = MetricFormatter.Unknown;
 
     public MetricDescriptor Descriptor { get; } = descriptor;
 
-    public string Name => Descriptor.DisplayName;
+    public string Name { get; } = name ?? descriptor.DisplayName;
 
     public string Source => Descriptor.Source;
 

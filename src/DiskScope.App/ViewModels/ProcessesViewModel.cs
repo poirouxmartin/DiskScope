@@ -20,6 +20,7 @@ public sealed class ProcessRowViewModel : ObservableObject
     private double? _cpu;
     private ProcessSnapshot _snapshot;
     private string _growth = string.Empty;
+    private double? _memoryShare;
 
     public ProcessRowViewModel(ProcessSnapshot snapshot) => _snapshot = snapshot;
 
@@ -74,13 +75,19 @@ public sealed class ProcessRowViewModel : ObservableObject
 
     public string Growth { get => _growth; private set => SetProperty(ref _growth, value); }
 
-    public void Update(ProcessSnapshot snapshot, int depth, double? cpu, string growth)
+    /// <summary>Private bytes as a percent of the largest process in the list (0-100); null when unknown.</summary>
+    public double? MemoryShare { get => _memoryShare; private set => SetProperty(ref _memoryShare, value); }
+
+    public void Update(ProcessSnapshot snapshot, int depth, double? cpu, string growth, long maxPrivateBytes = 0)
     {
         bool changed = !ReferenceEquals(_snapshot, snapshot);
         _snapshot = snapshot;
         Depth = depth;
         Cpu = cpu;
         Growth = growth;
+        MemoryShare = snapshot.PrivateBytes is long bytes && maxPrivateBytes > 0
+            ? Math.Clamp(100.0 * bytes / maxPrivateBytes, 0, 100)
+            : null;
         if (changed)
         {
             foreach (string name in new[] { nameof(PrivateBytes), nameof(PrivateBytesText), nameof(WorkingSet), nameof(WorkingSetText), nameof(PrivateWorkingSet), nameof(PrivateWorkingSetText), nameof(Threads), nameof(Handles), nameof(HandlesText), nameof(IoRead), nameof(IoReadText), nameof(IoWrite), nameof(IoWriteText), nameof(Path) })
@@ -110,6 +117,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     private CancellationTokenSource? _cts;
     private Task? _loop;
     private string _filterText = string.Empty;
+    private bool _showTree;
     private string _summary = "Not refreshed yet";
     private ProcessRowViewModel? _selected;
     private Snapshot? _last;
@@ -139,6 +147,19 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
     }
 
     public string Summary { get => _summary; private set => SetProperty(ref _summary, value); }
+
+    /// <summary>False (default): flat list by private bytes, largest first. True: parent/child tree when no filter is set.</summary>
+    public bool ShowTree
+    {
+        get => _showTree;
+        set
+        {
+            if (SetProperty(ref _showTree, value) && _last is not null)
+            {
+                Apply(_last);
+            }
+        }
+    }
 
     public ProcessRowViewModel? Selected { get => _selected; set => SetProperty(ref _selected, value); }
 
@@ -280,7 +301,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         _last = s;
         string filter = _filterText.Trim();
         var ordered = new List<(ProcessSnapshot P, int Depth)>(s.Read.Processes.Count);
-        if (filter.Length == 0)
+        if (filter.Length == 0 && _showTree)
         {
             var stack = new Stack<(ProcessSnapshot, int)>();
             foreach (ProcessSnapshot root in s.Tree.Roots.OrderByDescending(r => r.Name, StringComparer.OrdinalIgnoreCase))
@@ -300,13 +321,19 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
         }
         else
         {
+            // Flat list, largest private bytes first; unknown memory goes last, never counted as 0.
             ordered.AddRange(s.Read.Processes
-                .Where(p => p.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                .Where(p => filter.Length == 0
+                    || p.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
                     || p.ProcessId.ToString(CultureInfo.InvariantCulture) == filter
                     || (p.ImagePath?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false))
-                .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(p => p.PrivateBytes is null)
+                .ThenByDescending(p => p.PrivateBytes ?? 0)
+                .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(p => (p, 0)));
         }
+
+        long maxPrivate = ordered.Count == 0 ? 0 : ordered.Max(o => o.P.PrivateBytes ?? 0);
 
         var targetKeys = new HashSet<ProcessKey>(ordered.Select(o => o.P.Key));
         for (int i = Rows.Count - 1; i >= 0; i--)
@@ -335,7 +362,7 @@ public sealed class ProcessesViewModel : ObservableObject, IAsyncDisposable
                 }
             }
 
-            row.Update(p, depth, s.Cpu.TryGetValue(p.Key, out double? c) ? c : null, s.Growth.TryGetValue(p.Key, out string? g) ? g : string.Empty);
+            row.Update(p, depth, s.Cpu.TryGetValue(p.Key, out double? c) ? c : null, s.Growth.TryGetValue(p.Key, out string? g) ? g : string.Empty, maxPrivate);
         }
 
         SuspicionCount = s.Growth.Count;

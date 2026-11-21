@@ -2,14 +2,17 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <DockPanel Margin="6">
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
             <TextBlock Text="Filter (name, PID or path):" VerticalAlignment="Center" Margin="0,0,6,0" />
             <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" Width="260" VerticalContentAlignment="Center" />
-            <Button Content="Export CSV" Command="{Binding ExportCommand}" Padding="10,2" Margin="8,0,0,0" />
+            <CheckBox Content="Show as tree" IsChecked="{Binding ShowTree}" VerticalAlignment="Center" Margin="14,0,0,0"
+                      ToolTip="Off: largest private bytes first. On: parents and their children, when no filter is set." />
+            <Button Style="{StaticResource IconButton}" Tag="{StaticResource GlyphExport}" Content="Export CSV"
+                    Command="{Binding ExportCommand}" Margin="12,0,0,0" />
             <TextBlock Text="Read-only: no process is stopped or modified." Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
         </DockPanel>
         <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,4,0,0" />
-        <!-- Tree order (indented) until a column header is clicked; then a flat sort by that column. -->
+        <!-- Largest memory first (or tree order) until a column header is clicked; then a flat sort by that column. -->
         <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True"
                   HeadersVisibility="Column" EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling">
@@ -22,8 +25,33 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="60" />
+                <!-- Private bytes with a bar relative to the largest process in the list (none when unknown). -->
+                <DataGridTemplateColumn Header="Private bytes" SortMemberPath="PrivateBytes" Width="170">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="74" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding PrivateBytesText}" FontFamily="{DynamicResource NumberFont}" VerticalAlignment="Center" />
+                                <ProgressBar Grid.Column="1" Height="6" Maximum="100" Margin="4,0,0,0" VerticalAlignment="Center"
+                                             Value="{Binding MemoryShare, Mode=OneWay, TargetNullValue=0}">
+                                    <ProgressBar.Style>
+                                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MemoryShare}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Hidden" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ProgressBar.Style>
+                                </ProgressBar>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="CPU (% machine)" Binding="{Binding CpuText}" SortMemberPath="Cpu" Width="110" />
-                <DataGridTextColumn Header="Private bytes" Binding="{Binding PrivateBytesText}" SortMemberPath="PrivateBytes" Width="100" />
                 <DataGridTextColumn Header="Working set" Binding="{Binding WorkingSetText}" SortMemberPath="WorkingSet" Width="100" />
                 <DataGridTextColumn Header="Private WS" Binding="{Binding PrivateWorkingSetText}" SortMemberPath="PrivateWorkingSet" Width="90" />
                 <DataGridTextColumn Header="Threads" Binding="{Binding Threads}" Width="65" />

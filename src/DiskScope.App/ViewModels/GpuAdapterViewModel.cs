@@ -15,10 +15,32 @@ public sealed class GpuAdapterViewModel
         UsageTile = tile(GpuCollector.UtilizationId(index));
         DedicatedTile = tile(GpuCollector.DedicatedUsedId(index));
         SharedTile = tile(GpuCollector.SharedUsedId(index));
+        // The section title already names the adapter: tiles and rows drop the "GPU n (name)" prefix.
+        foreach (MetricTileViewModel? t in new[] { UsageTile, DedicatedTile, SharedTile })
+        {
+            if (t is not null)
+            {
+                t.Title = ShortName(t.Title);
+            }
+        }
+
         EngineRows = new ObservableCollection<MetricRowViewModel>(
             GpuCollector.EngineGroups
-                .Select(g => descriptors.TryGetValue(GpuCollector.EngineId(index, g), out MetricDescriptor? d) ? new MetricRowViewModel(d) : null)
+                .Select(g => descriptors.TryGetValue(GpuCollector.EngineId(index, g), out MetricDescriptor? d) ? new MetricRowViewModel(d, ShortName(d.DisplayName)) : null)
                 .OfType<MetricRowViewModel>());
+    }
+
+    /// <summary>Removes the leading adapter label ("GPU 0 (NVIDIA ...) ") and capitalizes the rest; other names are unchanged.</summary>
+    public string ShortName(string displayName)
+    {
+        string prefix = string.Create(CultureInfo.InvariantCulture, $"GPU {Index} ({Info.Name}) ");
+        if (!displayName.StartsWith(prefix, StringComparison.Ordinal) || displayName.Length == prefix.Length)
+        {
+            return displayName;
+        }
+
+        string rest = displayName[prefix.Length..];
+        return char.ToUpperInvariant(rest[0]) + rest[1..];
     }
 
     public int Index { get; }

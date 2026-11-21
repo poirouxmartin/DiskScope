@@ -128,7 +128,7 @@ public sealed class MonitoringViewModelTests
     [Fact]
     public void Processes_TreeOrderWithDepth_AndInPlaceUpdateKeepsRows()
     {
-        var vm = new ProcessesViewModel();
+        var vm = new ProcessesViewModel { ShowTree = true };
         vm.Apply(Snap(Proc(1, 0, "root.exe", 10), Proc(2, 1, "child.exe", 20), Proc(3, 0, "another.exe", 5)));
 
         Assert.Equal(new[] { "another.exe", "root.exe", "child.exe" }, vm.Rows.Select(r => r.Name).ToArray());

@@ -24,7 +24,7 @@
                             <DataGrid ItemsSource="{Binding EngineRows}" AutoGenerateColumns="False" IsReadOnly="True"
                                       HeadersVisibility="Column" Margin="6">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Engine" Binding="{Binding Name}" Width="320" />
+                                    <DataGridTextColumn Header="Engine" Binding="{Binding Name}" Width="180" />
                                     <DataGridTextColumn Header="Usage" Binding="{Binding Value}" Width="90" />
                                     <DataGridTextColumn Header="Definition" Binding="{Binding Definition}" Width="*" />
                                 </DataGrid.Columns>
