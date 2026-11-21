@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:DiskScope.App.Controls">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="6">
             <TextBlock Style="{StaticResource SectionTitle}" Text="History" />
             <StackPanel Orientation="Horizontal" Margin="6,2">
@@ -20,19 +20,21 @@
                     </Button.ContextMenu>
                 </Button>
             </StackPanel>
-            <TextBlock Text="{Binding ExportStatus}" Margin="8,2" Foreground="#4A5560"
+            <TextBlock Text="{Binding ExportStatus}" Margin="8,2" Foreground="{DynamicResource MutedTextBrush}"
                        ToolTip="Reports cover the selected range and never include machine names, user names or command lines." />
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <controls:SparklineControl Height="160" Points="{Binding HistoryPoints}" End="{Binding Now}" Window="{Binding HistoryRange}" />
                     <TextBlock Text="{Binding HistorySummary}" Margin="0,4,0,0" TextWrapping="Wrap" />
-                    <TextBlock Foreground="#6B7580" FontSize="11" TextWrapping="Wrap"
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" TextWrapping="Wrap"
                                Text="Kept in memory since DiskScope started: 1 s points for 10 min, 5 s for 1 h, 1 min for 24 h. Gaps are periods without data." />
                 </StackPanel>
             </Border>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="Alerts" />
-            <DataGrid ItemsSource="{Binding Alerts}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
+            <ContentControl Style="{StaticResource EmptyState}" Tag="{Binding HasItems, ElementName=AlertsGrid}"
+                            Content="No alerts. Every rule below is watching; an alert appears here as soon as one fires." />
+            <DataGrid x:Name="AlertsGrid" Style="{StaticResource HideWhenEmpty}" ItemsSource="{Binding Alerts}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Started" Binding="{Binding Started}" Width="140" />
                     <DataGridTextColumn Header="Ended" Binding="{Binding Ended}" Width="70" />
@@ -51,7 +53,9 @@
             </DataGrid>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="Hypotheses (correlations in time, not causes)" />
-            <DataGrid ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
+            <ContentControl Style="{StaticResource EmptyState}" Tag="{Binding HasItems, ElementName=FindingsGrid}"
+                            Content="No hypothesis. They appear when two measures move together in time; each one is a lead to check, not a cause." />
+            <DataGrid x:Name="FindingsGrid" Style="{StaticResource HideWhenEmpty}" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="6" MaxHeight="300">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Period" Binding="{Binding Period}" Width="130" />
                     <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="170" />
@@ -74,11 +78,11 @@
                                     <TextBox Text="{Binding ThresholdText, UpdateSourceTrigger=PropertyChanged}" Width="80" VerticalContentAlignment="Center" />
                                     <TextBlock Text="{Binding ThresholdUnit}" Margin="4,0" VerticalAlignment="Center" />
                                     <Button Content="Apply" Command="{Binding ApplyCommand}" Margin="8,0" Padding="8,0" />
-                                    <TextBlock Text="{Binding Error}" Foreground="#B00020" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource CriticalBrush}" VerticalAlignment="Center" />
                                 </StackPanel>
-                                <TextBlock Text="{Binding Condition}" Foreground="#4A5560" Margin="0,4,0,0" />
+                                <TextBlock Text="{Binding Condition}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,4,0,0" />
                                 <TextBlock Text="{Binding Rationale}" TextWrapping="Wrap" />
-                                <TextBlock Foreground="#6B7580" TextWrapping="Wrap">
+                                <TextBlock Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap">
                                     <Run Text="Known false positives: " /><Run Text="{Binding KnownFalsePositives, Mode=OneWay}" />
                                 </TextBlock>
                             </StackPanel>

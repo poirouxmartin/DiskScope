@@ -44,23 +44,23 @@
                                         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
                                         <TextBlock Text="{Binding UsedText}" Margin="10,0,0,0" Foreground="{DynamicResource MutedTextBrush}" />
                                     </StackPanel>
-                                    <ProgressBar Height="8" Margin="0,8,0,6" Maximum="100" Value="{Binding GaugeValue, Mode=OneWay}"
-                                                 Background="{DynamicResource TrackBrush}" BorderThickness="0"
-                                                 Visibility="{Binding IsSizeKnown, Converter={StaticResource BoolToVisibility}}">
-                                        <ProgressBar.Style>
-                                            <Style TargetType="ProgressBar">
-                                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                    <controls:SegmentGaugeControl Height="10" Margin="0,8,0,6" Percent="{Binding UsedPercent}"
+                                                                  Track="{DynamicResource TrackBrush}"
+                                                                  Visibility="{Binding IsSizeKnown, Converter={StaticResource BoolToVisibility}}">
+                                        <controls:SegmentGaugeControl.Style>
+                                            <Style TargetType="controls:SegmentGaugeControl">
+                                                <Setter Property="Fill" Value="{DynamicResource AccentBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsWarning}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                                        <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding IsCritical}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource CriticalBrush}" />
+                                                        <Setter Property="Fill" Value="{DynamicResource CriticalBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </ProgressBar.Style>
-                                    </ProgressBar>
+                                        </controls:SegmentGaugeControl.Style>
+                                    </controls:SegmentGaugeControl>
                                     <TextBlock Text="{Binding FreeText}" Foreground="{DynamicResource MutedTextBrush}" />
                                 </StackPanel>
                             </DockPanel>
@@ -179,7 +179,7 @@
 
                 <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" ResizeDirection="Rows" />
 
-                <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1">
+                <Border Grid.Row="2" BorderBrush="{DynamicResource LineBrush}" BorderThickness="1">
                     <controls:TreemapControl Index="{Binding Index}"
                                              RootId="{Binding TreemapRootId, Mode=TwoWay}"
                                              SizeKind="{Binding SizeKind}"

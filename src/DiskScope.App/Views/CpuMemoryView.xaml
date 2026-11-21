@@ -4,7 +4,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     </UserControl.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="6">
             <TextBlock Style="{StaticResource SectionTitle}" Text="Last 10 minutes" />
             <UniformGrid Columns="4">
@@ -69,7 +69,7 @@
                     <DataGridTextColumn Header="Availability" Binding="{Binding Availability.Reason}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
-            <TextBlock Margin="8,2" Foreground="#6B7580" TextWrapping="Wrap"
+            <TextBlock Margin="8,2" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                        Text="CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured." />
         </StackPanel>
     </ScrollViewer>

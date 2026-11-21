@@ -6,9 +6,9 @@
             <TextBlock Text="Filter (name, PID or path):" VerticalAlignment="Center" Margin="0,0,6,0" />
             <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" Width="260" VerticalContentAlignment="Center" />
             <Button Content="Export CSV" Command="{Binding ExportCommand}" Padding="10,2" Margin="8,0,0,0" />
-            <TextBlock Text="Read-only: no process is stopped or modified." Foreground="#6B7580" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <TextBlock Text="Read-only: no process is stopped or modified." Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
         </DockPanel>
-        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="#4A5560" Margin="0,4,0,0" />
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,4,0,0" />
         <!-- Tree order (indented) until a column header is clicked; then a flat sort by that column. -->
         <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" AutoGenerateColumns="False" IsReadOnly="True"
                   HeadersVisibility="Column" EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True"

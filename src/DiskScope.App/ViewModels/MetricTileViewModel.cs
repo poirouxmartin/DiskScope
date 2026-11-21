@@ -12,6 +12,7 @@ public sealed class MetricTileViewModel : ObservableObject
     private DateTime _end;
     private double _maximum = double.NaN;
     private string _detail = string.Empty;
+    private double? _gaugePercent;
 
     public MetricTileViewModel(MetricDescriptor descriptor, TimeSpan window, int? navigateTo = null)
     {
@@ -51,9 +52,24 @@ public sealed class MetricTileViewModel : ObservableObject
 
     public double Maximum { get => _maximum; private set => SetProperty(ref _maximum, value); }
 
+    /// <summary>Gauge fill for percent metrics, 0-100; null when the metric is not a percent or the value is unknown.</summary>
+    public double? GaugePercent { get => _gaugePercent; private set => SetProperty(ref _gaugePercent, value); }
+
+    /// <summary>Gauge state: 0 normal, 1 warning (80 % and above), 2 critical (90 % and above).</summary>
+    public int GaugeLevel => GaugePercent switch
+    {
+        >= DriveCardViewModel.CriticalPercent => 2,
+        >= DriveCardViewModel.WarningPercent => 1,
+        _ => 0,
+    };
+
     public void Update(MetricValue? latest, IReadOnlyList<MetricPoint> points, DateTime end, double maximum)
     {
         IsAvailable = latest is { IsAvailable: true };
+        GaugePercent = Descriptor.Unit == MetricUnit.Percent && latest is { IsAvailable: true, Value: double v } && double.IsFinite(v)
+            ? Math.Clamp(v, 0, 100)
+            : null;
+        RaisePropertyChanged(nameof(GaugeLevel));
         ValueText = MetricFormatter.Format(latest?.Value, Descriptor.Unit);
         Points = points;
         End = end;

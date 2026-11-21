@@ -15,8 +15,8 @@
             <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="12,0,6,0" />
             <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="220" VerticalContentAlignment="Center" />
         </StackPanel>
-        <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" TextWrapping="Wrap" Foreground="#4A5560" Margin="0,0,0,4" />
-        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Errors}" Foreground="#B00020" MaxHeight="80" />
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Status}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" />
+        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Errors}" Foreground="{DynamicResource CriticalBrush}" MaxHeight="80" />
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -50,7 +50,7 @@
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Enabled}" Value="True">
                                                         <Setter Property="Text" Value="Enabled" />
-                                                        <Setter Property="Foreground" Value="White" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource OnStatusBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Enabled}" Value="False">
                                                         <Setter Property="Text" Value="Disabled" />

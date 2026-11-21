@@ -24,11 +24,11 @@ public sealed class TreemapControl : FrameworkElement
     // Gray ramp for directories, one step per depth level; deeper levels reuse the last brush.
     private static readonly SolidColorBrush[] DirectoryBrushes =
     [
-        FrozenRgb(0xF5F5F5),
-        FrozenRgb(0xEBEBEB),
-        FrozenRgb(0xE1E1E1),
-        FrozenRgb(0xD7D7D7),
-        FrozenRgb(0xCDCDCD),
+        FrozenRgb(0x1E252D),
+        FrozenRgb(0x252D36),
+        FrozenRgb(0x2C3540),
+        FrozenRgb(0x333D49),
+        FrozenRgb(0x3A4552),
     ];
 
     // Files take a color from this palette, selected by a hash of the extension.
@@ -48,8 +48,9 @@ public sealed class TreemapControl : FrameworkElement
         FrozenRgb(0xA0CBE8),
     ];
 
-    private static readonly Pen OutlinePen = FrozenPen(FrozenBrush(Color.FromArgb(0x40, 0, 0, 0)), 0.5);
-    private static readonly Pen SelectedPen = FrozenPen(Brushes.Crimson, 2);
+    private static readonly Pen OutlinePen = FrozenPen(FrozenBrush(Color.FromArgb(0x80, 0x0E, 0x13, 0x17)), 0.5);
+    private static readonly Pen SelectedPen = FrozenPen(FrozenRgb(0x57B7E8), 2);
+    private static readonly SolidColorBrush CanvasBrush = FrozenRgb(0x161B21);
 
     public static readonly DependencyProperty IndexProperty =
         DependencyProperty.Register(nameof(Index), typeof(NodeIndex), typeof(TreemapControl),
@@ -111,7 +112,7 @@ public sealed class TreemapControl : FrameworkElement
     protected override void OnRender(DrawingContext drawingContext)
     {
         // Single DrawingContext for the whole treemap (see class remarks).
-        drawingContext.DrawRectangle(Brushes.White, null, new Rect(0, 0, ActualWidth, ActualHeight));
+        drawingContext.DrawRectangle(CanvasBrush, null, new Rect(0, 0, ActualWidth, ActualHeight));
 
         NodeIndex? index = Index;
         if (index is not null)
