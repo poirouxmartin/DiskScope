@@ -55,6 +55,64 @@ public static class StartupInventory
     internal static bool? ParseApproved(object? value) =>
         value is byte[] { Length: >= 1 } bytes && (bytes[0] & ~0x05) == 0x02 ? (bytes[0] & 0x01) == 0 : null;
 
+    /// <summary>
+    /// Command text of a Run value. Windows only runs string values: a binary, DWORD or multi-string value has no
+    /// command line (null), and is never shown as "System.Byte[]".
+    /// </summary>
+    internal static string? CommandText(object? value) => value as string;
+
+    /// <summary>
+    /// Whether the executable exists. A fully qualified path is checked directly. A bare name (rundll32.exe, cmd) is
+    /// looked up in the given directories (system, Windows, PATH), with ".exe" appended when it has no extension;
+    /// not found there is unknown (null), not absent: App Paths and the launcher's current directory may still
+    /// resolve it. A relative path with a directory is unknown too: it is never resolved against our own directory.
+    /// </summary>
+    internal static (bool? Exists, string? Resolved) Locate(string? exe, IEnumerable<string> searchDirs, Func<string, bool> fileExists)
+    {
+        if (string.IsNullOrWhiteSpace(exe))
+        {
+            return (null, null);
+        }
+
+        if (Path.IsPathFullyQualified(exe))
+        {
+            bool exists = fileExists(exe);
+            return (exists, exists ? exe : null);
+        }
+
+        if (exe.IndexOfAny(['\\', '/', ':']) >= 0)
+        {
+            return (null, null);
+        }
+
+        string name = Path.HasExtension(exe) ? exe : exe + ".exe";
+        foreach (string dir in searchDirs)
+        {
+            if (string.IsNullOrWhiteSpace(dir) || dir.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+            {
+                continue;
+            }
+
+            string candidate = Path.Combine(dir, name);
+            if (Path.IsPathFullyQualified(candidate) && fileExists(candidate))
+            {
+                return (true, candidate);
+            }
+        }
+
+        return (null, null);
+    }
+
+    private static IEnumerable<string> SearchDirectories()
+    {
+        yield return Environment.SystemDirectory;
+        yield return Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        foreach (string dir in (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            yield return Environment.ExpandEnvironmentVariables(dir.Trim('"'));
+        }
+    }
+
     private static void ReadKey(RegistryKey hive, string scope, string path, StartupSource source, string? approvedName, List<StartupEntry> items, List<string> errors)
     {
         try
@@ -68,9 +126,13 @@ public static class StartupInventory
             using RegistryKey? approved = approvedName is null ? null : hive.OpenSubKey(Approved + approvedName);
             foreach (string name in key.GetValueNames())
             {
-                string command = key.GetValue(name)?.ToString() ?? string.Empty;
+                // Raw value: %VAR% stays visible in the command, CommandLine expands it for the executable.
+                string? command = CommandText(key.GetValue(name, null, RegistryValueOptions.DoNotExpandEnvironmentNames));
                 bool? enabled = approvedName is null ? true : approved?.GetValue(name) is { } v ? ParseApproved(v) : true;
-                items.Add(Entry(source, scope, name, command, $@"{hive.Name}\{path}", enabled, string.Empty));
+                StartupEntry entry = command is null
+                    ? new StartupEntry(source, scope, name, $"({key.GetValueKind(name)} value, not a command line)", $@"{hive.Name}\{path}", null, null, null, enabled, string.Empty)
+                    : Entry(source, scope, name, command, $@"{hive.Name}\{path}", enabled, string.Empty);
+                items.Add(entry);
             }
         }
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
@@ -125,7 +187,7 @@ public static class StartupInventory
             service.Connect();
             WalkFolder(service.GetFolder(@"\"), items, errors);
         }
-        catch (COMException ex)
+        catch (Exception ex) when (IsTaskReadError(ex))
         {
             errors.Add($"Task Scheduler: {ex.Message}");
         }
@@ -138,9 +200,24 @@ public static class StartupInventory
         }
     }
 
-    private static void WalkFolder(dynamic folder, List<StartupEntry> items, List<string> errors)
+    // COM failures, plus what the dynamic binder raises on a missing member or a value of an unexpected type.
+    private static bool IsTaskReadError(Exception ex) =>
+        ex is COMException or UnauthorizedAccessException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException;
+
+    // Internal: tests pass fake objects as dynamic.
+    internal static void WalkFolder(dynamic folder, List<StartupEntry> items, List<string> errors)
     {
-        string folderPath = folder.Path;
+        string folderPath;
+        try
+        {
+            folderPath = folder.Path;
+        }
+        catch (Exception ex) when (IsTaskReadError(ex))
+        {
+            folderPath = "?";
+        }
+
+        // A failure listing the tasks must not skip the subfolders, and the other way round.
         try
         {
             // TASK_ENUM_HIDDEN = 1: hidden tasks start things too.
@@ -150,24 +227,31 @@ public static class StartupInventory
                 {
                     AddTask(task, items);
                 }
-                catch (COMException ex)
+                catch (Exception ex) when (IsTaskReadError(ex))
                 {
                     errors.Add($"{folderPath}: {ex.Message}");
                 }
             }
+        }
+        catch (Exception ex) when (IsTaskReadError(ex))
+        {
+            errors.Add($"{folderPath}: {ex.Message}");
+        }
 
+        try
+        {
             foreach (dynamic sub in folder.GetFolders(0))
             {
                 WalkFolder(sub, items, errors);
             }
         }
-        catch (Exception ex) when (ex is COMException or UnauthorizedAccessException)
+        catch (Exception ex) when (IsTaskReadError(ex))
         {
             errors.Add($"{folderPath}: {ex.Message}");
         }
     }
 
-    private static void AddTask(dynamic task, List<StartupEntry> items)
+    internal static void AddTask(dynamic task, List<StartupEntry> items)
     {
         dynamic definition = task.Definition;
         var triggers = new List<string>();
@@ -203,7 +287,7 @@ public static class StartupInventory
             if ((int)action.Type == 0)
             {
                 // TASK_ACTION_EXEC
-                command = $"\"{(string)action.Path}\" {(string?)action.Arguments}".Trim();
+                command = CommandLine.Join((string?)action.Path, (string?)action.Arguments);
                 break;
             }
 
@@ -216,15 +300,15 @@ public static class StartupInventory
     private static StartupEntry Entry(StartupSource source, string scope, string name, string command, string location, bool? enabled, string trigger)
     {
         string? exe = source == StartupSource.StartupFolder ? command : CommandLine.ExtractExecutable(command);
-        bool? exists = exe is null ? null : File.Exists(exe);
+        (bool? exists, string? resolved) = Locate(exe, SearchDirectories(), File.Exists);
         string? publisher = null;
-        if (exists == true && !exe!.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+        if (exists == true && !resolved!.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
         {
             try
             {
-                publisher = FileVersionInfo.GetVersionInfo(exe).CompanyName;
+                publisher = FileVersionInfo.GetVersionInfo(resolved).CompanyName;
             }
-            catch (FileNotFoundException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
             }
         }

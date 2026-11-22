@@ -9,6 +9,7 @@ namespace DiskScope.Maintenance;
 /// silently omits services the caller may not query), configuration from HKLM\SYSTEM\CurrentControlSet\Services
 /// (Start, DelayedAutostart, ObjectName, ImagePath, DependOnService). The SCM handle is opened with
 /// SC_MANAGER_ENUMERATE_SERVICE only: nothing can be started, stopped or reconfigured through it.
+/// ImagePath is the raw registry value: environment variables (%SystemRoot%...) are not expanded.
 /// </summary>
 public static unsafe partial class ServiceInventory
 {
@@ -121,7 +122,7 @@ public static unsafe partial class ServiceInventory
                 start = key.GetValue("Start") is int s && Enum.IsDefined(typeof(ServiceStartType), s) ? (ServiceStartType)s : ServiceStartType.Unknown;
                 delayed = key.GetValue("DelayedAutostart") is int d && d != 0;
                 account = key.GetValue("ObjectName") as string;
-                image = key.GetValue("ImagePath", null, RegistryValueOptions.None) as string;
+                image = key.GetValue("ImagePath", null, RegistryValueOptions.DoNotExpandEnvironmentNames) as string;
                 depends = key.GetValue("DependOnService") as string[] ?? Array.Empty<string>();
             }
         }
