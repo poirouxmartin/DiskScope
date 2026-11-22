@@ -1,7 +1,7 @@
 # Code audit 2026-11-16: lots 1 and 2
 
-Branch `dev/poiroux/audit-lots-1-2`, from `main` (9c4ab12). Not pushed.
-Baseline on main: 209 tests (the 217 of the audit include 8 tests of the unpushed `securite-1411` branch).
+Branch `dev/poiroux/audit-lots-1-2`, from `main` (9c4ab12). Merged into `main` and pushed on 2026-11-16 (CI green).
+Baseline on main at the time: 209 tests (the 217 of the audit include 8 tests of the `securite-1411` branch, merged later).
 Result: Release build with no warning (TreatWarningsAsErrors), 230/230 tests pass (+21).
 
 ## Lot 1: safety nets (B1-B7)
@@ -38,4 +38,4 @@ The unknown marker stays `n/a` (`MetricFormatter.Unknown`), already used across 
 - Not tested: treemap tooltip, GPU detail, window close, null `Application.Current` (WPF runtime needed).
 - `SubscriberFailures` is counted but not shown in the UI yet.
 - Lot 2 leaves alone: largest-files rows (files have an exact size), `DiskActivityCollector` all-`Derived` quality, storage index CSV export (not reviewed for this rule).
-- Lots 3 to 7 of the audit (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are untouched. The `securite-1411` commits are not on this branch: merging both will need a rebase (that branch's files are not touched here).
+- Lots 3 to 7 of the audit (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are untouched. The `securite-1411` commits are not on this branch: merging both will need a rebase (that branch's files are not touched here). Update: it was rebased and merged into `main` afterwards.
