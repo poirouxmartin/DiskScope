@@ -1,8 +1,25 @@
 # DiskScope roadmap
 
-Status as of 2026-10-21. Part 1 is complete except the items blocked by the environment (elevation, quiet machine). Part 2 is in progress: steps A to E and H done; F and G partly done, their remaining parts need decisions (dependencies, kernel driver, elevation).
+Status as of 2026-11-22.
 
-Target: open-source publication on the owner's GitHub. LICENSE (MIT), English README, CI (GitHub Actions, windows-latest) and a privacy audit are in place; nothing is pushed and no GitHub repository exists yet (needs the owner's go).
+## Current state
+
+- Public repository on GitHub since 2026-10-22, MIT license. No release yet.
+- CI (GitHub Actions, windows-latest) builds and runs the tests on every push and pull request; green on `main`. Dependabot watches NuGet packages and GitHub Actions; NuGet packages are audited on restore.
+- Part 1 (storage) is complete except the items blocked by the environment (elevated console, quiet machine).
+- Part 2 (monitoring) is in progress: steps A to E and H done; F and G partly done, their remaining parts wait for decisions (see below).
+- Code audit of 2026-11-16: lots 1 (safety nets) and 2 (unknown is never shown as zero) are merged into `main`; details and remaining items in docs/audit-lots-1-2.md. Lots 3 to 7 (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are not on `main` yet.
+- Security hardening merged into `main`: formula-like text neutralized in CSV exports, NuGet audit and Dependabot, SECURITY.md and CONTRIBUTING.md.
+- Tests: 238, all passing on `main` (`dotnet test DiskScope.slnx`).
+- The app has not been re-checked by hand on every tab since audit lots 1 and 2.
+
+### Decisions pending (owner)
+
+1. Hardware sensors: whether to use LibreHardwareMonitor (kernel driver, MPL 2.0) or stay with documented APIs only (Part 2, remaining item 1).
+2. ETW: TraceEvent dependency and administrator rights for kernel providers (Part 2, remaining item 2).
+3. Persistent history: SQLite would be the first external runtime dependency (Part 2, remaining item 3).
+4. Alert engine and data gaps (audit lot 7): scope of the rework.
+5. First release: when, and what it must contain.
 
 ## Part 1: Storage module (done, except blocked items)
 
