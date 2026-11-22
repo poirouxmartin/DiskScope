@@ -82,6 +82,68 @@ public sealed class CsvExporterTests
     }
 
     [Fact]
+    public void OwnErrorDirectory_WithNothingRead_SizesAndCountsAreEmptyNotZero()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\s");
+        int locked = builder.Add(root, "locked", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.AddStatus(locked, NodeStatus.AccessDenied);
+        string[] fields = Lines(Export(builder.Build()))[2].Split(',');
+
+        // Path, Kind, then the six numeric columns: all unknown.
+        for (int i = 2; i <= 7; i++)
+        {
+            Assert.Equal(string.Empty, fields[i]);
+        }
+    }
+
+    [Fact]
+    public void OwnErrorDirectory_WithPartialContent_KeepsLowerBoundValues()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\s");
+        int partial = builder.Add(root, "partial", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.Add(partial, "seen.txt", NodeKind.File, FileAttributes.Normal, 10, 4096, 0, 0);
+        builder.AddStatus(partial, NodeStatus.IoError);
+        string[] fields = Lines(Export(builder.Build()))[2].Split(',');
+
+        Assert.Equal("10", fields[4]);
+        Assert.Equal("4096", fields[5]);
+        Assert.Equal("1", fields[6]);
+    }
+
+    [Fact]
+    public void IncompleteAncestor_WithoutOwnError_KeepsKnownZeros()
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot("C:\\s");
+        int locked = builder.Add(root, "locked", NodeKind.Directory, FileAttributes.Directory, 0, 0, 0, 0);
+        builder.AddStatus(locked, NodeStatus.AccessDenied);
+        string[] rootFields = Lines(Export(builder.Build()))[1].Split(',');
+
+        // The root itself was read: its own sizes are a known 0, its totals a lower bound.
+        Assert.Equal("0", rootFields[2]);
+        Assert.Equal("0", rootFields[4]);
+        Assert.Equal("1", rootFields[7]);
+    }
+
+    [Theory]
+    [InlineData("=cmd|' /C calc'!A0")]
+    [InlineData("+x")]
+    [InlineData("-x")]
+    [InlineData("@x")]
+    public void Path_StartingLikeAFormula_IsNeutralized(string rootName)
+    {
+        var builder = new NodeIndexBuilder();
+        int root = builder.AddRoot(rootName);
+        builder.Add(root, "f.txt", NodeKind.File, FileAttributes.Normal, 1, 0, 0, 0);
+        string[] lines = Lines(Export(builder.Build()));
+
+        Assert.StartsWith("\"'" + rootName.Replace("\"", "\"\"", StringComparison.Ordinal) + "\",Directory,", lines[1]);
+        Assert.StartsWith("\"'" + rootName + "\\f.txt\",File,", lines[2]);
+    }
+
+    [Fact]
     public void Numbers_AreInvariantEvenUnderFrenchCulture()
     {
         var builder = new NodeIndexBuilder();

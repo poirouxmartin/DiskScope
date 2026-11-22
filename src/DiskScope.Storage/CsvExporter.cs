@@ -85,25 +85,31 @@ public static class CsvExporter
 
     private static void WriteColumns(NodeIndex index, TextWriter writer, int id)
     {
+        NodeStatus status = index.GetStatus(id);
+
+        // When nothing of the node itself could be read (own error), a 0 means unknown, not zero: the cell stays
+        // empty, as in the UI (ByteFormatter.FormatNodeSize). A non-zero value is a lower bound, kept as is and
+        // flagged by the Status column.
+        bool zeroIsUnknown = (status & NodeStatusExtensions.OwnErrorMask) != 0;
+
         writer.Write(',');
         WriteField(writer, index.GetKind(id).ToString());
         writer.Write(',');
-        WriteNumber(writer, index.GetLogicalSize(id));
+        WriteNumber(writer, index.GetLogicalSize(id), zeroIsUnknown);
         writer.Write(',');
-        WriteNumber(writer, index.GetAllocatedSize(id));
+        WriteNumber(writer, index.GetAllocatedSize(id), zeroIsUnknown);
         writer.Write(',');
-        WriteNumber(writer, index.GetTotalLogicalSize(id));
+        WriteNumber(writer, index.GetTotalLogicalSize(id), zeroIsUnknown);
         writer.Write(',');
-        WriteNumber(writer, index.GetTotalAllocatedSize(id));
+        WriteNumber(writer, index.GetTotalAllocatedSize(id), zeroIsUnknown);
         writer.Write(',');
-        WriteNumber(writer, index.GetRecursiveFileCount(id));
+        WriteNumber(writer, index.GetRecursiveFileCount(id), zeroIsUnknown);
         writer.Write(',');
-        WriteNumber(writer, index.GetRecursiveDirectoryCount(id));
+        WriteNumber(writer, index.GetRecursiveDirectoryCount(id), zeroIsUnknown);
         writer.Write(',');
         WriteDate(writer, index.GetLastWriteUtc(id));
         writer.Write(',');
 
-        NodeStatus status = index.GetStatus(id);
         if (status != NodeStatus.None)
         {
             WriteField(writer, status.ToString());
@@ -115,10 +121,20 @@ public static class CsvExporter
     /// <summary>Writes dirPath, an optional separator, then name, as one quoted field when needed.</summary>
     private static void WritePath(TextWriter writer, ReadOnlySpan<char> dirPath, bool separator, ReadOnlySpan<char> name)
     {
-        bool quote = NeedsQuoting(dirPath) || NeedsQuoting(name);
+        // The path starts with the root name. Scanners give a full path (drive letter or \\), but the index does
+        // not enforce it, so a path that a spreadsheet would run as a formula gets a leading quote and is quoted,
+        // as in DiskScope.Reports.CsvTable. A path is never a number, so there is no numeric exception here.
+        ReadOnlySpan<char> first = dirPath.Length > 0 ? dirPath : name;
+        bool formula = first.Length > 0 && first[0] is '=' or '+' or '-' or '@' or '\t' or '\r';
+        bool quote = formula || NeedsQuoting(dirPath) || NeedsQuoting(name);
         if (quote)
         {
             writer.Write('"');
+        }
+
+        if (formula)
+        {
+            writer.Write('\'');
         }
 
         WriteEscaped(writer, dirPath);
@@ -149,8 +165,13 @@ public static class CsvExporter
         }
     }
 
-    private static void WriteNumber(TextWriter writer, long value)
+    private static void WriteNumber(TextWriter writer, long value, bool zeroIsUnknown)
     {
+        if (value == 0 && zeroIsUnknown)
+        {
+            return;
+        }
+
         Span<char> buffer = stackalloc char[20];
         value.TryFormat(buffer, out int written, ReadOnlySpan<char>.Empty, CultureInfo.InvariantCulture);
         writer.Write(buffer.Slice(0, written));
