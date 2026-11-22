@@ -36,6 +36,6 @@ The unknown marker stays `n/a` (`MetricFormatter.Unknown`), already used across 
 
 - The app was not launched: the dialog, the hidden core bar and the `≥` columns are checked by tests and build only. A manual pass on each tab is still needed.
 - Not tested: treemap tooltip, GPU detail, window close, null `Application.Current` (WPF runtime needed).
-- `SubscriberFailures` is counted but not shown in the UI yet.
+- `SubscriberFailures` is counted and shown in the monitoring status bar (`MonitoringViewModel.StatusText`).
 - Lot 2 leaves alone: largest-files rows (files have an exact size), `DiskActivityCollector` all-`Derived` quality, storage index CSV export (not reviewed for this rule).
 - Lots 3 to 7 of the audit (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are untouched. The `securite-1411` commits are not on this branch: merging both will need a rebase (that branch's files are not touched here).

@@ -312,7 +312,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
         }
 
         long failures = stats.Sum(s => s.Failures);
-        StatusText = Invariant($"{stats.Count(s => s.Availability.IsAvailable)}/{stats.Count} collectors running, {failures} failed collections, {_scheduler.StoreFailures} history write failures");
+        StatusText = Invariant($"{stats.Count(s => s.Availability.IsAvailable)}/{stats.Count} collectors running, {failures} failed collections, {_scheduler.StoreFailures} history write failures, {_scheduler.SubscriberFailures} subscriber failures");
         SelfCostText = Invariant($"DiskScope: CPU {MetricFormatter.Format(Latest(SelfCollector.Cpu), MetricUnit.Percent)}, working set {MetricFormatter.Format(Latest(SelfCollector.WorkingSet), MetricUnit.Bytes)}, ") +
             Invariant($"collection time {stats.Sum(s => s.LastDuration.TotalMilliseconds):F1} ms per round");
     }

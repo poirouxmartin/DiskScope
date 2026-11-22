@@ -55,6 +55,31 @@ public sealed class MonitoringViewModelTests
     }
 
     [Fact]
+    public void Refresh_ThrowingSubscriber_ShowsSubscriberFailures()
+    {
+        MonitoringViewModel vm = Create(1, out _);
+        vm.Scheduler.BatchPublished += _ => throw new InvalidOperationException("subscriber");
+
+        vm.Scheduler.CollectOnce();
+        vm.Scheduler.CollectOnce();
+        vm.Refresh();
+
+        Assert.Equal(2, vm.Scheduler.SubscriberFailures);
+        Assert.Contains("2 subscriber failures", vm.StatusText);
+    }
+
+    [Fact]
+    public void Refresh_NoSubscriberFailure_ShowsZeroNotHidden()
+    {
+        MonitoringViewModel vm = Create(1, out _);
+
+        vm.Scheduler.CollectOnce();
+        vm.Refresh();
+
+        Assert.Contains("0 subscriber failures", vm.StatusText);
+    }
+
+    [Fact]
     public void Tiles_ForMissingMetrics_AreNull()
     {
         MonitoringViewModel vm = Create(1, out _);
