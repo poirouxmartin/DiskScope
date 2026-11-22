@@ -187,13 +187,13 @@ public sealed class CsvExporterTests
             + "C:\\data,Directory,0,0,16,8192,3,1,,SubtreeIncomplete\r\n"
             + "\"C:\\data\\a,b.txt\",File,10,4096,10,4096,1,0,2024-03-05T07:08:09Z,\r\n"
             + "\"C:\\data\\q\"\"x.txt\",File,1,0,1,0,1,0,,\r\n"
-            + "C:\\data\\locked,Directory,0,0,5,4096,1,0,,\"AccessDenied, SubtreeIncomplete\"\r\n"
+            + "C:\\data\\locked,Directory,,,5,4096,1,,,\"AccessDenied, SubtreeIncomplete\"\r\n"
             + "C:\\data\\locked\\in.txt,File,5,4096,5,4096,1,0,,\r\n",
             csv);
     }
 
     [Fact]
-    public void Path_StartingLikeAFormula_IsNeutralized()
+    public void Path_StartingLikeACmdPayload_IsNeutralized()
     {
         var builder = new NodeIndexBuilder();
         int root = builder.AddRoot("=cmd|' /C calc'!A0");
