@@ -11,20 +11,20 @@ namespace DiskScope.Monitoring.CpuRam;
 /// </summary>
 public sealed class MemoryCollector : IMetricCollector
 {
-    public const string PhysicalTotal = "mem.physical.total";
-    public const string PhysicalAvailable = "mem.physical.available";
-    public const string PhysicalUsed = "mem.physical.used";
-    public const string Load = "mem.physical.load";
-    public const string CommitUsed = "mem.commit.used";
-    public const string CommitLimit = "mem.commit.limit";
-    public const string CommitPeak = "mem.commit.peak";
-    public const string CommitPercent = "mem.commit.percent";
-    public const string Cache = "mem.cache";
-    public const string PoolPaged = "mem.pool.paged";
-    public const string PoolNonPaged = "mem.pool.nonpaged";
-    public const string Processes = "sys.processes";
-    public const string Threads = "sys.threads";
-    public const string Handles = "sys.handles";
+    public const string PhysicalTotal = MetricIds.MemPhysicalTotal;
+    public const string PhysicalAvailable = MetricIds.MemPhysicalAvailable;
+    public const string PhysicalUsed = MetricIds.MemPhysicalUsed;
+    public const string Load = MetricIds.MemPhysicalLoad;
+    public const string CommitUsed = MetricIds.MemCommitUsed;
+    public const string CommitLimit = MetricIds.MemCommitLimit;
+    public const string CommitPeak = MetricIds.MemCommitPeak;
+    public const string CommitPercent = MetricIds.MemCommitPercent;
+    public const string Cache = MetricIds.MemCache;
+    public const string PoolPaged = MetricIds.MemPoolPaged;
+    public const string PoolNonPaged = MetricIds.MemPoolNonPaged;
+    public const string Processes = MetricIds.SysProcesses;
+    public const string Threads = MetricIds.SysThreads;
+    public const string Handles = MetricIds.SysHandles;
 
     private const string StatusSource = "GlobalMemoryStatusEx";
     private const string PerfSource = "GetPerformanceInfo";

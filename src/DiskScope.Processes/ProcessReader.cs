@@ -57,7 +57,7 @@ public static unsafe class ProcessReader
         if (h.IsInvalid)
         {
             // ERROR_INVALID_PARAMETER: the process exited after the snapshot; anything else: access refused.
-            return Marshal.GetLastPInvokeError() == 87
+            return Marshal.GetLastPInvokeError() == NativeMethods.ERROR_INVALID_PARAMETER
                 ? null
                 : new ProcessSnapshot { Key = new ProcessKey(pid, 0), ParentProcessId = parentPid, Name = name, ThreadCount = threads, IsAccessible = false };
         }

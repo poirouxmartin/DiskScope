@@ -136,14 +136,14 @@ public sealed class DiagnosticEngine(IReadOnlyList<IDiagnosticRule> rules)
     public static DiagnosticEngine CreateDefault() => new(
     [
         new CoincidenceRule(
-            "cpu.high.with.disk", DefaultRules.HighCpu, "disk.active", MetricUnit.Percent, 60, Confidence.Low,
+            "cpu.high.with.disk", DefaultRules.HighCpu, MetricIds.DiskActive, MetricUnit.Percent, 60, Confidence.Low,
             "High CPU coincided with heavy disk activity",
             "Both resources were busy at the same time.",
             ["Processes tab: sort by CPU, then by I/O read and I/O write, and look for the same process at the top.",
              "Common shared causes: search indexing, antivirus scans, Windows Update, backups."],
             "builds and installers read many files while compiling or unpacking."),
         new CoincidenceRule(
-            "mem.low.with.disk", DefaultRules.LowAvailableMemory, "disk.active", MetricUnit.Percent, 50, Confidence.Medium,
+            "mem.low.with.disk", DefaultRules.LowAvailableMemory, MetricIds.DiskActive, MetricUnit.Percent, 50, Confidence.Medium,
             "Low memory coincided with heavy disk activity: paging is likely",
             "When available memory is short, Windows writes pages to the page file and reads them back, which keeps the disk busy.",
             ["Compare commit charge with physical memory in the CPU & memory tab.",

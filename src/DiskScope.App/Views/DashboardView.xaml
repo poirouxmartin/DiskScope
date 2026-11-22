@@ -1,24 +1,58 @@
 <UserControl x:Class="DiskScope.App.Views.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization">
     <UserControl.Resources>
         <!-- A clickable card: opens the module given by the tile's NavigateTo. -->
         <Style x:Key="CardButton" TargetType="Button">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D5DAE0" />
-            <Setter Property="Padding" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Padding" Value="12,10" />
             <Setter Property="Margin" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Width" Value="260" />
+            <!-- Whole card is the button; an amber or red left edge flags a gauge over its threshold. -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource CardRadius}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter />
+                            </Border>
+                            <Border x:Name="Edge" Width="3" HorizontalAlignment="Left" CornerRadius="2,0,0,2" Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding GaugeLevel}" Value="1">
+                                <Setter TargetName="Edge" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Edge" Property="Background" Value="{DynamicResource WarningBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding GaugeLevel}" Value="2">
+                                <Setter TargetName="Edge" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Edge" Property="Background" Value="{DynamicResource CriticalBrush}" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Command" Value="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             <Setter Property="CommandParameter" Value="{Binding NavigateTo}" />
             <Setter Property="ContentTemplate" Value="{StaticResource TileTemplate}" />
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F0F2F5">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="6">
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Now" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Now}" />
             <WrapPanel>
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.CpuTile}" Content="{Binding}" />
                 <Button Style="{StaticResource CardButton}" DataContext="{Binding Monitoring.MemoryTile}" Content="{Binding}" />
@@ -38,7 +72,7 @@
                 </ItemsControl>
             </WrapPanel>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Volumes" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Volumes}" />
             <ItemsControl ItemsSource="{Binding Monitoring.VolumeTiles}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -52,30 +86,30 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="Findings" />
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{loc:Loc Dashboard_Findings}" />
             <WrapPanel>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Active alerts (not acknowledged)" Foreground="#4A5560" />
+                        <TextBlock Text="{loc:Loc Dashboard_ActiveAlerts}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Monitoring.ActiveAlertCount}" FontSize="22" FontWeight="SemiBold" />
-                        <Button Content="Open history &amp; alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <Button Content="{loc:Loc Dashboard_OpenAlerts}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="5" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Hypotheses (correlations, to verify)" Foreground="#4A5560" />
+                        <TextBlock Text="{loc:Loc Dashboard_Hypotheses}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Monitoring.FindingCount}" FontSize="22" FontWeight="SemiBold" />
-                        <Button Content="Open history &amp; alerts" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <Button Content="{loc:Loc Dashboard_OpenAlerts}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="5" />
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Width="260">
                     <StackPanel>
-                        <TextBlock Text="Memory growth suspicions" Foreground="#4A5560" />
+                        <TextBlock Text="{loc:Loc Dashboard_MemoryGrowth}" Foreground="{DynamicResource MutedTextBrush}" />
                         <TextBlock Text="{Binding Processes.SuspicionCount}" FontSize="22" FontWeight="SemiBold" />
-                        <TextBlock Text="Sustained growth over 10 min, to verify" Foreground="#6B7580" FontSize="11" />
-                        <Button Content="Open processes" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
+                        <TextBlock Text="{loc:Loc Dashboard_MemoryGrowthHint}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
+                        <Button Content="{loc:Loc Dashboard_OpenProcesses}" Margin="0,6,0,0" HorizontalAlignment="Left" Padding="8,2"
                                 Command="{Binding NavigateCommand}" CommandParameter="3" />
                     </StackPanel>
                 </Border>
@@ -83,8 +117,8 @@
                     <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TileTemplate}" />
                 </Border>
             </WrapPanel>
-            <TextBlock Margin="8,4" Foreground="#6B7580" TextWrapping="Wrap"
-                       Text="Network and hardware sensors are not monitored yet. Values read n/a when the source does not provide them; they are never shown as 0." />
+            <TextBlock Margin="8,4" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                       Text="{loc:Loc Dashboard_Footnote}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

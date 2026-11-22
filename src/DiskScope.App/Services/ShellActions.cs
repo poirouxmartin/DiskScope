@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using DiskScope.App.Localization;
 
 namespace DiskScope.App.Services;
 
@@ -15,8 +16,6 @@ public sealed class ShellActions : IShellActions
         Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = false });
     }
 
-    public string? AskSaveCsvPath(string suggestedFileName) => AskSavePath(suggestedFileName);
-
     public string? AskSavePath(string suggestedFileName)
     {
         string ext = System.IO.Path.GetExtension(suggestedFileName).ToLowerInvariant();
@@ -25,13 +24,19 @@ public sealed class ShellActions : IShellActions
             FileName = suggestedFileName,
             Filter = ext switch
             {
-                ".json" => "JSON files (*.json)|*.json",
-                ".html" => "HTML files (*.html)|*.html",
-                _ => "CSV files (*.csv)|*.csv",
+                ".json" => Loc.Get("Dialog_JsonFilter"),
+                ".html" => Loc.Get("Dialog_HtmlFilter"),
+                _ => Loc.Get("Dialog_CsvFilter"),
             },
             DefaultExt = ext.Length > 0 ? ext : ".csv",
             OverwritePrompt = true,
         };
         return dlg.ShowDialog() == true ? dlg.FileName : null;
+    }
+
+    public string? AskFolder(string initialFolder)
+    {
+        var dlg = new Microsoft.Win32.OpenFolderDialog { InitialDirectory = initialFolder };
+        return dlg.ShowDialog() == true ? dlg.FolderName : null;
     }
 }

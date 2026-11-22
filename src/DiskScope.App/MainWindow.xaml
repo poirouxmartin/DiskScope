@@ -1,35 +1,56 @@
 <Window x:Class="DiskScope.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskScope.App.Localization"
         xmlns:views="clr-namespace:DiskScope.App.Views"
         Title="DiskScope"
-        Width="1200" Height="780">
+        Icon="Assets/DiskScope.ico"
+        Width="1200" Height="780"
+        Background="{DynamicResource WindowBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        FontFamily="{DynamicResource TextFont}">
     <DockPanel>
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem Content="{Binding Monitoring.StatusText}" />
-            <Separator />
-            <StatusBarItem Content="{Binding Monitoring.SelfCostText}" />
+        <StatusBar DockPanel.Dock="Bottom" Background="{DynamicResource ChromeBrush}" Foreground="{DynamicResource MutedTextBrush}">
+            <StatusBarItem ToolTip="{Binding Monitoring.StatusText}">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Margin="2,0,6,0" VerticalAlignment="Center">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{DynamicResource GoodBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Monitoring.IsHealthy}" Value="False">
+                                        <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding Monitoring.HealthText}" />
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right" Content="{Binding Monitoring.SelfCostText}" />
         </StatusBar>
-        <TabControl SelectedIndex="{Binding SelectedTab}">
-            <TabItem Header="Dashboard">
+        <TabControl Style="{StaticResource RailTabControl}" ItemContainerStyle="{StaticResource RailItem}"
+                    SelectedIndex="{Binding SelectedTab}">
+            <TabItem Header="{loc:Loc Nav_Home}" Tag="{StaticResource GlyphHome}">
                 <views:DashboardView />
             </TabItem>
-            <TabItem Header="Storage">
+            <TabItem Header="{loc:Loc Nav_Storage}" Tag="{StaticResource GlyphStorage}">
                 <views:StorageView DataContext="{Binding Storage}" />
             </TabItem>
-            <TabItem Header="CPU &amp; memory">
+            <TabItem Header="{loc:Loc Nav_CpuMemory}" Tag="{StaticResource GlyphCpu}">
                 <views:CpuMemoryView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="Processes">
+            <TabItem Header="{loc:Loc Nav_Processes}" Tag="{StaticResource GlyphProcesses}">
                 <views:ProcessesView DataContext="{Binding Processes}" />
             </TabItem>
-            <TabItem Header="GPU">
+            <TabItem Header="{loc:Loc Nav_Gpu}" Tag="{StaticResource GlyphGpu}">
                 <views:GpuView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="History &amp; alerts">
+            <TabItem Header="{loc:Loc Nav_Alerts}" Tag="{StaticResource GlyphAlerts}">
                 <views:HistoryView DataContext="{Binding Monitoring}" />
             </TabItem>
-            <TabItem Header="Startup &amp; services">
+            <TabItem Header="{loc:Loc Nav_Startup}" Tag="{StaticResource GlyphStartup}">
                 <views:StartupView DataContext="{Binding Startup}" />
             </TabItem>
         </TabControl>

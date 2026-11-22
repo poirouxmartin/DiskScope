@@ -14,7 +14,9 @@ DiskScope.Diagnostics          alert engine, default rules, coincidence hypothes
 DiskScope.Maintenance          read-only start-up and services inventory               -> Core
 DiskScope.Reports              CSV, JSON and HTML report writers                       -> Core
 DiskScope.Storage              storage index (Part 1). No dependency.
-DiskScope.Scanner[.Standard|.Ntfs]  scan engines                                       -> Storage
+DiskScope.Scanner              engine contract and scan orchestrator                  -> Storage
+DiskScope.Scanner.Standard     standard enumeration engine (GetFileInformationByHandleEx) -> Scanner
+DiskScope.Scanner.Ntfs         USN/MFT prototype, used only by Benchmarks              -> Scanner
 DiskScope.Benchmarks           reproducible measurements (scan, synthetic, monitor, usn-probe)
 DiskScope.Tests                unit and integration tests
 ```
@@ -25,7 +27,7 @@ Modules depend on Core only (the GPU collector also uses the PDH wrapper in Moni
 
 ```
 Storage <- Scanner <- Scanner.Standard <- App, Benchmarks
-                    <- Scanner.Ntfs     <- App, Benchmarks
+                    <- Scanner.Ntfs     <- Benchmarks
 Tests references every project.
 ```
 

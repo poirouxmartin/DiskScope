@@ -6,13 +6,21 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>DiskScope.App</RootNamespace>
     <Version>0.1.0</Version>
+    <ApplicationIcon>Assets\DiskScope.ico</ApplicationIcon>
+    <!-- UI strings: Resources/Strings.resx is English; Strings.fr.resx builds the fr satellite assembly. -->
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en;fr</SatelliteResourceLanguages>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Regenerate with tools/make-icon.ps1. -->
+    <Resource Include="Assets\DiskScope.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DiskScope.Storage\DiskScope.Storage.csproj" />
     <ProjectReference Include="..\DiskScope.Scanner\DiskScope.Scanner.csproj" />
     <ProjectReference Include="..\DiskScope.Scanner.Standard\DiskScope.Scanner.Standard.csproj" />
-    <ProjectReference Include="..\DiskScope.Scanner.Ntfs\DiskScope.Scanner.Ntfs.csproj" />
     <ProjectReference Include="..\DiskScope.Core\DiskScope.Core.csproj" />
     <ProjectReference Include="..\DiskScope.Monitoring\DiskScope.Monitoring.csproj" />
     <ProjectReference Include="..\DiskScope.Monitoring.CpuRam\DiskScope.Monitoring.CpuRam.csproj" />

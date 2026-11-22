@@ -9,10 +9,10 @@ namespace DiskScope.Processes;
 /// </summary>
 public sealed class SelfCollector : IMetricCollector
 {
-    public const string Cpu = "self.cpu";
-    public const string WorkingSet = "self.workingset";
-    public const string PrivateBytes = "self.private";
-    public const string ManagedHeap = "self.gcheap";
+    public const string Cpu = MetricIds.SelfCpu;
+    public const string WorkingSet = MetricIds.SelfWorkingSet;
+    public const string PrivateBytes = MetricIds.SelfPrivate;
+    public const string ManagedHeap = MetricIds.SelfGcHeap;
 
     private const string Source = "GetProcessTimes, GetProcessMemoryInfo on the current process";
 
@@ -44,10 +44,10 @@ public sealed class SelfCollector : IMetricCollector
             long total = kernel + user;
             if (_previousCpu >= 0 && total >= _previousCpu)
             {
-                double elapsed = Stopwatch.GetElapsedTime(_previousTimestamp, now).Ticks;
-                if (elapsed > 0)
+                long elapsed = Stopwatch.GetElapsedTime(_previousTimestamp, now).Ticks;
+                if (CpuDelta.Percent(total - _previousCpu, elapsed, _processors) is { } percent)
                 {
-                    cpu = MetricValue.Derived(Cpu, Math.Min(100, 100.0 * (total - _previousCpu) / (elapsed * _processors)));
+                    cpu = MetricValue.Derived(Cpu, percent);
                 }
             }
 

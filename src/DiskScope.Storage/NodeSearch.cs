@@ -46,7 +46,7 @@ public static class NodeSearch
         long maxSize = filter.MaxSize ?? long.MaxValue;
         SizeKind sizeKind = filter.SizeKind;
 
-        var heap = new PriorityQueue<int, (long Size, int NegId)>();
+        var top = new TopKBySize(maxResults);
         int totalMatches = 0;
         int unknownDateExcluded = 0;
         for (int id = 1; id < index.Count; id++)
@@ -101,25 +101,10 @@ public static class NodeSearch
             }
 
             totalMatches++;
-            var priority = (Size: size, NegId: -id);
-            if (heap.Count < maxResults)
-            {
-                heap.Enqueue(id, priority);
-            }
-            else if (heap.TryPeek(out _, out var weakest) && priority.CompareTo(weakest) > 0)
-            {
-                heap.DequeueEnqueue(id, priority);
-            }
+            top.Add(id, size);
         }
 
-        // Dequeue yields the weakest entry first, so fill the result from the end.
-        var ids = new int[heap.Count];
-        for (int i = ids.Length - 1; i >= 0; i--)
-        {
-            ids[i] = heap.Dequeue();
-        }
-
-        return new SearchResult(ids, totalMatches, unknownDateExcluded, totalMatches > maxResults);
+        return new SearchResult(top.ToSortedArray(),totalMatches, unknownDateExcluded, totalMatches > maxResults);
     }
 
     /// <summary>

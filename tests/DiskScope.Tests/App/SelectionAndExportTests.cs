@@ -145,6 +145,6 @@ public sealed class SelectionAndExportTests
         {
         }
 
-        public string? AskSaveCsvPath(string suggestedFileName) => SavePath;
+        public string? AskSavePath(string suggestedFileName) => SavePath;
     }
 }

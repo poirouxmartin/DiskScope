@@ -7,8 +7,7 @@ internal static unsafe partial class NativeMethods
 {
     internal const uint TH32CS_SNAPPROCESS = 0x2;
     internal const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
-    internal const int ERROR_NO_MORE_FILES = 18;
-    internal const int ERROR_INSUFFICIENT_BUFFER = 122;
+    internal const int ERROR_INVALID_PARAMETER = 87;
 
     // FILETIME epoch (1601) to DateTime ticks (0001).
     internal const long FileTimeToDateTimeTicks = 504911232000000000L;

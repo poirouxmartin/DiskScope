@@ -1,3 +1,4 @@
+using DiskScope.App.Localization;
 using DiskScope.Core;
 
 namespace DiskScope.App.ViewModels;
@@ -12,22 +13,26 @@ public sealed class MetricTileViewModel : ObservableObject
     private DateTime _end;
     private double _maximum = double.NaN;
     private string _detail = string.Empty;
+    private double? _gaugePercent;
+    private string _title;
 
     public MetricTileViewModel(MetricDescriptor descriptor, TimeSpan window, int? navigateTo = null)
     {
         Descriptor = descriptor;
+        _title = Loc.MetricName(descriptor);
         Window = window;
         NavigateTo = navigateTo;
         ToolTip = descriptor.Definition is null
-            ? $"Source: {descriptor.Source}"
-            : $"{descriptor.Definition}\nSource: {descriptor.Source}";
+            ? Loc.Format("Tile_Source", descriptor.Source)
+            : $"{Loc.MetricDefinition(descriptor)}\n{Loc.Format("Tile_Source", descriptor.Source)}";
     }
 
     public MetricDescriptor Descriptor { get; }
 
     public string Id => Descriptor.Id;
 
-    public string Title => Descriptor.DisplayName;
+    /// <summary>Card title; the GPU view shortens it because the adapter name is already in the section title.</summary>
+    public string Title { get => _title; set => SetProperty(ref _title, value); }
 
     public string ToolTip { get; }
 
@@ -51,16 +56,31 @@ public sealed class MetricTileViewModel : ObservableObject
 
     public double Maximum { get => _maximum; private set => SetProperty(ref _maximum, value); }
 
+    /// <summary>Gauge fill for percent metrics, 0-100; null when the metric is not a percent or the value is unknown.</summary>
+    public double? GaugePercent { get => _gaugePercent; private set => SetProperty(ref _gaugePercent, value); }
+
+    /// <summary>Gauge state: 0 normal, 1 warning (80 % and above), 2 critical (90 % and above).</summary>
+    public int GaugeLevel => GaugePercent switch
+    {
+        >= DriveCardViewModel.CriticalPercent => 2,
+        >= DriveCardViewModel.WarningPercent => 1,
+        _ => 0,
+    };
+
     public void Update(MetricValue? latest, IReadOnlyList<MetricPoint> points, DateTime end, double maximum)
     {
         IsAvailable = latest is { IsAvailable: true };
+        GaugePercent = Descriptor.Unit == MetricUnit.Percent && latest is { IsAvailable: true, Value: double v } && double.IsFinite(v)
+            ? Math.Clamp(v, 0, 100)
+            : null;
+        RaisePropertyChanged(nameof(GaugeLevel));
         ValueText = MetricFormatter.Format(latest?.Value, Descriptor.Unit);
         Points = points;
         End = end;
         Maximum = maximum;
         PeakText = points.Count > 0
-            ? $"max {MetricFormatter.Format(points.Max(p => p.Max), Descriptor.Unit)} over {FormatWindow(Window)}"
-            : "no data yet";
+            ? Loc.Format("Tile_Peak", MetricFormatter.Format(points.Max(p => p.Max), Descriptor.Unit), FormatWindow(Window))
+            : Loc.Get("Tile_NoData");
     }
 
     private static string FormatWindow(TimeSpan w) =>
@@ -94,17 +114,17 @@ public sealed class CoreViewModel(int index) : ObservableObject
 }
 
 /// <summary>Label, value and source of one metric, for detail tables.</summary>
-public sealed class MetricRowViewModel(MetricDescriptor descriptor) : ObservableObject
+public sealed class MetricRowViewModel(MetricDescriptor descriptor, string? name = null, string? definition = null) : ObservableObject
 {
     private string _value = MetricFormatter.Unknown;
 
     public MetricDescriptor Descriptor { get; } = descriptor;
 
-    public string Name => Descriptor.DisplayName;
+    public string Name { get; } = name ?? Loc.MetricName(descriptor);
 
     public string Source => Descriptor.Source;
 
-    public string Definition => Descriptor.Definition ?? string.Empty;
+    public string Definition { get; } = definition ?? Loc.MetricDefinition(descriptor) ?? string.Empty;
 
     public string Value { get => _value; private set => SetProperty(ref _value, value); }
 

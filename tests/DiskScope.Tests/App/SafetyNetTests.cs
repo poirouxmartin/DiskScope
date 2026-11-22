@@ -161,6 +161,6 @@ public sealed class SafetyNetTests
         {
         }
 
-        public string? AskSaveCsvPath(string suggestedFileName) => SavePath;
+        public string? AskSavePath(string suggestedFileName) => SavePath;
     }
 }

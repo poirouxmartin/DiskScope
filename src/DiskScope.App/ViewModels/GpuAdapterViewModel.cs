@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using DiskScope.App.Localization;
 using DiskScope.Core;
 using DiskScope.Monitoring.Gpu;
 
@@ -15,10 +16,40 @@ public sealed class GpuAdapterViewModel
         UsageTile = tile(GpuCollector.UtilizationId(index));
         DedicatedTile = tile(GpuCollector.DedicatedUsedId(index));
         SharedTile = tile(GpuCollector.SharedUsedId(index));
+        // The section title already names the adapter: tiles and rows drop the "GPU n (name)" prefix.
+        SetTitle(UsageTile, "Gpu_Tile_Usage");
+        SetTitle(DedicatedTile, "Gpu_Tile_Dedicated");
+        SetTitle(SharedTile, "Gpu_Tile_Shared");
+
+        // Engine names (3d, copy, videodecode...) are the driver's own labels and stay untranslated.
+        string? engineDefinition = Loc.TryGet("Gpu_EngineDefinition");
         EngineRows = new ObservableCollection<MetricRowViewModel>(
             GpuCollector.EngineGroups
-                .Select(g => descriptors.TryGetValue(GpuCollector.EngineId(index, g), out MetricDescriptor? d) ? new MetricRowViewModel(d) : null)
+                .Select(g => descriptors.TryGetValue(GpuCollector.EngineId(index, g), out MetricDescriptor? d)
+                    ? new MetricRowViewModel(d, ShortName(d.DisplayName), d.Definition is null ? null : engineDefinition)
+                    : null)
                 .OfType<MetricRowViewModel>());
+    }
+
+    private void SetTitle(MetricTileViewModel? tile, string key)
+    {
+        if (tile is not null)
+        {
+            tile.Title = Loc.TryGet(key) ?? ShortName(tile.Title);
+        }
+    }
+
+    /// <summary>Removes the leading adapter label ("GPU 0 (NVIDIA ...) ") and capitalizes the rest; other names are unchanged.</summary>
+    public string ShortName(string displayName)
+    {
+        string prefix = string.Create(CultureInfo.InvariantCulture, $"GPU {Index} ({Info.Name}) ");
+        if (!displayName.StartsWith(prefix, StringComparison.Ordinal) || displayName.Length == prefix.Length)
+        {
+            return displayName;
+        }
+
+        string rest = displayName[prefix.Length..];
+        return char.ToUpperInvariant(rest[0]) + rest[1..];
     }
 
     public int Index { get; }
@@ -27,9 +58,8 @@ public sealed class GpuAdapterViewModel
 
     public string Title => $"GPU {Index}: {Info.Name}";
 
-    public string Identity => string.Create(CultureInfo.InvariantCulture,
-        $"Vendor 0x{Info.VendorId:X4}, LUID {Info.Luid}, dedicated video memory {MetricFormatter.FormatBytes(Info.DedicatedVideoMemory)}, " +
-        $"shared system memory limit {MetricFormatter.FormatBytes(Info.SharedSystemMemory)} (DXGI)");
+    public string Identity => Loc.Format("Gpu_Identity", Info.VendorId.ToString("X4", CultureInfo.InvariantCulture), Info.Luid,
+        MetricFormatter.FormatBytes(Info.DedicatedVideoMemory), MetricFormatter.FormatBytes(Info.SharedSystemMemory));
 
     public MetricTileViewModel? UsageTile { get; }
 

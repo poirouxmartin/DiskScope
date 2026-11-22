@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using DiskScope.App.Localization;
 using DiskScope.App.Services;
 
 namespace DiskScope.App;
@@ -33,9 +34,9 @@ public partial class App : System.Windows.Application
         {
             string msg = e.Exception.Message;
             MessageBox.Show(
-                $"An unexpected error occurred: {msg}\n\n"
-                + (log is not null ? $"Details were written to {log}." : "The error log could not be written.")
-                + "\n\nDiskScope keeps running, but the last action may not have completed.",
+                Loc.Format("App_UnexpectedError", msg) + "\n\n"
+                + (log is not null ? Loc.Format("App_ErrorLogged", log) : Loc.Get("App_ErrorLogFailed"))
+                + "\n\n" + Loc.Get("App_KeepsRunning"),
                 "DiskScope",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -43,6 +44,18 @@ public partial class App : System.Windows.Application
         finally
         {
             _showingError = false;
+        }
+    }
+
+    /// <summary>MenuButton style: opens the button's ContextMenu below it. A menu opened by code does not inherit the DataContext, so it is copied.</summary>
+    private void OnMenuButtonClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { ContextMenu: { } menu } button)
+        {
+            menu.DataContext = button.DataContext;
+            menu.PlacementTarget = button;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
         }
     }
 

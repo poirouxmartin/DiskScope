@@ -61,7 +61,7 @@ public static class NodeIndexQueries
             return Array.Empty<int>();
         }
 
-        var heap = new PriorityQueue<int, (long Size, int NegId)>();
+        var top = new TopKBySize(count);
         for (int id = 0; id < index.Count; id++)
         {
             if (index.GetKind(id) != NodeKind.File)
@@ -69,24 +69,9 @@ public static class NodeIndexQueries
                 continue;
             }
 
-            var priority = (Size: index.GetTotalSize(id, kind), NegId: -id);
-            if (heap.Count < count)
-            {
-                heap.Enqueue(id, priority);
-            }
-            else if (heap.TryPeek(out _, out var weakest) && priority.CompareTo(weakest) > 0)
-            {
-                heap.DequeueEnqueue(id, priority);
-            }
+            top.Add(id, index.GetTotalSize(id, kind));
         }
 
-        // Dequeue yields the weakest entry first, so fill the result from the end.
-        var result = new int[heap.Count];
-        for (int i = result.Length - 1; i >= 0; i--)
-        {
-            result[i] = heap.Dequeue();
-        }
-
-        return result;
+        return top.ToSortedArray();
     }
 }

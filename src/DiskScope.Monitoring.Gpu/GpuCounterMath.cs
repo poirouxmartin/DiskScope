@@ -26,7 +26,7 @@ public readonly record struct GpuEngineInstance(int ProcessId, string Luid, int 
             return false;
         }
 
-        instance = new GpuEngineInstance(pid, $"{p[3]}_{p[4]}".ToUpperInvariant().Replace("0X", "0x", StringComparison.Ordinal), phys, eng, string.Join('_', p[10..]));
+        instance = new GpuEngineInstance(pid, GpuCounterMath.NormalizeLuid(p[3], p[4]), phys, eng, string.Join('_', p[10..]));
         return true;
     }
 }
@@ -76,9 +76,12 @@ public static class GpuCounterMath
     {
         string[] p = name.Split('_');
         return p.Length >= 3 && p[0] == "luid"
-            ? $"{p[1]}_{p[2]}".ToUpperInvariant().Replace("0X", "0x", StringComparison.Ordinal)
+            ? NormalizeLuid(p[1], p[2])
             : null;
     }
+
+    internal static string NormalizeLuid(string high, string low) =>
+        $"{high}_{low}".ToUpperInvariant().Replace("0X", "0x", StringComparison.Ordinal);
 
     public static string FormatLuid(uint lowPart, int highPart) =>
         string.Create(CultureInfo.InvariantCulture, $"0x{(uint)highPart:X8}_0x{lowPart:X8}");

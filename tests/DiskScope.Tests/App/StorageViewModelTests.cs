@@ -128,6 +128,6 @@ public sealed class StorageViewModelTests
 
         public string? SavePath { get; set; }
 
-        public string? AskSaveCsvPath(string suggestedFileName) => SavePath;
+        public string? AskSavePath(string suggestedFileName) => SavePath;
     }
 }

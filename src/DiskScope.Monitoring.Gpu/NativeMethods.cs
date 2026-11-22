@@ -2,22 +2,12 @@ using System.Runtime.InteropServices;
 
 namespace DiskScope.Monitoring.Gpu;
 
-/// <summary>Adapter identity and capacities from DXGI (IDXGIAdapter1::GetDesc1).</summary>
-public sealed record GpuAdapterInfo(
-    string Name,
-    string Luid,
-    uint VendorId,
-    long DedicatedVideoMemory,
-    long DedicatedSystemMemory,
-    long SharedSystemMemory,
-    bool IsSoftware);
-
 /// <summary>
 /// DXGI adapter enumeration through raw COM vtable calls (no interop assembly):
 /// IDXGIFactory1::EnumAdapters1 is vtable slot 12 (IUnknown 3 + IDXGIObject 4 + IDXGIFactory 5),
 /// IDXGIAdapter1::GetDesc1 is slot 10 (IUnknown 3 + IDXGIObject 4 + IDXGIAdapter 3), Release is slot 2.
 /// </summary>
-internal static unsafe partial class Dxgi
+internal static unsafe partial class NativeMethods
 {
     private const int DXGI_ERROR_NOT_FOUND = unchecked((int)0x887A0002);
     private const uint DXGI_ADAPTER_FLAG_SOFTWARE = 2;
@@ -74,7 +64,6 @@ internal static unsafe partial class Dxgi
                             GpuCounterMath.FormatLuid(d.LuidLowPart, d.LuidHighPart),
                             d.VendorId,
                             (long)d.DedicatedVideoMemory,
-                            (long)d.DedicatedSystemMemory,
                             (long)d.SharedSystemMemory,
                             (d.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0));
                     }

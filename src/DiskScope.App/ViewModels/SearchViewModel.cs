@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using DiskScope.App.Localization;
 using DiskScope.Storage;
 
 namespace DiskScope.App.ViewModels;
@@ -102,8 +103,8 @@ public sealed class SearchViewModel : ObservableObject
         long? minSize = null;
         long? maxSize = null;
         string? error = null;
-        if (!TryParseMegabytes(MinSizeMbText, "Min size", out minSize, out error)
-            || !TryParseMegabytes(MaxSizeMbText, "Max size", out maxSize, out error))
+        if (!TryParseMegabytes(MinSizeMbText, Loc.Get("Search_MinSize"), out minSize, out error)
+            || !TryParseMegabytes(MaxSizeMbText, Loc.Get("Search_MaxSize"), out maxSize, out error))
         {
             InputError = error;
             return null;
@@ -139,13 +140,13 @@ public sealed class SearchViewModel : ObservableObject
 
         if (_indexProvider() is not { } index)
         {
-            ClearResults("No scan loaded");
+            ClearResults(Loc.Get("Search_NoScan"));
             return;
         }
 
         if (filter.IsEmpty)
         {
-            ClearResults("Enter criteria");
+            ClearResults(Loc.Get("Search_EnterCriteria"));
             return;
         }
 
@@ -220,19 +221,19 @@ public sealed class SearchViewModel : ObservableObject
         if (!decimal.TryParse(trimmed, NumberStyles.Number, CultureInfo.CurrentCulture, out decimal megabytes)
             && !decimal.TryParse(trimmed, NumberStyles.Number, CultureInfo.InvariantCulture, out megabytes))
         {
-            error = $"{label}: not a number";
+            error = Loc.Format("Search_NotNumber", label);
             return false;
         }
 
         if (megabytes < 0)
         {
-            error = $"{label}: must not be negative";
+            error = Loc.Format("Search_Negative", label);
             return false;
         }
 
         if (megabytes > long.MaxValue / BytesPerMegabyte)
         {
-            error = $"{label}: too large";
+            error = Loc.Format("Search_TooLarge", label);
             return false;
         }
 
@@ -248,15 +249,15 @@ public sealed class SearchViewModel : ObservableObject
 
     private static string FormatResultText(SearchResult result)
     {
-        string text = FormattableString.Invariant($"{result.TotalMatches:N0} matches");
+        string text = Loc.Format("Search_Matches", result.TotalMatches.ToString("N0", CultureInfo.InvariantCulture));
         if (result.Truncated)
         {
-            text += FormattableString.Invariant($", showing first {MaxResults}");
+            text += Loc.Format("Search_Showing", MaxResults);
         }
 
         if (result.UnknownDateExcluded > 0)
         {
-            text += FormattableString.Invariant($"; {result.UnknownDateExcluded:N0} with unknown date excluded");
+            text += Loc.Format("Search_UnknownDate", result.UnknownDateExcluded.ToString("N0", CultureInfo.InvariantCulture));
         }
 
         return text;

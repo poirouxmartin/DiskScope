@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using DiskScope.Core;
 
 namespace DiskScope.Storage;
 
@@ -86,7 +87,7 @@ public static class CsvExporter
     private static void WriteColumns(NodeIndex index, TextWriter writer, int id)
     {
         writer.Write(',');
-        WriteField(writer, index.GetKind(id).ToString());
+        CsvWriter.WriteField(writer, index.GetKind(id).ToString());
         writer.Write(',');
         WriteNumber(writer, index.GetLogicalSize(id));
         writer.Write(',');
@@ -106,7 +107,7 @@ public static class CsvExporter
         NodeStatus status = index.GetStatus(id);
         if (status != NodeStatus.None)
         {
-            WriteField(writer, status.ToString());
+            CsvWriter.WriteField(writer, status.ToString());
         }
 
         writer.Write("\r\n");
@@ -115,34 +116,27 @@ public static class CsvExporter
     /// <summary>Writes dirPath, an optional separator, then name, as one quoted field when needed.</summary>
     private static void WritePath(TextWriter writer, ReadOnlySpan<char> dirPath, bool separator, ReadOnlySpan<char> name)
     {
-        bool quote = NeedsQuoting(dirPath) || NeedsQuoting(name);
+        // Rare case: a path starting like a formula gets the neutralizing field writer, at the cost of a string.
+        char first = dirPath.Length > 0 ? dirPath[0] : name.Length > 0 ? name[0] : '\0';
+        if (first is '=' or '+' or '-' or '@' or '\t' or '\r')
+        {
+            CsvWriter.WriteField(writer, string.Concat(dirPath, separator ? "\\" : string.Empty, name));
+            return;
+        }
+
+        bool quote = CsvWriter.NeedsQuoting(dirPath) || CsvWriter.NeedsQuoting(name);
         if (quote)
         {
             writer.Write('"');
         }
 
-        WriteEscaped(writer, dirPath);
+        CsvWriter.WriteEscaped(writer, dirPath);
         if (separator)
         {
             writer.Write('\\');
         }
 
-        WriteEscaped(writer, name);
-        if (quote)
-        {
-            writer.Write('"');
-        }
-    }
-
-    private static void WriteField(TextWriter writer, ReadOnlySpan<char> value)
-    {
-        bool quote = NeedsQuoting(value);
-        if (quote)
-        {
-            writer.Write('"');
-        }
-
-        WriteEscaped(writer, value);
+        CsvWriter.WriteEscaped(writer, name);
         if (quote)
         {
             writer.Write('"');
@@ -167,35 +161,5 @@ public static class CsvExporter
         Span<char> buffer = stackalloc char[32];
         utc.TryFormat(buffer, out int written, DateFormat, CultureInfo.InvariantCulture);
         writer.Write(buffer.Slice(0, written));
-    }
-
-    private static bool NeedsQuoting(ReadOnlySpan<char> value)
-    {
-        foreach (char c in value)
-        {
-            if (c is ',' or '"' or '\r' or '\n')
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>Writes the value with every quote doubled, in runs to avoid per-character calls.</summary>
-    private static void WriteEscaped(TextWriter writer, ReadOnlySpan<char> value)
-    {
-        int start = 0;
-        for (int i = 0; i < value.Length; i++)
-        {
-            if (value[i] == '"')
-            {
-                writer.Write(value.Slice(start, i - start + 1));
-                writer.Write('"');
-                start = i + 1;
-            }
-        }
-
-        writer.Write(value.Slice(start));
     }
 }

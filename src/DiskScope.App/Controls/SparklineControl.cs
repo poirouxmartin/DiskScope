@@ -29,10 +29,11 @@ public sealed class SparklineControl : FrameworkElement
 
     public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
         nameof(Stroke), typeof(Brush), typeof(SparklineControl),
-        new FrameworkPropertyMetadata(Brushes.SteelBlue, FrameworkPropertyMetadataOptions.AffectsRender));
+        new FrameworkPropertyMetadata(Freeze(new SolidColorBrush(Color.FromRgb(0x57, 0xB7, 0xE8))), FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private static readonly Brush Background = Freeze(new SolidColorBrush(Color.FromRgb(0xF4, 0xF6, 0xF8)));
-    private static readonly Pen GridPen = Freeze(new Pen(new SolidColorBrush(Color.FromRgb(0xDD, 0xE1, 0xE5)), 1));
+    // Dark "Instrument" palette (Themes/Tokens.xaml): input background and line color.
+    private static readonly Brush Background = Freeze(new SolidColorBrush(Color.FromRgb(0x14, 0x1A, 0x20)));
+    private static readonly Pen GridPen = Freeze(new Pen(new SolidColorBrush(Color.FromRgb(0x2C, 0x35, 0x40)), 1));
 
     public IReadOnlyList<MetricPoint>? Points
     {
