@@ -29,6 +29,7 @@ Result: Release build with no warning (TreatWarningsAsErrors), 230/230 tests pas
 | Sparkline: non-finite points dropped; no exception when `End` is default | `Controls/SparklineControl.cs` | `Sparkline_TryGetStart_*`, `Sparkline_FinitePoints_*` |
 | Incomplete directory sizes shown as lower bounds (`≥ 1.2 GB`), `n/a` when nothing could be read; percent of an empty parent is `n/a` | `Formatting/ByteFormatter.cs`, `NodeViewModel.cs`, `Controls/TreemapControl.cs` | `ByteFormatter_FormatNodeSize`, `NodeViewModel_IncompleteDirectory_*` |
 | GPU memory detail no longer shows "of 0 B" when the total is unknown | `MonitoringViewModel.cs` | none (needs a GPU adapter fake) |
+| Storage index CSV export (follow-up): a 0 size or count on a node with its own error is an empty cell; a path starting like a formula gets a leading quote, as in `CsvTable` | `Storage/CsvExporter.cs` | `OwnErrorDirectory_*`, `IncompleteAncestor_*`, `Path_StartingLikeAFormula_*` |
 
 The unknown marker stays `n/a` (`MetricFormatter.Unknown`), already used across the app, rather than a new "—".
 
@@ -37,5 +38,5 @@ The unknown marker stays `n/a` (`MetricFormatter.Unknown`), already used across 
 - The app was not launched: the dialog, the hidden core bar and the `≥` columns are checked by tests and build only. A manual pass on each tab is still needed.
 - Not tested: treemap tooltip, GPU detail, window close, null `Application.Current` (WPF runtime needed).
 - `SubscriberFailures` is counted and shown in the monitoring status bar (`MonitoringViewModel.StatusText`).
-- Lot 2 leaves alone: largest-files rows (files have an exact size), `DiskActivityCollector` all-`Derived` quality, storage index CSV export (not reviewed for this rule).
+- Lot 2 leaves alone: largest-files rows (files have an exact size), `DiskActivityCollector` all-`Derived` quality, storage index CSV export (reviewed later, see the table above).
 - Lots 3 to 7 of the audit (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are untouched. The `securite-1411` commits are not on this branch: merging both will need a rebase (that branch's files are not touched here). Update: it was rebased and merged into `main` afterwards.
