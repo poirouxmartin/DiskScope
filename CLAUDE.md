@@ -31,6 +31,14 @@ Read ROADMAP.md first. The Part 2 spec lives in docs/spec/ (DiskScope_Specificat
 - Logical and allocated sizes are never mixed.
 - Partial results are always flagged (NodeStatus).
 
+## Branches and deployment
+
+- Work directly on `main`: no feature branch, no worktree. Martin is the only user of this app.
+- After green tests: `git push origin main` (never force), then reinstall.
+- Reinstall: `dotnet publish src/DiskScope.App/DiskScope.App.csproj -c Release -o <tmp dir>`, back up then robocopy into
+  `%LOCALAPPDATA%\Programs\DiskScope`. Check `DiskScope.App.dll` ProductVersion ends with the pushed commit hash.
+- `global.json` pins SDK 10.0.401, which is not installed: run `dotnet` from `C:\tmp\sdk11-run` (SDK 11 override).
+
 ## Commits
 
 - No Co-Authored-By trailer.
