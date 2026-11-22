@@ -347,7 +347,7 @@ public sealed class MonitoringViewModel : ObservableObject, IAsyncDisposable
 
         long failures = stats.Sum(s => s.Failures);
         int running = stats.Count(s => s.Availability.IsAvailable);
-        StatusText = Loc.Format("Monitoring_Status", running, stats.Count, failures, _scheduler.StoreFailures, Invariant($"{stats.Sum(s => s.LastDuration.TotalMilliseconds):F1}"));
+        StatusText = Loc.Format("Monitoring_Status", running, stats.Count, failures, _scheduler.StoreFailures, Invariant($"{stats.Sum(s => s.LastDuration.TotalMilliseconds):F1}"), _scheduler.SubscriberFailures);
         (bool healthy, string health) = DescribeHealth(running, stats.Count, failures, _scheduler.StoreFailures);
         IsHealthy = healthy;
         HealthText = health;

@@ -15,6 +15,7 @@ collectors (IMetricCollector)  ->  MonitoringScheduler  ->  IMetricStore (histor
 - A collector never touches WPF. The UI pulls the latest values and the recent history once per second (`MonitoringViewModel.Refresh`), so the UI cost does not depend on the number of batches.
 - A collector that throws publishes a batch where all its metrics are `Unavailable`, plus the error. The others keep running.
 - A failing history store does not stop monitoring: the failure is counted (`StoreFailures`) and shown in the status bar.
+- A throwing `BatchPublished` or `StoreFailed` subscriber never stops a collector loop: the exception is counted (`SubscriberFailures`) and shown in the status bar.
 - Timestamps come from `MonitoringClock`: the wall clock is read once, then time advances with `Stopwatch`, so batches never go back in time when the system clock changes.
 
 ## CPU (`DiskScope.Monitoring.CpuRam`)

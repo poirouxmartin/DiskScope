@@ -242,7 +242,7 @@
   <data name="Monitoring_OkMissed" xml:space="preserve"><value>Monitoring OK ({0} missed readings)</value></data>
   <data name="Monitoring_Ok" xml:space="preserve"><value>Monitoring OK</value></data>
   <data name="Monitoring_UnknownProcess" xml:space="preserve"><value>(unknown)</value></data>
-  <data name="Monitoring_Status" xml:space="preserve"><value>{0}/{1} collectors running, {2} failed collections, {3} history write failures, collection time {4} ms per round</value></data>
+  <data name="Monitoring_Status" xml:space="preserve"><value>{0}/{1} collectors running, {2} failed collections, {3} history write failures, {5} subscriber failures, collection time {4} ms per round</value></data>
   <data name="Monitoring_SelfCost" xml:space="preserve"><value>DiskScope itself: {0} CPU, {1}</value></data>
   <data name="Monitoring_NoHistory" xml:space="preserve"><value>No data in this range (the history is kept in memory since DiskScope started).</value></data>
   <data name="Monitoring_HistorySummary" xml:space="preserve"><value>{0} points, min {1}, avg {2}, max {3}. Source: {4}</value></data>

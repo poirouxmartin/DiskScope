@@ -242,7 +242,7 @@
   <data name="Monitoring_OkMissed" xml:space="preserve"><value>Surveillance OK ({0} lectures manquées)</value></data>
   <data name="Monitoring_Ok" xml:space="preserve"><value>Surveillance OK</value></data>
   <data name="Monitoring_UnknownProcess" xml:space="preserve"><value>(inconnu)</value></data>
-  <data name="Monitoring_Status" xml:space="preserve"><value>{0}/{1} collecteurs actifs, {2} collectes en échec, {3} échecs d'écriture de l'historique, durée de collecte {4} ms par cycle</value></data>
+  <data name="Monitoring_Status" xml:space="preserve"><value>{0}/{1} collecteurs actifs, {2} collectes en échec, {3} échecs d'écriture de l'historique, {5} échecs d'abonnés, durée de collecte {4} ms par cycle</value></data>
   <data name="Monitoring_SelfCost" xml:space="preserve"><value>DiskScope lui-même : {0} CPU, {1}</value></data>
   <data name="Monitoring_NoHistory" xml:space="preserve"><value>Aucune donnée sur cette période (l'historique est conservé en mémoire depuis le démarrage de DiskScope).</value></data>
   <data name="Monitoring_HistorySummary" xml:space="preserve"><value>{0} points, min {1}, moy. {2}, max {3}. Source : {4}</value></data>
