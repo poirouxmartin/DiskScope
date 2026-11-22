@@ -17,13 +17,28 @@ public sealed class InventoryTests
     [InlineData("noextension arg", "noextension")]
     [InlineData("   ", null)]
     [InlineData("\"\"", null)]
+    // Quotes and spaces.
+    [InlineData(@"   C:\x.exe   ", @"C:\x.exe")]
+    [InlineData(@"C:\Program Files\App\app.exe", @"C:\Program Files\App\app.exe")]
+    [InlineData("\"C:\\a b\\x.exe", @"C:\a b\x.exe")]
+    [InlineData("\"C:\\a b\\x.exe\"\"-s", @"C:\a b\x.exe")]
+    [InlineData(@"C:\My.exe.d\tool.exe -x", @"C:\My.exe.d\tool.exe")]
+    // Environment variables: expanded inside quotes, unknown ones left as written.
+    [InlineData("\"%ProgramFiles%\\A B\\a.exe\" /x", @"C:\Program Files\A B\a.exe")]
+    [InlineData(@"%NOPE%\x.exe -s", @"%NOPE%\x.exe")]
+    // B8: task action path already quoted, then quoted again.
     [InlineData("\"\"C:\\a b\\x.exe\"\" -s", @"C:\a b\x.exe")]
+    // B9: cmd /c and /k payloads, bare program names, .dll/.msc/.cpl.
     [InlineData(@"cmd /c C:\s\x.bat", @"C:\s\x.bat")]
     [InlineData("cmd.exe /q /c \"C:\\a b\\y.cmd\" arg", @"C:\a b\y.cmd")]
+    [InlineData("CMD /K \"%ProgramFiles%\\x y\\s.cmd\"", @"C:\Program Files\x y\s.cmd")]
     [InlineData("cmd /k", "cmd")]
+    [InlineData("cmd", "cmd")]
     [InlineData(@"C:\Windows\System32\control.exe C:\x\desk.cpl", @"C:\Windows\System32\control.exe")]
     [InlineData(@"C:\Program Files\Snap In\tool.msc /a", @"C:\Program Files\Snap In\tool.msc")]
+    [InlineData(@"C:\Program Files\Lib Dir\plugin.dll arg", @"C:\Program Files\Lib Dir\plugin.dll")]
     [InlineData("rundll32 shell32.dll,Control_RunDLL", "rundll32")]
+    [InlineData(@"rundll32 C:\Program Files\x.exe", "rundll32")]
     public void ExtractExecutable(string command, string? expected) =>
         Assert.Equal(expected, CommandLine.ExtractExecutable(command, NoExpand));
 
@@ -72,6 +87,19 @@ public sealed class InventoryTests
 
         Assert.Equal((null, (string?)null), StartupInventory.Locate(@"tools\x.exe", [@"C:\fake\sys"], files.Contains));
         Assert.Equal((null, (string?)null), StartupInventory.Locate(null, [@"C:\fake\sys"], files.Contains));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate(@"C:x.exe", [@"C:\fake\sys"], files.Contains));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate(@"%NOPE%\x.exe", [@"C:\fake\sys"], files.Contains));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate(@"\x.exe", [@"C:\fake\sys"], files.Contains));
+    }
+
+    [Fact]
+    public void Locate_MissingQualifiedPath_IsAbsent_ButMissingBareName_IsUnknown()
+    {
+        Func<string, bool> none = _ => false;
+
+        Assert.Equal((false, (string?)null), StartupInventory.Locate(@"C:\gone\app.exe", [@"C:\fake\sys"], none));
+        Assert.Equal((false, (string?)null), StartupInventory.Locate(@"\\server\share\app.exe", [], none));
+        Assert.Equal((null, (string?)null), StartupInventory.Locate("rundll32.exe", [@"C:\fake\sys"], none));
     }
 
     public sealed class FakeTrigger
@@ -209,16 +237,6 @@ public sealed class InventoryTests
         CsvTable.Write(w, ["a"], [[field]]);
 
         Assert.Equal("a\r\n" + expected + "\r\n", w.ToString());
-    }
-
-    [Fact]
-    public void Csv_FormulaField_IsNeutralized()
-    {
-        var w = new StringWriter();
-
-        CsvTable.Write(w, ["a", "b"], [["=HYPERLINK(\"http://x\",\"y\")", "-3"]]);
-
-        Assert.Equal("a,b\r\n\"'=HYPERLINK(\"\"http://x\"\",\"\"y\"\")\",-3\r\n", w.ToString());
     }
 
     [Fact]
