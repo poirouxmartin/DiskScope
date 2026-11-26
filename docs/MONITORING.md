@@ -17,6 +17,7 @@ collectors (IMetricCollector)  ->  MonitoringScheduler  ->  IMetricStore (histor
 - A failing history store does not stop monitoring: the failure is counted (`StoreFailures`) and shown in the status bar.
 - A throwing `BatchPublished` or `StoreFailed` subscriber never stops a collector loop: the exception is counted (`SubscriberFailures`) and shown in the status bar.
 - Timestamps come from `MonitoringClock`: the wall clock is read once, then time advances with `Stopwatch`, so batches never go back in time when the system clock changes.
+- Cost of each collector (`CollectorStats`): wall-clock duration (last, max, total) and the CPU time of the collecting thread (`ThreadCpuClock`, GetThreadTimes). On a saturated machine the wall-clock figure mostly measures waiting for a processor; the CPU figure is the work itself. Windows counts thread time in clock ticks (about 15.6 ms), so only the mean over many collections is meaningful. One unreadable sample makes the CPU total unknown (`n/a`), never a low number.
 
 ## CPU (`DiskScope.Monitoring.CpuRam`)
 
@@ -54,6 +55,17 @@ The two sources fail independently: one failing call only makes its own metrics 
 - Memory growth: `MemoryGrowthDetector` flags private bytes that grew for at least 5 min of a 10 min window, by at least max(100 MB, 20 %), with 80 % non-decreasing steps and growth in both halves of the span. Shown as "sustained growth, to verify (not a proven leak)". Known false positives: caches filling up, large documents loading.
 - Not implemented yet: command line, user, signature (on demand), exited processes in history.
 
+### By application (`ApplicationConsumerTracker`)
+
+The "By application" tab groups processes by image name (case-insensitive) at each refresh, keeps 5 minutes of history per group (CPU % sum and private bytes sum), and answers "what would closing it return".
+
+- Sums cover the processes that could be opened; a group with an unreadable member shows how many were `n/a`, and its sums are lower bounds. A sum no member reported stays `n/a`, never 0.
+- CPU average and maximum, and the private bytes trend, use `MetricTrend` over the window (no trend before half the window is covered, shown as "collecting").
+- Kind, most cautious wins: DiskScope itself; any member running from the Windows directory is a Windows component ("do not end it"); any member that refused the open, or whose path is unknown, makes the group "not inspectable" (no advice: protected, elevated or security processes look like this); otherwise an application.
+- Estimate for an application: its private working set (physical memory returned on exit) and its private bytes (commit returned on exit). Shared pages (DLLs, mapped files) and the file cache stay, so they are not counted. The total in the summary covers applications only.
+- DiskScope never ends a process. The advice never says "safe": closing an application can lose unsaved work, and only the user can judge that.
+- Limits: two programs with the same image name (for example two `python.exe` installs) form one group. Whether a process has a window, or is a background helper restarted by its parent, is not known yet. GPU memory per application is not included.
+
 ## GPU (`DiskScope.Monitoring.Gpu`)
 
 See `docs/GPU-COMPATIBILITY.md`.
@@ -72,6 +84,7 @@ See `docs/GPU-COMPATIBILITY.md`.
 - Every value goes to every tier on arrival; each bucket keeps min, average, max and sample count.
 - A query uses the finest tier that still holds the start of the range, or that never dropped anything.
 - Unavailable values are not stored: a period without data is a gap, drawn as a gap.
+- Tiles summarize their window with `MetricTrend`: average weighted by sample count, min and max from the stored extremes, and the change over the window from a weighted least-squares line on the real timestamps (gaps are skipped, not read as zeros). The change is shown only with at least 3 points covering half the window; before that the tile says how much history it needs. Percent metrics change in percentage points (`pts`). A trend describes the window; it is not a forecast.
 - Not persisted: history is lost when DiskScope exits. Persistence (SQLite, with batched writes and schema migrations, as the spec suggests) is a later step; it would add the first external dependency and needs a decision.
 
 ## Alerts (`DiskScope.Diagnostics`)

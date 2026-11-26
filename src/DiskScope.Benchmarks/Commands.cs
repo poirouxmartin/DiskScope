@@ -16,10 +16,11 @@ internal static class Commands
     private sealed class TraceObserver : IScanObserver
     {
         public void OnProgress(in ScanProgress p) =>
-            Console.Error.WriteLine($"[trace] {p.Elapsed.TotalSeconds,7:F1} s nodes={p.Nodes} errors={p.Errors} dir={p.CurrentDirectory}");
+            // Invariant like the rest of the CLI output, so log parsers do not depend on the machine's culture.
+            Console.Error.WriteLine(FormattableString.Invariant($"[trace] {p.Elapsed.TotalSeconds,7:F1} s nodes={p.Nodes} errors={p.Errors} dir={p.CurrentDirectory}"));
     }
 
-    private sealed record Baseline(long Files, long LogicalBytes, long SkippedLinks, long LengthFailures);
+    internal sealed record Baseline(long Files, long LogicalBytes, long SkippedLinks, long LengthFailures, long VanishedDirectories);
 
     public static int Scan(string path, int runs, int warmup)
     {
@@ -102,7 +103,7 @@ internal static class Commands
             .ScanAsync(request, new TraceObserver(), CancellationToken.None)
             .GetAwaiter()
             .GetResult();
-        Console.Error.WriteLine($"[trace] engine done in {result.Elapsed.TotalSeconds:F1} s, starting baseline walk");
+        Console.Error.WriteLine(FormattableString.Invariant($"[trace] engine done in {result.Elapsed.TotalSeconds:F1} s, starting baseline walk"));
         NodeIndex index = result.Index;
         long engineFiles = index.GetRecursiveFileCount(NodeIndex.RootId);
         long engineBytes = index.GetTotalLogicalSize(NodeIndex.RootId);
@@ -113,14 +114,80 @@ internal static class Commands
 
         Console.WriteLine($"Path:     {path}");
         Console.WriteLine($"Engine:   {result.EngineName} outcome={result.Outcome} files={engineFiles} logical={engineBytes} bytes errors={engineErrors}");
-        Console.WriteLine($"Baseline: files={baseline.Files} logical={baseline.LogicalBytes} bytes links-skipped={baseline.SkippedLinks} length-failures={baseline.LengthFailures}");
+        Console.WriteLine($"Baseline: files={baseline.Files} logical={baseline.LogicalBytes} bytes links-skipped={baseline.SkippedLinks} length-failures={baseline.LengthFailures} vanished-dirs={baseline.VanishedDirectories}");
         Console.WriteLine($"Delta:    files {Signed(engineFiles - baseline.Files)} ({Percent(engineFiles, baseline.Files)}), logical {Signed(engineBytes - baseline.LogicalBytes)} bytes ({Percent(engineBytes, baseline.LogicalBytes)})");
-        Console.WriteLine("Baseline caveats: skips every entry carrying ReparsePoint (junctions, symlinks, and cloud placeholders that carry the attribute); enumeration errors are hidden by IgnoreInaccessible and not counted.");
+        Console.WriteLine("Baseline caveats: skips every entry carrying ReparsePoint (junctions, symlinks, and cloud placeholders that carry the attribute); enumeration errors are hidden by IgnoreInaccessible and not counted; on a live tree (profile, volume) the two passes run minutes apart, so a small mismatch is expected.");
         Console.WriteLine(equal ? "RESULT: equal" : "RESULT: MISMATCH");
         return equal ? 0 : 1;
     }
 
-    private static Baseline WalkBaseline(string path)
+    /// <summary>One scan, then every unreadable directory with its error, and optionally the details of one node.</summary>
+    public static int Inspect(string path, string? nodePath)
+    {
+        ScanResult result = new StandardScanEngine()
+            .ScanAsync(new ScanRequest(path), null, CancellationToken.None)
+            .GetAwaiter()
+            .GetResult();
+        Console.WriteLine($"Path:    {path}");
+        Console.WriteLine($"Outcome: {result.Outcome} in {result.Elapsed.TotalSeconds.ToString("F1", CultureInfo.InvariantCulture)} s");
+        List<string> lines = InspectLines(result.Index, nodePath, out bool found);
+        foreach (string line in lines)
+        {
+            Console.WriteLine(line);
+        }
+
+        return result.Outcome == ScanOutcome.Completed && found ? 0 : 1;
+    }
+
+    /// <summary>
+    /// Error list (kind, Win32 code, path), then the node at <paramref name="nodePath"/> if given.
+    /// <paramref name="found"/> is false when the node is not in the index. Unknown values print as n/a, never 0.
+    /// </summary>
+    internal static List<string> InspectLines(NodeIndex index, string? nodePath, out bool found)
+    {
+        var lines = new List<string> { $"Errors:  {index.Errors.Count}" };
+        foreach (ScanError error in index.Errors)
+        {
+            lines.Add($"  {error.Kind} {error.Win32Error} {index.GetFullPath(error.NodeId)}");
+        }
+
+        found = true;
+        if (nodePath is null)
+        {
+            return lines;
+        }
+
+        int id = index.FindByPath(nodePath);
+        if (id < 0)
+        {
+            found = false;
+            lines.Add($"Node not found: {nodePath}");
+            return lines;
+        }
+
+        lines.Add($"Node:    {index.GetFullPath(id)} ({index.GetKind(id)})");
+        lines.Add($"  status:             {index.GetStatus(id)}");
+        lines.Add($"  logical bytes:      {Known(index.GetKnownTotalSize(id, SizeKind.Logical))}");
+        lines.Add($"  allocated bytes:    {Known(index.GetKnownTotalSize(id, SizeKind.Allocated))}");
+        lines.Add($"  files:              {index.GetRecursiveFileCount(id).ToString(CultureInfo.InvariantCulture)}");
+        lines.Add($"  directories:        {index.GetRecursiveDirectoryCount(id).ToString(CultureInfo.InvariantCulture)}");
+        lines.Add($"  last write:         {Date(index.GetLastWriteUtc(id))}");
+        lines.Add($"  subtree last write: {Date(index.GetSubtreeLastWriteUtc(id))}");
+        if (index.GetStatus(id) != NodeStatus.None)
+        {
+            lines.Add("  incomplete: sizes, counts and the subtree date are lower bounds.");
+        }
+
+        return lines;
+
+        static string Known(long? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "n/a";
+
+        static string Date(DateTime utc) =>
+            utc.Ticks == 0 ? "n/a" : utc.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
+    }
+
+    /// <param name="beforeEnumerate">Test seam: called with each directory path just before it is enumerated.</param>
+    internal static Baseline WalkBaseline(string path, Action<string>? beforeEnumerate = null)
     {
         var options = new EnumerationOptions
         {
@@ -134,40 +201,51 @@ internal static class Commands
         long bytes = 0;
         long links = 0;
         long lengthFailures = 0;
+        long vanished = 0;
         var pending = new Stack<DirectoryInfo>();
         pending.Push(new DirectoryInfo(path));
 
         while (pending.Count > 0)
         {
             DirectoryInfo directory = pending.Pop();
-            foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos("*", options))
+            beforeEnumerate?.Invoke(directory.FullName);
+            try
             {
-                if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+                foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos("*", options))
                 {
-                    links++;
-                    continue;
-                }
-
-                if (entry is DirectoryInfo subdirectory)
-                {
-                    pending.Push(subdirectory);
-                }
-                else if (entry is FileInfo file)
-                {
-                    try
+                    if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
                     {
-                        bytes += file.Length;
-                        files++;
+                        links++;
+                        continue;
                     }
-                    catch (IOException)
+
+                    if (entry is DirectoryInfo subdirectory)
                     {
-                        lengthFailures++;
+                        pending.Push(subdirectory);
+                    }
+                    else if (entry is FileInfo file)
+                    {
+                        try
+                        {
+                            bytes += file.Length;
+                            files++;
+                        }
+                        catch (IOException)
+                        {
+                            lengthFailures++;
+                        }
                     }
                 }
             }
+            catch (DirectoryNotFoundException)
+            {
+                // A live tree (temp folders, build output) loses directories between listing and visit. Aborting the
+                // whole walk would throw away minutes of work; count it so the caller sees the baseline is partial.
+                vanished++;
+            }
         }
 
-        return new Baseline(files, bytes, links, lengthFailures);
+        return new Baseline(files, bytes, links, lengthFailures, vanished);
     }
 
     public static int Synthetic(int nodeCount)

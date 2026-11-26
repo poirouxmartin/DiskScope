@@ -38,8 +38,9 @@
   <data name="CpuMemory_Col_MissedTicks" xml:space="preserve"><value>Missed ticks</value></data>
   <data name="CpuMemory_Col_LastMs" xml:space="preserve"><value>Last (ms)</value></data>
   <data name="CpuMemory_Col_MaxMs" xml:space="preserve"><value>Max (ms)</value></data>
+  <data name="CpuMemory_Col_MeanCpu" xml:space="preserve"><value>Mean CPU</value></data>
   <data name="CpuMemory_Col_Availability" xml:space="preserve"><value>Availability</value></data>
-  <data name="CpuMemory_Footnote" xml:space="preserve"><value>CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured.</value></data>
+  <data name="CpuMemory_Footnote" xml:space="preserve"><value>Last and Max are wall-clock times and include waiting for a processor; Mean CPU is the collecting thread's own CPU time, counted by Windows in clock ticks (about 15.6 ms), so it is only meaningful over many collections. CPU frequency is not shown: Windows exposes no reliable effective frequency without a driver. On machines with more than 64 logical processors only the first processor group is measured.</value></data>
   <data name="Gpu_Col_Engine" xml:space="preserve"><value>Engine</value></data>
   <data name="Gpu_Col_Usage" xml:space="preserve"><value>Usage</value></data>
   <data name="Gpu_Col_Definition" xml:space="preserve"><value>Definition</value></data>
@@ -151,6 +152,7 @@
   <data name="Storage_Type" xml:space="preserve"><value>Type</value></data>
   <data name="Storage_Col_Extension" xml:space="preserve"><value>Extension</value></data>
   <data name="Storage_Col_Files" xml:space="preserve"><value>Files</value></data>
+  <data name="Storage_LastChangeTip" xml:space="preserve"><value>Latest change anywhere in this subtree</value></data>
   <data name="Storage_Col_Share" xml:space="preserve"><value>Share</value></data>
   <data name="Storage_SummaryAndErrors" xml:space="preserve"><value>Summary and errors</value></data>
   <data name="Common_ExportFailed" xml:space="preserve"><value>Export failed: {0}</value></data>
@@ -160,6 +162,23 @@
   <data name="Processes_NotRefreshed" xml:space="preserve"><value>Not refreshed yet</value></data>
   <data name="Processes_EnumerationFailed" xml:space="preserve"><value>Process enumeration failed ({0}): {1}</value></data>
   <data name="Processes_Exported" xml:space="preserve"><value>Exported {0} processes to {1}</value></data>
+  <data name="Processes_TabAll" xml:space="preserve"><value>All processes</value></data>
+  <data name="Consumers_Tab" xml:space="preserve"><value>By application</value></data>
+  <data name="Consumers_ReadOnly" xml:space="preserve"><value>Read-only: DiskScope never ends a process. The estimate is what an application returns when you close it yourself.</value></data>
+  <data name="Consumers_Col_Application" xml:space="preserve"><value>Application</value></data>
+  <data name="Consumers_Col_Kind" xml:space="preserve"><value>Kind</value></data>
+  <data name="Consumers_Col_Processes" xml:space="preserve"><value>Processes</value></data>
+  <data name="Consumers_Col_CpuNow" xml:space="preserve"><value>CPU now</value></data>
+  <data name="Consumers_Col_CpuAvg" xml:space="preserve"><value>CPU avg</value></data>
+  <data name="Consumers_Col_CpuAvgTip" xml:space="preserve"><value>Average CPU % of the machine over the last 5 minutes</value></data>
+  <data name="Consumers_Col_CpuMax" xml:space="preserve"><value>CPU max</value></data>
+  <data name="Consumers_Col_CpuMaxTip" xml:space="preserve"><value>Highest CPU % of the machine over the last 5 minutes</value></data>
+  <data name="Consumers_Col_PrivateRam" xml:space="preserve"><value>Private RAM</value></data>
+  <data name="Consumers_Col_PrivateRamTip" xml:space="preserve"><value>Private working set: physical memory used by this application alone</value></data>
+  <data name="Consumers_Col_Trend" xml:space="preserve"><value>5 min trend</value></data>
+  <data name="Consumers_Col_TrendTip" xml:space="preserve"><value>Change of private bytes over the last 5 minutes (least-squares line)</value></data>
+  <data name="Consumers_Col_IfClosed" xml:space="preserve"><value>If closed</value></data>
+  <data name="Processes_ConsumerSummary" xml:space="preserve"><value>{0} user applications. Closing all of them would return about {1} of RAM (private working set) and {2} of commit. Windows components, processes that cannot be inspected and DiskScope hold {3} of commit and are never counted. Memory shared between processes and the file cache are not included. History: last {4} min.</value></data>
   <data name="Processes_Growth" xml:space="preserve"><value>+{0} in {1} min: sustained growth, to verify (not a proven leak)</value></data>
   <data name="Processes_Summary" xml:space="preserve"><value>{0} processes, {1} not openable (their memory, CPU and I/O read n/a), read in {2} ms, {3} parent links unverified, {4} growth suspicions. CPU % is of the whole machine; private bytes = commit charge.</value></data>
   <data name="Startup_NotLoaded" xml:space="preserve"><value>Not loaded yet</value></data>
@@ -183,7 +202,9 @@
   <data name="Storage_Drive_Optical" xml:space="preserve"><value>Optical drive</value></data>
   <data name="Storage_Drive_Local" xml:space="preserve"><value>Local disk</value></data>
   <data name="Tile_Source" xml:space="preserve"><value>Source: {0}</value></data>
-  <data name="Tile_Peak" xml:space="preserve"><value>max {0} over {1}</value></data>
+  <data name="Tile_AvgMax" xml:space="preserve"><value>avg {0}, max {1} over {2}</value></data>
+  <data name="Tile_Trend" xml:space="preserve"><value>trend {0} per {1}</value></data>
+  <data name="Tile_TrendNeedsHistory" xml:space="preserve"><value>trend n/a: needs {0} of history</value></data>
   <data name="Tile_NoData" xml:space="preserve"><value>no data yet</value></data>
   <data name="Tile_Of" xml:space="preserve"><value>of</value></data>
   <data name="Tile_Limit" xml:space="preserve"><value>limit</value></data>

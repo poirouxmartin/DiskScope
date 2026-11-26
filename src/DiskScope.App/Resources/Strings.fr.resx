@@ -38,8 +38,9 @@
   <data name="CpuMemory_Col_MissedTicks" xml:space="preserve"><value>Cycles manqués</value></data>
   <data name="CpuMemory_Col_LastMs" xml:space="preserve"><value>Dernier (ms)</value></data>
   <data name="CpuMemory_Col_MaxMs" xml:space="preserve"><value>Max (ms)</value></data>
+  <data name="CpuMemory_Col_MeanCpu" xml:space="preserve"><value>CPU moyen</value></data>
   <data name="CpuMemory_Col_Availability" xml:space="preserve"><value>Disponibilité</value></data>
-  <data name="CpuMemory_Footnote" xml:space="preserve"><value>La fréquence du processeur n'est pas affichée : Windows n'expose aucune fréquence effective fiable sans pilote. Sur les machines de plus de 64 processeurs logiques, seul le premier groupe de processeurs est mesuré.</value></data>
+  <data name="CpuMemory_Footnote" xml:space="preserve"><value>Dernier et Max sont des durées réelles, attente d'un processeur comprise ; CPU moyen est le temps processeur propre du thread de collecte, compté par Windows en tops d'horloge (environ 15,6 ms), donc significatif seulement sur de nombreuses collectes. La fréquence du processeur n'est pas affichée : Windows n'expose aucune fréquence effective fiable sans pilote. Sur les machines de plus de 64 processeurs logiques, seul le premier groupe de processeurs est mesuré.</value></data>
   <data name="Gpu_Col_Engine" xml:space="preserve"><value>Moteur</value></data>
   <data name="Gpu_Col_Usage" xml:space="preserve"><value>Utilisation</value></data>
   <data name="Gpu_Col_Definition" xml:space="preserve"><value>Définition</value></data>
@@ -151,6 +152,7 @@
   <data name="Storage_Type" xml:space="preserve"><value>Type</value></data>
   <data name="Storage_Col_Extension" xml:space="preserve"><value>Extension</value></data>
   <data name="Storage_Col_Files" xml:space="preserve"><value>Fichiers</value></data>
+  <data name="Storage_LastChangeTip" xml:space="preserve"><value>Dernière modification dans toute cette arborescence</value></data>
   <data name="Storage_Col_Share" xml:space="preserve"><value>Part</value></data>
   <data name="Storage_SummaryAndErrors" xml:space="preserve"><value>Résumé et erreurs</value></data>
   <data name="Common_ExportFailed" xml:space="preserve"><value>Échec de l'exportation : {0}</value></data>
@@ -160,6 +162,23 @@
   <data name="Processes_NotRefreshed" xml:space="preserve"><value>Pas encore actualisé</value></data>
   <data name="Processes_EnumerationFailed" xml:space="preserve"><value>Échec de l'énumération des processus ({0}) : {1}</value></data>
   <data name="Processes_Exported" xml:space="preserve"><value>{0} processus exportés vers {1}</value></data>
+  <data name="Processes_TabAll" xml:space="preserve"><value>Tous les processus</value></data>
+  <data name="Consumers_Tab" xml:space="preserve"><value>Par application</value></data>
+  <data name="Consumers_ReadOnly" xml:space="preserve"><value>Lecture seule : DiskScope ne termine jamais un processus. L'estimation est ce qu'une application rend quand vous la fermez vous-même.</value></data>
+  <data name="Consumers_Col_Application" xml:space="preserve"><value>Application</value></data>
+  <data name="Consumers_Col_Kind" xml:space="preserve"><value>Type</value></data>
+  <data name="Consumers_Col_Processes" xml:space="preserve"><value>Processus</value></data>
+  <data name="Consumers_Col_CpuNow" xml:space="preserve"><value>CPU actuel</value></data>
+  <data name="Consumers_Col_CpuAvg" xml:space="preserve"><value>CPU moy.</value></data>
+  <data name="Consumers_Col_CpuAvgTip" xml:space="preserve"><value>% CPU moyen de la machine sur les 5 dernières minutes</value></data>
+  <data name="Consumers_Col_CpuMax" xml:space="preserve"><value>CPU max</value></data>
+  <data name="Consumers_Col_CpuMaxTip" xml:space="preserve"><value>% CPU le plus haut de la machine sur les 5 dernières minutes</value></data>
+  <data name="Consumers_Col_PrivateRam" xml:space="preserve"><value>RAM privée</value></data>
+  <data name="Consumers_Col_PrivateRamTip" xml:space="preserve"><value>Plage de travail privée : mémoire physique utilisée par cette seule application</value></data>
+  <data name="Consumers_Col_Trend" xml:space="preserve"><value>Tendance 5 min</value></data>
+  <data name="Consumers_Col_TrendTip" xml:space="preserve"><value>Variation des octets privés sur les 5 dernières minutes (droite des moindres carrés)</value></data>
+  <data name="Consumers_Col_IfClosed" xml:space="preserve"><value>Si fermée</value></data>
+  <data name="Processes_ConsumerSummary" xml:space="preserve"><value>{0} applications utilisateur. Les fermer toutes rendrait environ {1} de RAM (plage de travail privée) et {2} de mémoire allouée. Les composants Windows, les processus non inspectables et DiskScope tiennent {3} de mémoire allouée et ne sont jamais comptés. La mémoire partagée entre processus et le cache de fichiers ne sont pas inclus. Historique : {4} dernières minutes.</value></data>
   <data name="Processes_Growth" xml:space="preserve"><value>+{0} en {1} min : croissance soutenue, à vérifier (fuite non avérée)</value></data>
   <data name="Processes_Summary" xml:space="preserve"><value>{0} processus, {1} non ouvrables (leur mémoire, CPU et E/S affichent n/a), lus en {2} ms, {3} liens parents non vérifiés, {4} soupçons de croissance. Le % CPU est celui de la machine entière ; octets privés = mémoire allouée.</value></data>
   <data name="Startup_NotLoaded" xml:space="preserve"><value>Pas encore chargé</value></data>
@@ -183,7 +202,9 @@
   <data name="Storage_Drive_Optical" xml:space="preserve"><value>Lecteur optique</value></data>
   <data name="Storage_Drive_Local" xml:space="preserve"><value>Disque local</value></data>
   <data name="Tile_Source" xml:space="preserve"><value>Source : {0}</value></data>
-  <data name="Tile_Peak" xml:space="preserve"><value>max {0} sur {1}</value></data>
+  <data name="Tile_AvgMax" xml:space="preserve"><value>moy. {0}, max {1} sur {2}</value></data>
+  <data name="Tile_Trend" xml:space="preserve"><value>tendance {0} par {1}</value></data>
+  <data name="Tile_TrendNeedsHistory" xml:space="preserve"><value>tendance indisponible : il faut {0} d'historique</value></data>
   <data name="Tile_NoData" xml:space="preserve"><value>pas encore de données</value></data>
   <data name="Tile_Of" xml:space="preserve"><value>sur</value></data>
   <data name="Tile_Limit" xml:space="preserve"><value>limite</value></data>

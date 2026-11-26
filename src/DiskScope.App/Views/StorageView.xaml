@@ -147,8 +147,9 @@
                                     <!-- Fixed width: a star column sizes to content inside a TreeViewItem and misaligns the numbers. -->
                                     <ColumnDefinition Width="320" />
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Pct" />
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="{loc:Loc Storage_Col_Size}" />
-                                    <ColumnDefinition Width="Auto" SharedSizeGroup="{loc:Loc Storage_Col_Files}" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Size" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Files" />
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="LastChange" />
                                     <ColumnDefinition Width="Auto" SharedSizeGroup="Status" />
                                 </Grid.ColumnDefinitions>
 
@@ -171,7 +172,10 @@
                                            MinWidth="90" Margin="8,0,0,0" TextAlignment="Right" />
                                 <TextBlock Grid.Column="3" Text="{Binding FileCount, StringFormat=N0}"
                                            MinWidth="80" Margin="8,0,0,0" TextAlignment="Right" />
-                                <TextBlock Grid.Column="4" Text="{Binding StatusText}"
+                                <TextBlock Grid.Column="4" Text="{Binding LastChangeText}"
+                                           ToolTip="{loc:Loc Storage_LastChangeTip}"
+                                           MinWidth="80" Margin="8,0,0,0" TextAlignment="Right" />
+                                <TextBlock Grid.Column="5" Text="{Binding StatusText}"
                                            Foreground="DarkOrange" Margin="8,0,0,0" />
                             </Grid>
                         </HierarchicalDataTemplate>

@@ -11,6 +11,8 @@ public sealed class NodeViewModel : ObservableObject
     /// <summary>Stand-in child shown under a directory until its children are materialized.</summary>
     public static readonly NodeViewModel Placeholder = new();
 
+    private const string Unknown = MetricFormatter.Unknown;
+
     private readonly NodeIndex? _index;
     private readonly SizeKind _sizeKind;
     private bool _isExpanded;
@@ -27,15 +29,21 @@ public sealed class NodeViewModel : ObservableObject
         Kind = index.GetKind(id);
         NodeStatus status = index.GetStatus(id);
         TotalSize = index.GetTotalSize(id, sizeKind);
+        PercentOfParent = ComputePercentOfParent(id, TotalSize, parentTotal);
+
+        // A failed listing with nothing counted shows n/a, never "0 B"; a partial count shows a lower bound.
         TotalSizeText = ByteFormatter.FormatNodeSize(TotalSize, status);
         LogicalText = ByteFormatter.FormatNodeSize(index.GetTotalLogicalSize(id), status);
         AllocatedText = ByteFormatter.FormatNodeSize(index.GetTotalAllocatedSize(id), status);
-        PercentOfParent = ComputePercentOfParent(id, TotalSize, parentTotal);
         // 0 of 0 is undefined: the bar stays at 0, the text says n/a.
-        PercentText = id != NodeIndex.RootId && parentTotal <= 0
-            ? MetricFormatter.Unknown
-            : PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %";
+        bool percentKnown = TotalSizeText != MetricFormatter.Unknown && (id == NodeIndex.RootId || parentTotal > 0);
+        PercentText = percentKnown ? PercentOfParent.ToString("F1", CultureInfo.InvariantCulture) + " %" : Unknown;
         FileCount = index.GetRecursiveFileCount(id);
+
+        DateTime lastChange = index.GetSubtreeLastWriteUtc(id);
+        LastChangeText = lastChange.Ticks == 0
+            ? Unknown
+            : lastChange.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
         IsIncomplete = status != NodeStatus.None;
         StatusText = IsIncomplete ? status.ToString() : string.Empty;
@@ -69,6 +77,9 @@ public sealed class NodeViewModel : ObservableObject
     public string PercentText { get; } = string.Empty;
 
     public long FileCount { get; }
+
+    /// <summary>Latest change anywhere in the subtree (local date); for an incomplete subtree, the latest change seen.</summary>
+    public string LastChangeText { get; } = string.Empty;
 
     public bool IsIncomplete { get; }
 

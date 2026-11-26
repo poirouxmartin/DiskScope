@@ -16,7 +16,7 @@ namespace DiskScope.Storage;
 /// </remarks>
 public static class CsvExporter
 {
-    public const string Header = "Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,Status";
+    public const string Header = "Path,Kind,LogicalSize,AllocatedSize,TotalLogicalSize,TotalAllocatedSize,RecursiveFiles,RecursiveDirectories,LastWriteUtc,SubtreeLastWriteUtc,Status";
 
     private const int CancellationCheckInterval = 4096;
     private const string DateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -109,6 +109,8 @@ public static class CsvExporter
         WriteNumber(writer, index.GetRecursiveDirectoryCount(id), zeroIsUnknown);
         writer.Write(',');
         WriteDate(writer, index.GetLastWriteUtc(id));
+        writer.Write(',');
+        WriteDate(writer, index.GetSubtreeLastWriteUtc(id));
         writer.Write(',');
 
         if (status != NodeStatus.None)

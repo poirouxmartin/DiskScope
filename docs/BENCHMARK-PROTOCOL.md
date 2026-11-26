@@ -29,7 +29,7 @@ Check the printed header of `scan` for which of these it already emits. Anything
 1. Release build. Run from the repo root:
    `dotnet run -c Release --project src/DiskScope.Benchmarks -- scan <path>`
 2. Machine: AC power, heavy applications closed. Record the power state in Notes.
-3. Correctness first: run `compare <path>` on the dataset before any timing. Exit code 1 (mismatch) blocks timing for that dataset.
+3. Correctness first: run `compare <path>` on the dataset before any timing. Exit code 1 (mismatch) blocks timing for that dataset. Exception: D2 and D3 are live trees and the two passes run minutes apart, so they rarely compare equal; for them, check stable subtrees instead (on D3: `Program Files`, `ProgramData`, `Windows`), which must be equal, and record the live-tree delta in Notes.
 4. Defaults are 1 warmup and 5 measured runs (`--warmup 1 --runs 5`). Warmups are tagged in the output and excluded from median and min.
 5. Report the median and the min, plus the printed header line, in the RESULTS row.
 6. Any non-zero exit code invalidates the run. Exit codes: 1 scan not completed, compare mismatch, or I/O failure; 2 usage error; 3 refused by precondition.
@@ -40,10 +40,10 @@ Check the printed header of `scan` for which of these it already emits. Anything
 - Cold: needs a reboot, or a standby-list purge (RAMMap "Empty Standby List", or `NtSetSystemInformation` with `SystemMemoryListInformation`, both administrator). Label rows `cold` and name the method used.
 - Never mix warm and cold runs in the same median.
 
-## Defender
+## Real-time antivirus scanning
 
-Real-time scanning slows the first touch of newly created files. D1 is generated right before timing, so its first runs are skewed. Record whether Defender real-time protection was on, and whether D1 was touched between generation and the first measured run. Do not drop those runs silently; note them.
+Real-time scanning slows the first touch of newly created files. D1 is generated right before timing, so its first runs are skewed. Record whether real-time antivirus protection was on, and whether D1 was touched between generation and the first measured run. Do not drop those runs silently; note them.
 
 ## Recording
 
-Each RESULTS row carries: date, short commit hash, dataset (D1/D2/D3 with path), engine, cache state, median, min, nodes/s, peak working set, allocation per 1M nodes, and notes (power state, Defender, denied directories, warmup or cold method).
+Each RESULTS row carries: date, short commit hash, dataset (D1/D2/D3 with path), engine, cache state, median, min, nodes/s, peak working set, allocation per 1M nodes, and notes (power state, real-time scanning, denied directories, warmup or cold method).

@@ -30,6 +30,7 @@ public sealed class NodeIndex
     private readonly int[] _directFiles;
     private readonly long[] _recursiveFiles;
     private readonly long[] _recursiveDirectories;
+    private readonly long[] _subtreeLastWriteTicks;
     private readonly int[] _childStart;
     private readonly int[] _children;
     private readonly IReadOnlyList<ScanError> _errors;
@@ -68,8 +69,9 @@ public sealed class NodeIndex
         _directFiles = new int[count];
         _recursiveFiles = new long[count];
         _recursiveDirectories = new long[count];
-        Aggregate(count, parent, kind, logical, allocated, status,
-            _totalLogical, _totalAllocated, _directFiles, _recursiveFiles, _recursiveDirectories);
+        _subtreeLastWriteTicks = new long[count];
+        Aggregate(count, parent, kind, logical, allocated, lastWriteTicks, status,
+            _totalLogical, _totalAllocated, _directFiles, _recursiveFiles, _recursiveDirectories, _subtreeLastWriteTicks);
 
         _childStart = new int[count + 1];
         _children = new int[count - 1];
@@ -120,6 +122,18 @@ public sealed class NodeIndex
     {
         Check(id);
         return new DateTime(_lastWriteTicks[id], DateTimeKind.Utc);
+    }
+
+    /// <summary>
+    /// Latest known last-write time of the node and all its descendants: when anything in the subtree last changed.
+    /// A directory's own date moves only when its direct entries change, so this is the date to use when looking
+    /// for abandoned folders. Ticks 0 means no date is known in the subtree. For an incomplete subtree
+    /// (<see cref="NodeStatus.SubtreeIncomplete"/>) it is a lower bound: an unread part may be more recent.
+    /// </summary>
+    public DateTime GetSubtreeLastWriteUtc(int id)
+    {
+        Check(id);
+        return new DateTime(_subtreeLastWriteTicks[id], DateTimeKind.Utc);
     }
 
     public ulong GetFileReference(int id)
@@ -211,18 +225,21 @@ public sealed class NodeIndex
         NodeKind[] kind,
         long[] logical,
         long[] allocated,
+        long[] lastWriteTicks,
         NodeStatus[] status,
         long[] totalLogical,
         long[] totalAllocated,
         int[] directFiles,
         long[] recursiveFiles,
-        long[] recursiveDirectories)
+        long[] recursiveDirectories,
+        long[] subtreeLastWriteTicks)
     {
         for (int id = 0; id < count; id++)
         {
             totalLogical[id] = logical[id];
             totalAllocated[id] = allocated[id];
             recursiveFiles[id] = kind[id] == NodeKind.File ? 1 : 0;
+            subtreeLastWriteTicks[id] = lastWriteTicks[id];
 
             // A node whose own contents are unknown is itself an incomplete subtree.
             if ((status[id] & NodeStatusExtensions.OwnErrorMask) != 0)
@@ -238,6 +255,9 @@ public sealed class NodeIndex
             totalAllocated[p] += totalAllocated[id];
             recursiveFiles[p] += recursiveFiles[id];
             recursiveDirectories[p] += recursiveDirectories[id] + (kind[id] == NodeKind.Directory ? 1 : 0);
+
+            // Unknown dates are 0, so Max ignores them without a special case.
+            subtreeLastWriteTicks[p] = Math.Max(subtreeLastWriteTicks[p], subtreeLastWriteTicks[id]);
             if (kind[id] == NodeKind.File)
             {
                 directFiles[p]++;

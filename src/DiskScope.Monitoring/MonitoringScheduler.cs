@@ -5,6 +5,9 @@ using DiskScope.Core;
 namespace DiskScope.Monitoring;
 
 /// <summary>Cost and reliability of one collector, for the self-monitoring view and the benchmark.</summary>
+/// <param name="TotalDuration">Wall-clock time, waiting for a processor included.</param>
+/// <param name="TotalCpuTime">CPU time of the collecting thread (see <see cref="ThreadCpuClock"/>); null when it
+/// could not be read for at least one collection, rather than a total that silently misses some.</param>
 public sealed record CollectorStats(
     string Collector,
     CollectorAvailability Availability,
@@ -14,7 +17,17 @@ public sealed record CollectorStats(
     long SkippedTicks,
     TimeSpan LastDuration,
     TimeSpan MaxDuration,
-    TimeSpan TotalDuration);
+    TimeSpan TotalDuration,
+    TimeSpan? TotalCpuTime)
+{
+    /// <summary>Mean CPU time per collection in milliseconds; NaN before the first collection or when unknown.</summary>
+    public double MeanCpuMilliseconds =>
+        Collections > 0 && TotalCpuTime is { } cpu ? cpu.TotalMilliseconds / Collections : double.NaN;
+
+    /// <summary>Display form of <see cref="MeanCpuMilliseconds"/>: "n/a" when unknown, never "NaN" or "0".</summary>
+    public string MeanCpuText =>
+        MetricFormatter.Format(double.IsNaN(MeanCpuMilliseconds) ? null : MeanCpuMilliseconds, MetricUnit.Milliseconds);
+}
 
 /// <summary>
 /// Runs each available collector on its own background loop at its interval, isolates failures, measures the cost
@@ -138,6 +151,8 @@ public sealed class MonitoringScheduler : IAsyncDisposable
 
     private MetricBatch CollectAndPublish(Entry entry, CancellationToken ct)
     {
+        // Collect is synchronous, so the thread that starts it is the one that finishes it.
+        TimeSpan? cpuStart = ThreadCpuClock.Current();
         long start = Stopwatch.GetTimestamp();
         CollectorResult result;
         bool failed = false;
@@ -159,7 +174,8 @@ public sealed class MonitoringScheduler : IAsyncDisposable
 
         long end = Stopwatch.GetTimestamp();
         TimeSpan duration = Stopwatch.GetElapsedTime(start, end);
-        entry.Record(duration, failed);
+        TimeSpan? cpuEnd = ThreadCpuClock.Current();
+        entry.Record(duration, cpuStart is { } a && cpuEnd is { } b ? b - a : null, failed);
 
         var batch = new MetricBatch(entry.Collector.Name, _clock.At(end), result.Values, result.Errors, duration);
         foreach (MetricValue value in batch.Values)
@@ -225,6 +241,7 @@ public sealed class MonitoringScheduler : IAsyncDisposable
         private TimeSpan _last;
         private TimeSpan _max;
         private TimeSpan _total;
+        private TimeSpan? _totalCpu = TimeSpan.Zero;
 
         public IMetricCollector Collector { get; } = collector;
 
@@ -232,10 +249,12 @@ public sealed class MonitoringScheduler : IAsyncDisposable
 
         public CollectorAvailability Availability { get; } = availability;
 
-        public void Record(TimeSpan duration, bool failed)
+        public void Record(TimeSpan duration, TimeSpan? cpu, bool failed)
         {
             lock (_gate)
             {
+                // One unknown sample makes the total unknown for good: a partial sum would read as a low cost.
+                _totalCpu = _totalCpu is { } t && cpu is { } c ? t + c : null;
                 _collections++;
                 _failures += failed ? 1 : 0;
 
@@ -251,7 +270,7 @@ public sealed class MonitoringScheduler : IAsyncDisposable
         {
             lock (_gate)
             {
-                return new CollectorStats(Collector.Name, Availability, Interval, _collections, _failures, _skipped, _last, _max, _total);
+                return new CollectorStats(Collector.Name, Availability, Interval, _collections, _failures, _skipped, _last, _max, _total, _totalCpu);
             }
         }
     }

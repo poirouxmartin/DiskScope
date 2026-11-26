@@ -38,7 +38,8 @@ public sealed class ReviewFollowUpTests
         new(new ProcessReadResult(processes, 0, TimeSpan.Zero),
             processes.ToDictionary(p => p.Key, _ => (double?)null),
             ProcessTree.Build(processes),
-            new Dictionary<ProcessKey, string>());
+            new Dictionary<ProcessKey, string>(),
+            new ConsumerReport([], 0, null, 0, 0));
 
     [Fact]
     public void Processes_DefaultOrder_IsLargestMemoryFirst_UnknownLast()

@@ -16,6 +16,8 @@ public sealed class AlertRowViewModel(AlertEvent alert, Action<Guid> acknowledge
 
     public string Title => Alert.Title;
 
+    public override string ToString() => Title;
+
     public string Explanation => Alert.Explanation;
 
     public string Evidence => string.Join(
@@ -37,6 +39,8 @@ public sealed class FindingRowViewModel(Finding finding)
     public string Level => Loc.Format("Alerts_FindingLevel", Loc.Get($"Level_{Finding.Level}"), Loc.Get($"Confidence_{Finding.Confidence}"));
 
     public string Title => Finding.Title;
+
+    public override string ToString() => Title;
 
     public string Explanation => Finding.Explanation;
 
@@ -74,6 +78,8 @@ public sealed class RuleViewModel : ObservableObject
 
     // Built-in rules have translated texts keyed by rule id; other rules show their own text.
     public string Name => Loc.TryGet($"Rule.{_rule.Id}.Name") ?? _rule.Name;
+
+    public override string ToString() => Name;
 
     public string Condition =>
         Loc.Format("Alerts_Condition", _rule.MetricId, _rule.Comparison == ThresholdComparison.Above ? ">" : "<",

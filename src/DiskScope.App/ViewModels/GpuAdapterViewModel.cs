@@ -58,6 +58,8 @@ public sealed class GpuAdapterViewModel
 
     public string Title => $"GPU {Index}: {Info.Name}";
 
+    public override string ToString() => Title;
+
     public string Identity => Loc.Format("Gpu_Identity", Info.VendorId.ToString("X4", CultureInfo.InvariantCulture), Info.Luid,
         MetricFormatter.FormatBytes(Info.DedicatedVideoMemory), MetricFormatter.FormatBytes(Info.SharedSystemMemory));
 

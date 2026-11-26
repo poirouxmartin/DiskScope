@@ -224,6 +224,7 @@
                                                Points="{Binding Points}" End="{Binding End}"
                                                Window="{Binding Window}" Maximum="{Binding Maximum}" />
                     <TextBlock Text="{Binding PeakText}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
+                    <TextBlock Text="{Binding TrendText}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
                 </StackPanel>
             </DataTemplate>
         </ResourceDictionary>

@@ -8,6 +8,7 @@ public sealed class MetricTileViewModel : ObservableObject
 {
     private string _valueText = MetricFormatter.Unknown;
     private string _peakText = string.Empty;
+    private string _trendText = string.Empty;
     private bool _isAvailable;
     private IReadOnlyList<MetricPoint> _points = Array.Empty<MetricPoint>();
     private DateTime _end;
@@ -33,6 +34,8 @@ public sealed class MetricTileViewModel : ObservableObject
 
     /// <summary>Card title; the GPU view shortens it because the adapter name is already in the section title.</summary>
     public string Title { get => _title; set => SetProperty(ref _title, value); }
+
+    public override string ToString() => Title;
 
     public string ToolTip { get; }
 
@@ -78,10 +81,21 @@ public sealed class MetricTileViewModel : ObservableObject
         Points = points;
         End = end;
         Maximum = maximum;
-        PeakText = points.Count > 0
-            ? Loc.Format("Tile_Peak", MetricFormatter.Format(points.Max(p => p.Max), Descriptor.Unit), FormatWindow(Window))
-            : Loc.Get("Tile_NoData");
+        MetricTrend? trend = MetricTrend.Compute(points, Window);
+        PeakText = trend is null
+            ? Loc.Get("Tile_NoData")
+            : Loc.Format("Tile_AvgMax", MetricFormatter.Format(trend.Average, Descriptor.Unit),
+                MetricFormatter.Format(trend.Max, Descriptor.Unit), FormatWindow(Window));
+        TrendText = trend switch
+        {
+            null => string.Empty,
+            { Change: { } change } => Loc.Format("Tile_Trend", MetricTrend.FormatChange(change, Descriptor.Unit), FormatWindow(Window)),
+            _ => Loc.Format("Tile_TrendNeedsHistory", FormatWindow(Window / 2)),
+        };
     }
+
+    /// <summary>Change over the window from a least-squares line; empty before the first point.</summary>
+    public string TrendText { get => _trendText; private set => SetProperty(ref _trendText, value); }
 
     private static string FormatWindow(TimeSpan w) =>
         w.TotalMinutes >= 1 ? $"{w.TotalMinutes:0} min" : $"{w.TotalSeconds:0} s";
@@ -111,6 +125,9 @@ public sealed class CoreViewModel(int index) : ObservableObject
         Percent = value?.Value ?? 0; // the bar needs a length; see HasValue
         Text = MetricFormatter.Format(value?.Value, MetricUnit.Percent);
     }
+
+    // The UI Automation name of the item; without it screen readers read the type name.
+    public override string ToString() => Label;
 }
 
 /// <summary>Label, value and source of one metric, for detail tables.</summary>
@@ -129,4 +146,6 @@ public sealed class MetricRowViewModel(MetricDescriptor descriptor, string? name
     public string Value { get => _value; private set => SetProperty(ref _value, value); }
 
     public void Update(MetricValue? latest) => Value = MetricFormatter.Format(latest?.Value, Descriptor.Unit);
+
+    public override string ToString() => Name;
 }

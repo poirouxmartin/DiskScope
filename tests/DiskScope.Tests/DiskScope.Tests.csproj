@@ -38,6 +38,7 @@
     <ProjectReference Include="..\..\src\DiskScope.Scanner.Standard\DiskScope.Scanner.Standard.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.Scanner.Ntfs\DiskScope.Scanner.Ntfs.csproj" />
     <ProjectReference Include="..\..\src\DiskScope.App\DiskScope.App.csproj" />
+    <ProjectReference Include="..\..\src\DiskScope.Benchmarks\DiskScope.Benchmarks.csproj" />
   </ItemGroup>
 
 </Project>

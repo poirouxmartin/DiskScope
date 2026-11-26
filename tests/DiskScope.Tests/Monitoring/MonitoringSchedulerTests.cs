@@ -92,6 +92,53 @@ public sealed class MonitoringSchedulerTests
     }
 
     [Fact]
+    public void Stats_SeparateCpuTimeFromWaiting()
+    {
+        // "busy" burns 50 ms of its own CPU time per collection; "idle" sleeps 50 ms and burns almost none.
+        double Busy()
+        {
+            TimeSpan start = ThreadCpuClock.Current()!.Value;
+            var guard = System.Diagnostics.Stopwatch.StartNew();
+            while (ThreadCpuClock.Current()!.Value - start < TimeSpan.FromMilliseconds(50) && guard.Elapsed < TimeSpan.FromSeconds(5))
+            {
+            }
+
+            return 1;
+        }
+
+        var scheduler = new MonitoringScheduler(
+        [
+            new FakeCollector("busy", "busy.v", Busy),
+            new FakeCollector("idle", "idle.v", () => { Thread.Sleep(50); return 1; }),
+        ]);
+
+        for (int i = 0; i < 4; i++)
+        {
+            scheduler.CollectOnce();
+        }
+
+        CollectorStats busy = scheduler.GetStats().Single(s => s.Collector == "busy");
+        CollectorStats idle = scheduler.GetStats().Single(s => s.Collector == "idle");
+        Assert.True(busy.TotalCpuTime >= TimeSpan.FromMilliseconds(200), $"busy cpu {busy.TotalCpuTime}");
+        Assert.True(idle.TotalDuration >= TimeSpan.FromMilliseconds(200));
+
+        // Clock-tick accounting may charge a tick to a sleeping thread now and then, never the whole sleep.
+        Assert.True(idle.TotalCpuTime < idle.TotalDuration / 2, $"idle cpu {idle.TotalCpuTime}, wall {idle.TotalDuration}");
+        Assert.EndsWith(" ms", idle.MeanCpuText);
+    }
+
+    [Fact]
+    public void Stats_BeforeAnyCollection_ShowUnknownCpu()
+    {
+        var scheduler = new MonitoringScheduler([new FakeCollector("c", "c.v", () => 1)]);
+
+        CollectorStats stats = scheduler.GetStats().Single();
+
+        Assert.True(double.IsNaN(stats.MeanCpuMilliseconds));
+        Assert.Equal("n/a", stats.MeanCpuText);
+    }
+
+    [Fact]
     public void NonPositiveInterval_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new MonitoringScheduler(

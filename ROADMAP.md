@@ -10,7 +10,7 @@ Status as of 2026-11-22.
 - Part 2 (monitoring) is in progress: steps A to E and H done; F and G partly done, their remaining parts wait for decisions (see below).
 - Code audit of 2026-11-16: lots 1 (safety nets) and 2 (unknown is never shown as zero) are merged into `main`; details and remaining items in docs/audit-lots-1-2.md. Lots 3 to 7 (start-up inventory, deduplication, App refactor, UI performance, background monitoring) are not on `main` yet.
 - Security hardening merged into `main`: formula-like text neutralized in CSV exports, NuGet audit and Dependabot, SECURITY.md and CONTRIBUTING.md.
-- Tests: 238, all passing on `main` (`dotnet test DiskScope.slnx`).
+- Tests: 409, all passing on `main` (`dotnet test DiskScope.slnx`), after merging the laptop branch (by-application process view, tile trends, collector CPU time, storage fixes, publishing checklist).
 - The app has not been re-checked by hand on every tab since audit lots 1 and 2.
 
 ### Decisions pending (owner)
@@ -20,6 +20,8 @@ Status as of 2026-11-22.
 3. Persistent history: SQLite would be the first external runtime dependency (Part 2, remaining item 3).
 4. Alert engine and data gaps (audit lot 7): scope of the rework.
 5. First release: when, and what it must contain.
+
+Summaries: docs/STORAGE-REPORT.md (Part 1), docs/MONITORING-REPORT.md (Part 2), publishing checklist and history privacy audit in docs/PUBLISHING.md.
 
 ## Part 1: Storage module (done, except blocked items)
 
@@ -48,6 +50,8 @@ Then: squarified treemap (Core layout, pure and tested; one WPF element drawing 
 Then (2026-10-21): treemap mouse interaction checked in the running app with real clicks on `C:\Program Files\dotnet` (click selects and reveals the node in the tree, double-click zooms into the directory, right-click zooms out). Partial results during the scan: `NodeIndexBuilder.Snapshot` copies the builder on the scan thread and flags pending directories NotScanned, so the root reads SubtreeIncomplete; `ScanOptions.PartialResultInterval` (app: 2 s, doubling after each snapshot, capped at 30 s, never shorter than 10x the last snapshot cost); `IScanObserver.OnPartialResult`. Checked in the running app on `C:\Windows` (summary shows PARTIAL RESULT during the scan). Known limit: each partial refresh rebuilds the tree, so expansion state is lost. Changes during the scan: a test seam in the standard engine deletes or renames a directory between listing and enumeration (Vanished, NotFound error, siblings still counted). 107 tests.
 
 Then: NTFS prototype, parts that do not need elevation (USN record parser, tree rebuild with orphans, root reference, `usn-probe` benchmark command). Status and what is not verified: docs/NTFS-RISKS.md section 8. 123 tests.
+
+Then (2026-10-26): limits found on real use and fixable without elevation: last change in the subtree (tree column, CSV column), lookup by path and `inspect` CLI command (denied directories listed), `GetKnownTotalSize` (unknown totals show `n/a`, never 0), tree expansion and selection kept across partial refreshes. Details: docs/STORAGE-REPORT.md. 255 tests.
 
 ### Remaining (blocked by the environment)
 
@@ -105,6 +109,17 @@ Other rules kept from the spec:
 - F (partial). Read-only start-up and services inventory with CSV export (`DiskScope.Maintenance`); checked in the app on the dev machine (68 entries, 345 services, every source read). Hardware sensors: not started (see below).
 - G (partial). Disk activity collector; `Finding`, `Confidence`, `IDiagnosticRule` in Core; two coincidence hypotheses (CPU or low memory with heavy disk activity) and a disk latency alert. ETW: not started (see below).
 - H. History CSV, process CSV, JSON and HTML reports (`DiskScope.Reports`); HTML export checked end to end from the running app (real data, no user or machine name in the file). Docs updated. 209 tests.
+
+### Done (2026-10-26)
+
+- Tested on a second, busy machine (work laptop, not elevated): build, 214 tests, full-volume scan, monitoring for 5 minutes, app memory over 10 minutes. Fixes: `compare` survives a directory vanishing mid-walk; view models have UI Automation names.
+- Metric tiles show average, maximum and a least-squares trend over their window (`MetricTrend`, Core); no trend before half the window is covered.
+- Collector cost: CPU time of the collecting thread (GetThreadTimes) next to wall-clock time, which on a saturated machine mostly measures waiting.
+- Privacy: commits authored with a work address were re-authored with the personal one before any push; tracked files, history patches, screenshots and the spec .docx metadata checked for work or personal data. 231 tests.
+
+### Done (2026-10-27)
+
+- "By application" view in the Processes tab (`ApplicationConsumerTracker`, Processes): processes grouped by image name, 5 minutes of history per group (CPU now, average, maximum; private bytes trend), and what closing each application would return (private working set and private bytes). Windows components, processes that cannot be inspected and DiskScope get no estimate; nothing is ever ended. Checked in the running app on the work laptop. Summary of Part 2: docs/MONITORING-REPORT.md. 270 tests.
 
 ### Remaining, in order
 

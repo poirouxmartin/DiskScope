@@ -17,6 +17,65 @@ public static class NodeIndexQueries
         kind == SizeKind.Logical ? index.GetTotalLogicalSize(id) : index.GetTotalAllocatedSize(id);
 
     /// <summary>
+    /// Total size, or null when it is unknown: the node's own contents could not be read or were not read yet
+    /// (<see cref="NodeStatusExtensions.OwnErrorMask"/>), so a 0 there would be a guess.
+    /// When only a descendant is incomplete (<see cref="NodeStatus.SubtreeIncomplete"/>) the value is returned
+    /// and is a lower bound.
+    /// </summary>
+    public static long? GetKnownTotalSize(this NodeIndex index, int id, SizeKind kind) =>
+        (index.GetStatus(id) & NodeStatusExtensions.OwnErrorMask) != 0 ? null : index.GetTotalSize(id, kind);
+
+    /// <summary>
+    /// Id of the node at <paramref name="path"/>, or -1 when the path is not in the index.
+    /// The path must start with the root path; comparison ignores case, as Windows does, and accepts '/' and
+    /// a trailing separator. Cost: one linear pass over the children of each directory on the way.
+    /// </summary>
+    public static int FindByPath(this NodeIndex index, string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        ReadOnlySpan<char> rest = path.Replace('/', '\\').AsSpan().TrimEnd('\\');
+        ReadOnlySpan<char> root = index.GetName(NodeIndex.RootId).TrimEnd('\\');
+        if (!rest.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        {
+            return -1;
+        }
+
+        rest = rest.Slice(root.Length);
+        if (rest.Length > 0 && rest[0] != '\\')
+        {
+            return -1; // "C:\data2" must not match the root "C:\data".
+        }
+
+        int current = NodeIndex.RootId;
+        while (rest.Length > 0)
+        {
+            rest = rest.Slice(1);
+            int end = rest.IndexOf('\\');
+            ReadOnlySpan<char> segment = end < 0 ? rest : rest.Slice(0, end);
+            rest = end < 0 ? ReadOnlySpan<char>.Empty : rest.Slice(end);
+
+            int next = -1;
+            foreach (int child in index.GetChildren(current))
+            {
+                if (index.GetName(child).Equals(segment, StringComparison.OrdinalIgnoreCase))
+                {
+                    next = child;
+                    break;
+                }
+            }
+
+            if (next < 0)
+            {
+                return -1;
+            }
+
+            current = next;
+        }
+
+        return current;
+    }
+
+    /// <summary>
     /// Direct children of <paramref name="id"/> sorted by total size, descending. Ties are broken by name
     /// (ordinal, ignoring case), then by id, so the order is deterministic.
     /// </summary>

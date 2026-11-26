@@ -67,6 +67,7 @@
                     <DataGridTextColumn Header="{loc:Loc CpuMemory_Col_MissedTicks}" Binding="{Binding SkippedTicks}" Width="90" />
                     <DataGridTextColumn Header="{loc:Loc CpuMemory_Col_LastMs}" Binding="{Binding LastDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
                     <DataGridTextColumn Header="{loc:Loc CpuMemory_Col_MaxMs}" Binding="{Binding MaxDuration.TotalMilliseconds, StringFormat=F2}" Width="80" />
+                    <DataGridTextColumn Header="{loc:Loc CpuMemory_Col_MeanCpu}" Binding="{Binding MeanCpuText}" Width="80" />
                     <DataGridTextColumn Header="{loc:Loc CpuMemory_Col_Availability}" Binding="{Binding Availability.Reason}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
